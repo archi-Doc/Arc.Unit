@@ -99,11 +99,17 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
         public ILog? Filter(LogFilterParameter param)
         {// Log source/Event id/LogLevel -> Filter() -> ILog
-            if (param.LogSourceType == typeof(ConsoleCommand) &&
-                param.LogLevel == LogLevel.Error)
+            if (param.LogSourceType == typeof(ConsoleCommand))
             {
-                return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
                 // return null; // No log
+                if (param.LogLevel == LogLevel.Error)
+                {
+                    return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+                }
+                else if (param.LogLevel == LogLevel.Fatal)
+                {
+                    return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
+                }
             }
 
             return param.OriginalLogger;

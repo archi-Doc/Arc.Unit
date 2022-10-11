@@ -19,6 +19,7 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.logger.TryGet(LogLevel.Debug)?.Log("Start");
 
         this.logger.TryGet(LogLevel.Error)?.Log("Log filter test: Error -> Fatal");
+        this.logger.TryGet(LogLevel.Fatal)?.Log("Log filter test: Fatal -> Error");
 
         this.logger.TryGet(LogLevel.Debug)?.Log("End");
     }
