@@ -59,7 +59,14 @@ public class ConsoleLogger : BufferedLogOutput
     {
         if (this.worker == null)
         {
-            Console.WriteLine(this.Formatter.Format(param));
+            try
+            {// Console.WriteLine() might cause unexpected exceptions after console window is closed.
+                Console.WriteLine(this.Formatter.Format(param));
+            }
+            catch
+            {
+            }
+
             return;
         }
 
