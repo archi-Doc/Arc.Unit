@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.32916.344
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Arc.Unit", "Arc.Unit\Arc.Unit.csproj", "{425AA0B4-4DD3-4BC8-97F0-51ED5817D4F0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QuickStart", "QuickStart\QuickStart.csproj", "{305228DD-11ED-43A9-B24B-9BC32B5B1386}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{425AA0B4-4DD3-4BC8-97F0-51ED5817D4F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{425AA0B4-4DD3-4BC8-97F0-51ED5817D4F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{425AA0B4-4DD3-4BC8-97F0-51ED5817D4F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{425AA0B4-4DD3-4BC8-97F0-51ED5817D4F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{305228DD-11ED-43A9-B24B-9BC32B5B1386}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{305228DD-11ED-43A9-B24B-9BC32B5B1386}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{305228DD-11ED-43A9-B24B-9BC32B5B1386}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{305228DD-11ED-43A9-B24B-9BC32B5B1386}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {115A9DD1-BD2A-4A84-B92A-778466CA86D6}
+	EndGlobalSection
+EndGlobal
