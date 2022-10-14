@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Arc.Unit\Arc.Unit.csproj" />
+  </ItemGroup>
+
 </Project>
