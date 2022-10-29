@@ -168,6 +168,7 @@ public class UnitBuilder
         builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
         builderContext.TryAddSingleton<TUnit>();
+        builderContext.TryAddSingleton<IConsoleService, ConsoleService>();
         builderContext.TryAddSingleton<RadioClass>(); // Unit radio
 
         // Setup classes
