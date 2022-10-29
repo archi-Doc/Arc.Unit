@@ -8,15 +8,17 @@ namespace QuickStart;
 [SimpleCommand("console", Default = true)]
 public class ConsoleCommand : ISimpleCommandAsync
 {
-    public ConsoleCommand(ILogger<ConsoleCommand> logger)
+    public ConsoleCommand(ILogger<ConsoleCommand> logger, IConsoleService consoleService)
     {
         this.logger = logger;
+        this.consoleService = consoleService;
     }
 
     public async Task RunAsync(string[] args)
     {
         this.logger.TryGet()?.Log("Console command");
         this.logger.TryGet(LogLevel.Debug)?.Log("Start");
+        this.consoleService.WriteLine("Console test");
 
         this.logger.TryGet(LogLevel.Error)?.Log("Log filter test: Error -> Fatal");
         this.logger.TryGet(LogLevel.Fatal)?.Log("Log filter test: Fatal -> Error");
@@ -25,4 +27,5 @@ public class ConsoleCommand : ISimpleCommandAsync
     }
 
     private ILogger<ConsoleCommand> logger;
+    private IConsoleService consoleService;
 }
