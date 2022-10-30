@@ -69,6 +69,9 @@ public class UnitLogger
     public ILogger<TLogSource> GetLogger<TLogSource>()
         => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
 
+    public ILogger GetLogger(Type logSource)
+        => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
+
     public ILog? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
