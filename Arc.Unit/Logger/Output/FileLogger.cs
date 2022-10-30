@@ -17,6 +17,7 @@ public class FileLogger<TOption> : BufferedLogOutput
 
         this.worker = new(core, unitLogger, options.Path, options.MaxLogCapacity, options.Formatter);
         this.options = options;
+        this.worker.Start();
     }
 
     public override void Output(LogOutputParameter param)
