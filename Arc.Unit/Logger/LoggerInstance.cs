@@ -41,7 +41,7 @@ internal class LogInstance : ILog
         }
     }
 
-    public void Log(int eventId, string message, Exception? exception)
+    public void Log(long eventId, string message, Exception? exception)
     {
         LogOutputParameter param = new(this.logSourceType, this.logLevel, eventId, message, exception);
         if (this.filterDelegate != null)

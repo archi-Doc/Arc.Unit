@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public readonly struct LogOutputParameter : IEquatable<LogOutputParameter>
 {
-    public LogOutputParameter(Type logSourceType, LogLevel logLevel, int eventId, string message, Exception? exception)
+    public LogOutputParameter(Type logSourceType, LogLevel logLevel, long eventId, string message, Exception? exception)
     {
         this.LogSourceType = logSourceType;
         this.LogLevel = logLevel;
@@ -18,7 +18,7 @@ public readonly struct LogOutputParameter : IEquatable<LogOutputParameter>
 
     public readonly LogLevel LogLevel;
 
-    public readonly int EventId;
+    public readonly long EventId;
 
     public readonly string Message;
 
