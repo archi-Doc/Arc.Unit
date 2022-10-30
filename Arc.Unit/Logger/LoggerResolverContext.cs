@@ -89,6 +89,22 @@ public sealed class LoggerResolverContext
         }
     }
 
+    public void ClearOutput()
+    {
+        this.LogOutputType = null;
+    }
+
+    public void ClearFilter()
+    {
+        this.LogFilterType = null;
+    }
+
+    public void ClearOutputAndFilter()
+    {
+        this.LogOutputType = null;
+        this.LogFilterType = null;
+    }
+
     public Type LogSourceType { get; }
 
     public LogLevel LogLevel { get; }
