@@ -14,7 +14,7 @@ public interface ILog
     /// <param name="eventId">The event id.</param>
     /// <param name="message">The message.</param>
     /// <param name="exception">The exception.</param>
-    public void Log(int eventId, string message, Exception? exception = null);
+    public void Log(long eventId, string message, Exception? exception = null);
 
     public Type OutputType { get; }
 }
