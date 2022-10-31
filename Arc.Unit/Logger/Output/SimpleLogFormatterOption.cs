@@ -20,4 +20,9 @@ public record class SimpleLogFormatterOptions
     /// Gets or sets a value indicating whether timestamps are displayed as local time or not.
     /// </summary>
     public bool TimestampLocal { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the event id format (default is "X4").
+    /// </summary>
+    public string? EventIdFormat { get; set; } = "X4";
 }
