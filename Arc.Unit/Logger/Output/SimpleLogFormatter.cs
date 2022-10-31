@@ -53,7 +53,7 @@ public class SimpleLogFormatter
         // Source(EventId)
         // var position = sb.Length;
         string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name; // DefaultLogText
-        if (param.EventId == 0)
+        if (param.EventId == 0 || this.options.EventIdFormat == null)
         {
             if (!string.IsNullOrEmpty(source))
             {
@@ -62,7 +62,7 @@ public class SimpleLogFormatter
         }
         else
         {
-            sb.Append($" {source}({param.EventId.ToString()})");
+            sb.Append($" {source}({param.EventId.ToString(this.options.EventIdFormat)})");
         }
 
         // Padding
