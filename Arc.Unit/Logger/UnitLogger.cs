@@ -61,7 +61,8 @@ public class UnitLogger
 
     public UnitLogger(UnitContext context)
     {
-        this.context = new(this);
+        this.UnitContext = context;
+        this.logContext = new(this);
         this.serviceProvider = context.ServiceProvider;
         this.loggerResolvers = (LoggerResolverDelegate[])context.LoggerResolvers.Clone();
     }
@@ -76,7 +77,7 @@ public class UnitLogger
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
-            LoggerResolverContext context = new(x);
+            LoggerResolverContext context = new(this, x);
             for (var i = 0; i < this.loggerResolvers.Length; i++)
             {
                 this.loggerResolvers[i](context);
@@ -87,7 +88,7 @@ public class UnitLogger
                 if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
                 {
                     var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LogInstance(this.context, x.LogSourceType, x.LogLevel, logOutput, logFilter);
+                    return new LogInstance(this.logContext, x.LogSourceType, x.LogLevel, logOutput, logFilter);
                 }
             }
 
@@ -135,7 +136,9 @@ public class UnitLogger
         }
     }
 
-    private LogContext context;
+    internal UnitContext UnitContext { get; }
+
+    private LogContext logContext;
     private IServiceProvider serviceProvider;
     private LoggerResolverDelegate[] loggerResolvers;
     private ConcurrentDictionary<LogSourceLevelPair, ILog?> sourceLevelToLogger = new();
