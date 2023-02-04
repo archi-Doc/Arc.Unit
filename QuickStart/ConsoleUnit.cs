@@ -44,6 +44,11 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 });
             });
 
+            this.SetupOptions<UnitOptions>((context, options) =>
+            {// UnitOptions
+                options.DataDirectory = "test";
+            });
+
             this.SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/Log.txt";
@@ -118,15 +123,18 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         private ConsoleUnit consoleUnit;
     }
 
-    public ConsoleUnit(UnitContext context, ILogger<ConsoleUnit> logger)
+    public ConsoleUnit(UnitContext context, ILogger<ConsoleUnit> logger, UnitOptions options)
         : base(context)
     {
         this.logger = logger;
+        this.options = options;
     }
 
     public void Prepare(UnitMessage.Prepare message)
     {
         this.logger.TryGet()?.Log("Unit prepared.");
+        this.logger.TryGet()?.Log($"Root: {this.options.RootDirectory}");
+        this.logger.TryGet()?.Log($"Data: {this.options.DataDirectory}");
     }
 
     public async Task RunAsync(UnitMessage.RunAsync message)
@@ -140,4 +148,5 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
     }
 
     private ILogger<ConsoleUnit> logger;
+    private UnitOptions options;
 }
