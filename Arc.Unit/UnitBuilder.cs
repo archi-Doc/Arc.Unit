@@ -162,11 +162,13 @@ public class UnitBuilder
         this.PreloadInternal(builderContext, args);
 
         // Configure
+        UnitOptions.Configure(builderContext); // Unit options
         UnitLogger.Configure(builderContext); // Logger
         this.ConfigureInternal(builderContext);
 
         builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
+        builderContext.TryAddSingleton<UnitOptions>();
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<IConsoleService, ConsoleService>();
         builderContext.TryAddSingleton<RadioClass>(); // Unit radio
