@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information used by Setup delegate and provided to <see cref="UnitBuilder"/>.
 /// </summary>
-public interface IUnitSetupContext : IUnitPreloadContext
+public interface IUnitSetupContext : IUnitPreloadSetupContext
 {
     /// <summary>
     /// Gets <see cref="IServiceProvider"/>.
