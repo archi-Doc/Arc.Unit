@@ -83,6 +83,25 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
         options = (TOptions)this.OptionTypeToInstance[typeof(TOptions)];
     }
 
+    public TOptions GetOrCreateOptions<TOptions>()
+        where TOptions : class, new()
+    {
+        TOptions? options = null;
+        if (this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
+        {
+            options = instance as TOptions;
+            if (options != null)
+            {
+                return options;
+            }
+        }
+
+        options = new();
+        this.OptionTypeToInstance[typeof(TOptions)] = options;
+
+        return options;
+    }
+
     public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
     public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
