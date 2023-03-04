@@ -22,4 +22,7 @@ public interface IUnitPreloadSetupContext
 
     public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
         where TOptions : class;
+
+    public TOptions GetOrCreateOptions<TOptions>()
+        where TOptions : class, new();
 }
