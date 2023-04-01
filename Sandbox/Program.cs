@@ -4,7 +4,23 @@ using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace QuickStart;
+namespace Sandbox;
+
+public interface ITestInterface
+{
+}
+
+public interface ITestInterface<T> : ITestInterface
+{
+}
+
+public class TestClass : ITestInterface
+{
+}
+
+public class TestClassFactory<T> : ITestInterface<T>
+{
+}
 
 public class Program
 {
@@ -22,15 +38,18 @@ public class Program
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
 
-        var builder = new ConsoleUnit.Builder()
+        var builder = new UnitBuilder()
             .Configure(context =>
             {
-                // Add Command
-                context.AddCommand(typeof(ExampleCommand));
+                context.AddSingleton<ITestInterface, TestClass>();
+                context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>), typeof(TestClassFactory<>)));
+                // context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>).MakeGenericType(typeof(int)), new TestClass()));
             });
 
         var unit = builder.Build();
-        await unit.RunAsync(new(args));
+
+        var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
+        var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
