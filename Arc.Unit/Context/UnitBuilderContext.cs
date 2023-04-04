@@ -58,6 +58,11 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
 
     internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
 
+    /*public void SetOptionsForUnitContext<TOptions>(TOptions options)
+        where TOptions : class
+    {
+    }*/
+
     public void SetOptions<TOptions>(TOptions options)
         where TOptions : class
     {

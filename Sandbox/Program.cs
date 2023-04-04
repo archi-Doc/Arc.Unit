@@ -6,6 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Sandbox;
 
+public record TestOptions
+{
+    public string Name { get; init; } = string.Empty;
+}
+
 public interface ITestInterface
 {
 }
@@ -16,6 +21,12 @@ public interface ITestInterface<T> : ITestInterface
 
 public class TestClass : ITestInterface
 {
+    public TestClass(TestOptions options)
+    {
+        this.options = options;
+    }
+
+    private TestOptions options;
 }
 
 public class TestClassFactory<T> : ITestInterface<T>
@@ -41,9 +52,15 @@ public class Program
         var builder = new UnitBuilder()
             .Configure(context =>
             {
+                context.AddSingleton<TestOptions>();
                 context.AddSingleton<ITestInterface, TestClass>();
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>), typeof(TestClassFactory<>)));
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>).MakeGenericType(typeof(int)), new TestClass()));
+            })
+            .SetupOptions<TestOptions>((context, options) =>
+            {
+                // options.Name = "test";
+                // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
             });
 
         var unit = builder.Build();
