@@ -13,4 +13,7 @@ public interface IUnitSetupContext : IUnitPreloadSetupContext
     /// Gets <see cref="IServiceProvider"/>.
     /// </summary>
     public IServiceProvider ServiceProvider { get; }
+
+    /* public void SetOptionsForUnitContext<TOptions>(TOptions options)
+        where TOptions : class;*/
 }
