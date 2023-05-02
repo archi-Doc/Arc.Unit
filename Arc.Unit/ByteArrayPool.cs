@@ -174,6 +174,19 @@ public class ByteArrayPool
             this.Memory = byteArray.AsMemory();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemoryOwner"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// </summary>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        /// <param name="start">The index at which to begin the memory.</param>
+        /// <param name="length">The number of items in the memory.</param>
+        public MemoryOwner(byte[] byteArray, int start, int length)
+        {
+            this.Owner = new(byteArray);
+            this.Memory = byteArray.AsMemory(start, length);
+        }
+
         internal MemoryOwner(Owner? owner)
         {
             this.Owner = owner;
@@ -303,6 +316,11 @@ public class ByteArrayPool
         /// </summary>
         public bool IsEmpty => this.Memory.IsEmpty;
 
+        /// <summary>
+        /// Gets a span from the memory.
+        /// </summary>
+        public Span<byte> Span => this.Memory.Span;
+
         public readonly Owner? Owner;
         public readonly Memory<byte> Memory;
     }
@@ -323,6 +341,19 @@ public class ByteArrayPool
         {
             this.Owner = new(byteArray);
             this.Memory = byteArray.AsMemory();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReadOnlyMemoryOwner"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="ByteArrayPool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// </summary>
+        /// <param name="byteArray">A byte array (other than <see cref="ByteArrayPool"/>).</param>
+        /// <param name="start">The index at which to begin the memory.</param>
+        /// <param name="length">The number of items in the memory.</param>
+        public ReadOnlyMemoryOwner(byte[] byteArray, int start, int length)
+        {
+            this.Owner = new(byteArray);
+            this.Memory = byteArray.AsMemory(start, length);
         }
 
         internal ReadOnlyMemoryOwner(Owner? owner)
@@ -418,6 +449,11 @@ public class ByteArrayPool
         /// Gets a value indicating whether the memory is empty.
         /// </summary>
         public bool IsEmpty => this.Memory.IsEmpty;
+
+        /// <summary>
+        /// Gets a span from the memory.
+        /// </summary>
+        public ReadOnlySpan<byte> Span => this.Memory.Span;
 
         public readonly Owner? Owner;
         public readonly ReadOnlyMemory<byte> Memory;
