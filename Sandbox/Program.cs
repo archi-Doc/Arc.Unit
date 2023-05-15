@@ -63,6 +63,12 @@ public class Program
                 // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
             });
 
+        var builder2 = new UnitBuilder()
+           .Configure(context =>
+           {
+           });
+        builder.AddBuilder(builder2);
+
         var unit = builder.Build();
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();

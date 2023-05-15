@@ -21,6 +21,8 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
         this.DataDirectory = string.Empty;
     }
 
+    public bool FirstBuilderRun { get; set; }
+
     /// <summary>
     /// Gets or sets a unit name.
     /// </summary>
@@ -57,6 +59,8 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
     internal List<LoggerResolverDelegate> LoggerResolvers { get; } = new();
 
     internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
+
+    internal HashSet<Type> BuilderRun { get; } = new();
 
     /*public void SetOptionsForUnitContext<TOptions>(TOptions options)
         where TOptions : class
