@@ -159,12 +159,16 @@ public class UnitBuilder
         var builderContext = new UnitBuilderContext();
 
         // Preload
-        this.PreloadInternal(builderContext, args);
+        builderContext.BuilderRun.Clear();
+        builderContext.BuilderRun.Add(this.GetType());
+        this.PreloadInternal(builderContext, args, true);
 
         // Configure
         UnitOptions.Configure(builderContext); // Unit options
         UnitLogger.Configure(builderContext); // Logger
-        this.ConfigureInternal(builderContext);
+        builderContext.BuilderRun.Clear();
+        builderContext.BuilderRun.Add(this.GetType());
+        this.ConfigureInternal(builderContext, true);
 
         builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
@@ -190,7 +194,7 @@ public class UnitBuilder
 
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();
-        unitContext.FromBuilderContext(serviceProvider, builderContext);
+        unitContext.FromBuilderToUnit(serviceProvider, builderContext);
 
         // Setup
         this.SetupInternal(builderContext);
@@ -200,7 +204,7 @@ public class UnitBuilder
         return unit;
     }
 
-    internal void PreloadInternal(UnitBuilderContext context, string? args)
+    internal void PreloadInternal(UnitBuilderContext context, string? args, bool firstRun)
     {
         // Arguments
         if (args != null)
@@ -214,25 +218,27 @@ public class UnitBuilder
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.PreloadInternal(context, args);
+            x.PreloadInternal(context, args, context.BuilderRun.Add(x.GetType()));
         }
 
-        // Actions
+        // Preload actions
+        context.FirstBuilderRun = firstRun;
         foreach (var x in this.preloadActions)
         {
             x(context);
         }
     }
 
-    internal void ConfigureInternal(UnitBuilderContext context)
+    internal void ConfigureInternal(UnitBuilderContext context, bool firstRun)
     {
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.ConfigureInternal(context);
+            x.ConfigureInternal(context, context.BuilderRun.Add(x.GetType()));
         }
 
         // Configure actions
+        context.FirstBuilderRun = firstRun;
         foreach (var x in this.configureActions)
         {
             x(context);

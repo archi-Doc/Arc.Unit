@@ -9,6 +9,8 @@ namespace Arc.Unit;
 /// </summary>
 public interface IUnitPreloadContext : IUnitPreloadSetupContext
 {
+    public bool FirstBuilderRun { get; }
+
     public void SetOptions<TOptions>(TOptions options)
         where TOptions : class;
 }

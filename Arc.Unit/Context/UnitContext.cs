@@ -100,7 +100,7 @@ public sealed class UnitContext
     /// </summary>
     /// <param name="serviceProvider"><see cref="IServiceCollection"/>.</param>
     /// <param name="builderContext"><see cref="UnitBuilderContext"/>.</param>
-    internal void FromBuilderContext(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
+    internal void FromBuilderToUnit(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
     {
         this.ServiceProvider = serviceProvider;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
