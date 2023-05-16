@@ -62,10 +62,19 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
 
     internal HashSet<Type> BuilderRun { get; } = new();
 
-    /*public void SetOptionsForUnitContext<TOptions>(TOptions options)
-        where TOptions : class
+    internal Dictionary<Type, object> CustomContexts { get; } = new();
+
+    public TContext GetCustomContext<TContext>()
+        where TContext : IUnitCustomContext, new()
     {
-    }*/
+        if (!this.CustomContexts.TryGetValue(typeof(TContext), out var context))
+        {
+            context = new TContext();
+            this.CustomContexts[typeof(TContext)] = context;
+        }
+
+        return (TContext)context;
+    }
 
     public void SetOptions<TOptions>(TOptions options)
         where TOptions : class

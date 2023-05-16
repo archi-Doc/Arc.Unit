@@ -19,6 +19,13 @@ public interface ITestInterface<T> : ITestInterface
 {
 }
 
+public class CustomContext : IUnitCustomContext
+{
+    void IUnitCustomContext.Configure(IUnitConfigurationContext context)
+    {
+    }
+}
+
 public class TestClass : ITestInterface
 {
     public TestClass(TestOptions options)
@@ -52,6 +59,7 @@ public class Program
         var builder = new UnitBuilder()
             .Configure(context =>
             {
+                var custom = context.GetCustomContext<CustomContext>();
                 context.AddSingleton<TestOptions>();
                 context.AddSingleton<ITestInterface, TestClass>();
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>), typeof(TestClassFactory<>)));

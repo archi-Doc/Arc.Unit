@@ -9,20 +9,20 @@ namespace Arc.Unit;
 /// </summary>
 public interface IUnitPreloadSetupContext
 {
-    public string UnitName { get; set; }
+    string UnitName { get; set; }
 
-    public string RootDirectory { get; set; }
+    string RootDirectory { get; set; }
 
-    public string DataDirectory { get; set; }
+    string DataDirectory { get; set; }
 
-    public UnitArguments Arguments { get; }
+    UnitArguments Arguments { get; }
 
-    public void GetOptions<TOptions>(out TOptions options)
+    void GetOptions<TOptions>(out TOptions options)
         where TOptions : class;
 
-    public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
+    bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
         where TOptions : class;
 
-    public TOptions GetOrCreateOptions<TOptions>()
+    TOptions GetOrCreateOptions<TOptions>()
         where TOptions : class, new();
 }
