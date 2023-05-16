@@ -64,6 +64,8 @@ public class UnitBuilder
     {
     }
 
+    protected Action<IUnitConfigurationContext>? CustomConfigure { get; set; }
+
     /// <summary>
     /// Runs the given actions and build a unit.
     /// </summary>
@@ -163,12 +165,30 @@ public class UnitBuilder
         builderContext.BuilderRun.Add(this.GetType());
         this.PreloadInternal(builderContext, args, true);
 
+        // Custom
+        /*foreach (var x in builderContext.CustomContexts.Values)
+        {
+            if (x is IUnitCustomContext context)
+            {
+                context.Preload(builderContext);
+            }
+        }*/
+
         // Configure
         UnitOptions.Configure(builderContext); // Unit options
         UnitLogger.Configure(builderContext); // Logger
         builderContext.BuilderRun.Clear();
         builderContext.BuilderRun.Add(this.GetType());
         this.ConfigureInternal(builderContext, true);
+
+        // Custom
+        foreach (var x in builderContext.CustomContexts.Values)
+        {
+            if (x is IUnitCustomContext context)
+            {
+                context.Configure(builderContext);
+            }
+        }
 
         builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
@@ -235,6 +255,10 @@ public class UnitBuilder
         foreach (var x in this.unitBuilders)
         {
             x.ConfigureInternal(context, context.BuilderRun.Add(x.GetType()));
+            if (x.CustomConfigure is { } customConfigure)
+            {
+                customConfigure(context);
+            }
         }
 
         // Configure actions
