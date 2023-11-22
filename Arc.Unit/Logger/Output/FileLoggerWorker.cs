@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Arc.Threading;
 
@@ -13,13 +14,15 @@ internal class FileLoggerWorker : TaskCore
     private const int MaxFlush = 10_000;
     private const int LimitLogThreshold = 10_000;
 
-    public FileLoggerWorker(UnitCore core, UnitLogger unitLogger, string fullPath, int maxCapacity, SimpleLogFormatterOptions options)
+    public FileLoggerWorker(UnitCore core, UnitLogger unitLogger, FileLoggerOptions options)
         : base(core, Process, false)
     {
         this.logger = unitLogger.GetLogger<FileLoggerWorker>();
-        this.formatter = new(options);
+        this.formatter = new(options.Formatter);
+        this.clearLogsAtStartup = options.ClearLogsAtStartup;
 
-        this.maxCapacity = maxCapacity * 1_000_000;
+        this.maxCapacity = options.MaxLogCapacity * 1_000_000;
+        var fullPath = options.Path;
         var fileName = Path.GetFileName(fullPath);
         var idx = fileName.LastIndexOf('.'); // "TestLog.txt" -> 7
         if (idx >= 0)
@@ -40,6 +43,12 @@ internal class FileLoggerWorker : TaskCore
     public static async Task Process(object? obj)
     {
         var worker = (FileLoggerWorker)obj!;
+
+        if (worker.clearLogsAtStartup)
+        {
+            worker.LimitLogs(true);
+        }
+
         while (worker.Sleep(1000))
         {
             await worker.Flush(false).ConfigureAwait(false);
@@ -92,7 +101,7 @@ internal class FileLoggerWorker : TaskCore
                     this.limitLogTime = now;
                     this.limitLogCount = 0;
 
-                    this.LimitLogs();
+                    this.LimitLogs(false);
                 }
             }
 
@@ -107,7 +116,7 @@ internal class FileLoggerWorker : TaskCore
     private string GetCurrentPath()
         => this.basePath + DateTime.Now.ToString("yyyyMMdd") + this.baseExtension;
 
-    private void LimitLogs()
+    private void LimitLogs(bool removeAll)
     {
         var currentPath = this.GetCurrentPath();
         var directory = Path.GetDirectoryName(currentPath);
@@ -145,7 +154,7 @@ internal class FileLoggerWorker : TaskCore
         // this.logger?.TryGet()?.Log($"Limit logs {capacity}/{this.maxCapacity} {directory}");
         foreach (var x in pathToSize)
         {
-            if (capacity < this.maxCapacity)
+            if (!removeAll && capacity < this.maxCapacity)
             {
                 break;
             }
@@ -175,6 +184,7 @@ internal class FileLoggerWorker : TaskCore
     private DateTime limitLogTime;
     private int limitLogCount = 0;
     private long maxCapacity;
+    private bool clearLogsAtStartup;
 }
 
 internal class FileLoggerWork

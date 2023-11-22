@@ -29,4 +29,9 @@ public class FileLoggerOptions
     /// Gets or sets the upper limit of log capacity in megabytes.
     /// </summary>
     public int MaxLogCapacity { get; set; } = 10;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether or not to clear logs at startup.
+    /// </summary>
+    public bool ClearLogsAtStartup { get; set; } = false;
 }

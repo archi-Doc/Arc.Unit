@@ -54,6 +54,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 var logfile = "Logs/Log.txt";
                 options.Path = Path.Combine(context.RootDirectory, logfile);
                 options.MaxLogCapacity = 2;
+                options.ClearLogsAtStartup = true;
             });
 
             this.SetupOptions<ConsoleLoggerOptions>((context, options) =>

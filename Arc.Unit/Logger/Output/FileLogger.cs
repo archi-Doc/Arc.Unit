@@ -15,7 +15,7 @@ public class FileLogger<TOption> : BufferedLogOutput
             options.Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path);
         }
 
-        this.worker = new(core, unitLogger, options.Path, options.MaxLogCapacity, options.Formatter);
+        this.worker = new(core, unitLogger, options);
         this.options = options;
         this.worker.Start();
     }
