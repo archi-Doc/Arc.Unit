@@ -71,6 +71,12 @@ public class Program
                 // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
             });
 
+        var ba = ByteArrayPool.Default.Rent(10);
+        ba.TryIncrement();
+        ba.Return();
+        ba.Return();
+        ba.TryIncrement();
+
         var builder2 = new UnitBuilder()
            .Configure(context =>
            {
