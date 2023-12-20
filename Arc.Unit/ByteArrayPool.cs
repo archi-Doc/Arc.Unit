@@ -80,6 +80,29 @@ public class ByteArrayPool
         }
 
         /// <summary>
+        ///  Increment the counter and attempt to share the byte array.
+        /// </summary>
+        /// <returns><see langword="true"/>; Success.</returns>
+        public bool TryIncrement()
+        {
+            int currentCount;
+            int newCount;
+            do
+            {
+                currentCount = this.count;
+                if (currentCount == 0)
+                {
+                    return false;
+                }
+
+                newCount = currentCount + 1;
+            }
+            while (Interlocked.CompareExchange(ref this.count, newCount, currentCount) != currentCount);
+
+            return true;
+        }
+
+        /// <summary>
         /// Decrement the reference count.<br/>
         /// When it reaches zero, it returns the byte array to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
@@ -263,6 +286,20 @@ public class ByteArrayPool
             }
 
             return new(this.Owner.IncrementAndShare(), start, length);
+        }
+
+        /// <summary>
+        ///  Increment the counter and attempt to share the byte array.
+        /// </summary>
+        /// <returns><see langword="true"/>; Success.</returns>
+        public bool TryIncrement()
+        {
+            if (this.Owner == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            return this.Owner.TryIncrement();
         }
 
         /// <summary>
