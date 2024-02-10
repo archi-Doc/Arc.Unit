@@ -11,6 +11,10 @@ public record class ConsoleLoggerOptions
         this.Formatter = new(true);
     }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether logs are buffered for a set period (default is 40 milliseconds) and then output together.<br/>
+    /// This improves performance during log output but may result in logs being out of order with other console outputs.
+    /// </summary>
     public bool EnableBuffering { get; set; } = false;
 
     /// <summary>

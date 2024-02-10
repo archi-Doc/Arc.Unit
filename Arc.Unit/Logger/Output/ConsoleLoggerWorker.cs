@@ -11,6 +11,7 @@ namespace Arc.Unit;
 internal class ConsoleLoggerWorker : TaskCore
 {
     private const int MaxFlush = 1_000;
+    private const int BufferingTimeInMilliseconds = 40;
 
     public ConsoleLoggerWorker(UnitCore core, ConsoleLogger consoleLogger)
         : base(core, Process)
@@ -21,7 +22,7 @@ internal class ConsoleLoggerWorker : TaskCore
     public static async Task Process(object? obj)
     {
         var worker = (ConsoleLoggerWorker)obj!;
-        while (worker.Sleep(40))
+        while (await worker.Delay(BufferingTimeInMilliseconds))
         {
             await worker.Flush(false).ConfigureAwait(false);
         }
