@@ -69,6 +69,10 @@ public class Program
             {
                 // options.Name = "test";
                 // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
+            })
+            .SetupOptions<ConsoleLoggerOptions>((context, options) =>
+            {
+                options.EnableBuffering = true;
             });
 
         var ba = ByteArrayPool.Default.Rent(10);
@@ -87,6 +91,17 @@ public class Program
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
         var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
+
+        var unitLogger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
+        var logger = unitLogger.GetLogger<TestClass>();
+
+        Parallel.For(0, 5, x =>
+        {
+            for (var i = 0; i < 10; i++)
+            {
+                logger.TryGet()?.Log($"{x} - {i}");
+            }
+        });
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
