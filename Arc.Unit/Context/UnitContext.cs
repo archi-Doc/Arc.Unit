@@ -50,17 +50,20 @@ public sealed class UnitContext
     public void SendPrepare(UnitMessage.Prepare message)
         => this.Radio.Send(message);
 
-    public async Task SendRunAsync(UnitMessage.RunAsync message)
-        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+    public async Task SendStartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken = default)
+        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
 
-    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message)
-        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+    public void SendStop(UnitMessage.Stop message)
+        => this.Radio.Send(message);
 
-    public async Task SendLoadAsync(UnitMessage.LoadAsync message)
-        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken = default)
+        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
 
-    public async Task SendSaveAsync(UnitMessage.SaveAsync message)
-        => await this.Radio.SendAsync(message).ConfigureAwait(false);
+    public async Task SendLoadAsync(UnitMessage.LoadAsync message, CancellationToken cancellationToken = default)
+        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
+
+    public async Task SendSaveAsync(UnitMessage.SaveAsync message, CancellationToken cancellationToken = default)
+        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
 
     /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
@@ -125,14 +128,15 @@ public sealed class UnitContext
 
         if (unit is IUnitExecutable executable)
         {
-            this.Radio.OpenAsync<UnitMessage.RunAsync>(x => executable.RunAsync(x), unit);
-            this.Radio.OpenAsync<UnitMessage.TerminateAsync>(x => executable.TerminateAsync(x), unit);
+            this.Radio.OpenAsync<(UnitMessage.StartAsync, CancellationToken)>(x => executable.StartAsync(x.Item1, x.Item2), unit);
+            this.Radio.Open<UnitMessage.Stop>(x => executable.Stop(x), unit);
+            this.Radio.OpenAsync<(UnitMessage.TerminateAsync, CancellationToken)>(x => executable.TerminateAsync(x.Item1, x.Item2), unit);
         }
 
         if (unit is IUnitSerializable serializable)
         {
-            this.Radio.OpenAsync<UnitMessage.LoadAsync>(x => serializable.LoadAsync(x), unit);
-            this.Radio.OpenAsync<UnitMessage.SaveAsync>(x => serializable.SaveAsync(x), unit);
+            this.Radio.OpenAsync<(UnitMessage.LoadAsync, CancellationToken)>(x => serializable.LoadAsync(x.Item1, x.Item2), unit);
+            this.Radio.OpenAsync<(UnitMessage.SaveAsync, CancellationToken)>(x => serializable.SaveAsync(x.Item1, x.Item2), unit);
         }
     }
 }

@@ -14,7 +14,7 @@ public interface IUnitRadio
 
     public void SendPrepare(UnitMessage.Prepare message);
 
-    public Task SendRunAsync(UnitMessage.RunAsync message);
+    public Task SendRunAsync(UnitMessage.StartAsync message);
 
     public Task SendTerminateAsync(UnitMessage.TerminateAsync message);
 
