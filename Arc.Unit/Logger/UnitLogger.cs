@@ -1,12 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
 public class UnitLogger
 {
+    internal static long OffsetTicks { get; private set; }
+
+    public static void SetTimeOffset(double seconds)
+    {
+        OffsetTicks = (long)(seconds * Stopwatch.Frequency);
+    }
+
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
