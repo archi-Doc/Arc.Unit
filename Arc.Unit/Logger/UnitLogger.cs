@@ -10,9 +10,9 @@ public class UnitLogger
 {
     internal static long OffsetTicks { get; private set; }
 
-    public static void SetTimeOffset(double seconds)
+    public static void SetTimeOffset(TimeSpan timeSpan)
     {
-        OffsetTicks = (long)(seconds * Stopwatch.Frequency);
+        OffsetTicks = timeSpan.Ticks; // (long)(timeSpan.TotalSeconds * Stopwatch.Frequency);
     }
 
     public static void Configure(IUnitConfigurationContext context)
