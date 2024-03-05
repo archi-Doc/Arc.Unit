@@ -114,7 +114,7 @@ internal class FileLoggerWorker : TaskCore
     }
 
     private string GetCurrentPath()
-        => this.basePath + DateTime.Now.ToString("yyyyMMdd") + this.baseExtension;
+        => this.basePath + DateTime.UtcNow.ToString("yyyyMMdd") + this.baseExtension;
 
     private void LimitLogs(bool removeAll)
     {
