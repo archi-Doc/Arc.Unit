@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public static class UnitHelper
+public static class PathHelper
 {
     /// <summary>
     /// Creates a path from <paramref name="directory"/>.<br/>
@@ -26,6 +26,42 @@ public static class UnitHelper
         else
         {
             return Path.Combine(baseDirectory, directory);
+        }
+    }
+
+    /// <summary>
+    /// Deletes the specified file (no exception will be thrown).
+    /// </summary>
+    /// <param name="file">File path.</param>
+    /// <returns><see langword="true"/>; File is successfully deleted.</returns>
+    public static bool TryDeleteFile(string file)
+    {
+        try
+        {
+            File.Delete(file);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Deletes the specified directory recursively (no exception will be thrown).
+    /// </summary>
+    /// <param name="directory">Directory path.</param>
+    /// <returns><see langword="true"/>; Directory is successfully deleted.</returns>
+    public static bool TryDeleteDirectory(string directory)
+    {
+        try
+        {
+            Directory.Delete(directory, true);
+            return true;
+        }
+        catch
+        {
+            return false;
         }
     }
 }
