@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
+
 namespace Arc.Unit;
 
 public static class PathHelper
@@ -62,6 +64,52 @@ public static class PathHelper
         catch
         {
             return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the rooted directory path.<br/>
+    /// If the directory is rooted, it is returned as is; if it is not the root path, root and directory path are combined.
+    /// </summary>
+    /// <param name="rootDirectory">Root path.</param>
+    /// <param name="directory">Directory path.</param>
+    /// <returns>Rooted directory path.</returns>
+    public static string GetRootedDirectory(string rootDirectory, string directory)
+    {
+        try
+        {
+            if (Path.IsPathRooted(directory))
+            {// File.GetAttributes(directory).HasFlag(FileAttributes.Directory)
+                return directory;
+            }
+            else
+            {
+                return Path.Combine(rootDirectory, directory);
+            }
+        }
+        catch
+        {
+            return Path.Combine(rootDirectory, directory);
+        }
+    }
+
+    /// <summary>
+    /// Gets the rooted file path.<br/>
+    /// If the file is rooted, it is returned as is; if it is not the root path, root and file path are combined.
+    /// </summary>
+    /// <param name="rootDirectory">Root path.</param>
+    /// <param name="file">File path.</param>
+    /// <returns>Rooted file path.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static string GetRootedFile(string rootDirectory, string file)
+    {
+        if (Path.IsPathRooted(file))
+        {
+            return file;
+        }
+        else
+        {
+            return Path.Combine(rootDirectory, file);
         }
     }
 }
