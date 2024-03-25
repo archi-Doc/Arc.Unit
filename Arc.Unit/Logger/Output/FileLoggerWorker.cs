@@ -49,7 +49,7 @@ internal class FileLoggerWorker : TaskCore
             worker.LimitLogs(true);
         }
 
-        while (worker.Sleep(1000))
+        while (worker.Sleep(1_000))
         {
             await worker.Flush(false).ConfigureAwait(false);
         }
@@ -113,7 +113,7 @@ internal class FileLoggerWorker : TaskCore
         }
     }
 
-    private string GetCurrentPath()
+    internal string GetCurrentPath()
         => this.basePath + DateTime.UtcNow.ToString("yyyyMMdd") + this.baseExtension;
 
     private void LimitLogs(bool removeAll)

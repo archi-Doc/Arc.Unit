@@ -20,6 +20,9 @@ public class FileLogger<TOption> : BufferedLogOutput
         this.worker.Start();
     }
 
+    public string GetCurrentPath()
+        => this.worker.GetCurrentPath();
+
     public override void Output(LogOutputParameter param)
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)

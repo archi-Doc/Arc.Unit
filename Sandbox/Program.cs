@@ -70,6 +70,12 @@ public class Program
                 // options.Name = "test";
                 // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
             })
+            .SetupOptions<FileLoggerOptions>((context, options) =>
+            {// FileLoggerOptions
+                var logfile = "Logs/TestLog.txt";
+                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.MaxLogCapacity = 1;
+            })
             .SetupOptions<ConsoleLoggerOptions>((context, options) =>
             {
                 options.EnableBuffering = true;
@@ -94,6 +100,9 @@ public class Program
 
         var unitLogger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
         var logger = unitLogger.GetLogger<TestClass>();
+
+        var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
+        var path = fileLogger.GetCurrentPath();
 
         Parallel.For(0, 5, x =>
         {
