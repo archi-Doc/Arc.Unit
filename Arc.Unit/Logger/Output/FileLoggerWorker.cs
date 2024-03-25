@@ -122,7 +122,7 @@ internal class FileLoggerWorker : TaskCore
     internal string GetCurrentPath()
         => this.basePath + DateTime.UtcNow.ToString("yyyyMMdd") + this.baseExtension;
 
-    private void LimitLogs(bool removeAll)
+    internal void LimitLogs(bool removeAll)
     {
         var currentPath = this.GetCurrentPath();
         var directory = Path.GetDirectoryName(currentPath);

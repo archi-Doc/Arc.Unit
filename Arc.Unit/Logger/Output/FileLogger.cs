@@ -23,6 +23,9 @@ public class FileLogger<TOption> : BufferedLogOutput
     public string GetCurrentPath()
         => this.worker.GetCurrentPath();
 
+    public void DeleteAllLogs()
+        => this.worker.LimitLogs(true);
+
     public override void Output(LogOutputParameter param)
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
