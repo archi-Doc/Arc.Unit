@@ -31,6 +31,18 @@ public static class PathHelper
         }
     }
 
+    public static DirectoryInfo? TryCreateDirectory(string directory)
+    {
+        try
+        {
+            return Directory.CreateDirectory(directory);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// Deletes the specified file (no exception will be thrown).
     /// </summary>
