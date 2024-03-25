@@ -81,10 +81,16 @@ internal class FileLoggerWorker : TaskCore
                 var path = this.GetCurrentPath();
                 if (Path.GetDirectoryName(path) is { } directory)
                 {
-                    Directory.CreateDirectory(directory);
+                    PathHelper.TryCreateDirectory(directory);
                 }
 
-                await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
+                try
+                {
+                    await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
+                }
+                catch
+                {
+                }
             }
 
             if (terminate)
