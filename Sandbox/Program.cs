@@ -47,7 +47,7 @@ public class Program
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+            ThreadCore.Root.TerminationEvent.WaitOne(2_000); // Wait until the termination process is complete (#1).
         };
 
         Console.CancelKeyPress += (s, e) =>
@@ -64,6 +64,19 @@ public class Program
                 context.AddSingleton<ITestInterface, TestClass>();
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>), typeof(TestClassFactory<>)));
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>).MakeGenericType(typeof(int)), new TestClass()));
+
+                // Logger
+                context.ClearLoggerResolver();
+                context.AddLoggerResolver(x =>
+                {// Log source/level -> Resolver() -> Output/filter
+                    if (x.LogLevel <= LogLevel.Debug)
+                    {
+                        x.SetOutput<ConsoleLogger>();
+                        return;
+                    }
+
+                    x.SetOutput<ConsoleAndFileLogger>();
+                });
             })
             .SetupOptions<TestOptions>((context, options) =>
             {
@@ -81,11 +94,9 @@ public class Program
                 options.EnableBuffering = true;
             });
 
-        var ba = ByteArrayPool.Default.Rent(10);
-        ba.TryIncrement();
-        ba.Return();
-        ba.Return();
-        ba.TryIncrement();
+        var sb = Cysharp.Text.ZString.CreateUtf8StringBuilder();
+        sb.Append(true);
+        var memo = sb.AsMemory();
 
         var builder2 = new UnitBuilder()
            .Configure(context =>

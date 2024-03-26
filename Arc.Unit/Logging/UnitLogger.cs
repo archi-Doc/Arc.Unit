@@ -26,6 +26,10 @@ public class UnitLogger
         // Empty logger
         context.TryAddSingleton<EmptyLogger>();
 
+        // Memory logger
+        context.TryAddSingleton<MemoryLogger>();
+        context.TryAddSingleton<MemoryLoggerOptions>();
+
         // Console logger
         context.TryAddSingleton<ConsoleLogger>();
         context.TryAddSingleton<ConsoleLoggerOptions>();
