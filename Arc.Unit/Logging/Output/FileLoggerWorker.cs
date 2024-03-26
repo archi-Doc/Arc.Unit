@@ -195,10 +195,10 @@ internal class FileLoggerWorker : TaskCore
 
 internal class FileLoggerWork
 {
-    public FileLoggerWork(LogOutputParameter parameter)
+    public FileLoggerWork(LogEvent parameter)
     {
         this.Parameter = parameter;
     }
 
-    public LogOutputParameter Parameter { get; }
+    public LogEvent Parameter { get; }
 }

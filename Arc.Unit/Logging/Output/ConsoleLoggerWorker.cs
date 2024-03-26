@@ -64,10 +64,10 @@ internal class ConsoleLoggerWorker : TaskCore
 
 internal class ConsoleLoggerWork : ThreadWork
 {
-    public ConsoleLoggerWork(LogOutputParameter parameter)
+    public ConsoleLoggerWork(LogEvent parameter)
     {
         this.Parameter = parameter;
     }
 
-    public LogOutputParameter Parameter { get; }
+    public LogEvent Parameter { get; }
 }

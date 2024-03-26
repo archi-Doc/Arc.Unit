@@ -16,7 +16,7 @@ public abstract class BufferedLogOutput : ILogOutput
     /// <returns>The number of flushed logs.</returns>
     public abstract Task<int> Flush(bool terminate);
 
-    public virtual void Output(LogOutputParameter param)
+    public virtual void Output(LogEvent param)
     {
         throw new NotImplementedException();
     }

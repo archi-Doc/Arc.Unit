@@ -55,7 +55,7 @@ public class ConsoleLogger : BufferedLogOutput
         this.options = options;
     }
 
-    public override void Output(LogOutputParameter param)
+    public override void Output(LogEvent param)
     {
         if (this.worker == null)
         {

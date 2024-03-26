@@ -43,7 +43,7 @@ internal class LogInstance : ILogWriter
 
     public void Log(long eventId, string message, Exception? exception)
     {
-        LogOutputParameter param = new(this.logSourceType, this.logLevel, eventId, message, exception);
+        LogEvent param = new(this.logSourceType, this.logLevel, eventId, message, exception);
         if (this.filterDelegate != null)
         {// Filter -> Log
             if (this.filterDelegate(new(this.context, this.logSourceType, this.logLevel, eventId, this)) is LogInstance loggerInstance)

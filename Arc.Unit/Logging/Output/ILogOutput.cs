@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// </summary>
 public interface ILogOutput
 {
-    internal delegate void OutputDelegate(LogOutputParameter param);
+    internal delegate void OutputDelegate(LogEvent param);
 
-    public void Output(LogOutputParameter param);
+    public void Output(LogEvent param);
 }

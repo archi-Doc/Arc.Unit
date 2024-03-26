@@ -26,7 +26,7 @@ public class FileLogger<TOption> : BufferedLogOutput
     public void DeleteAllLogs()
         => this.worker.LimitLogs(true);
 
-    public override void Output(LogOutputParameter param)
+    public override void Output(LogEvent param)
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {

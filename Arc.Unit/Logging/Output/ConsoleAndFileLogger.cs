@@ -10,7 +10,7 @@ public class ConsoleAndFileLogger : ILogOutput
         this.fileLogger = fileLogger;
     }
 
-    public void Output(LogOutputParameter param)
+    public void Output(LogEvent param)
     {
         this.consoleLogger.Output(param);
         this.fileLogger.Output(param);

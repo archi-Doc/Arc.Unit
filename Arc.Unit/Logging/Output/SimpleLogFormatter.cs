@@ -17,14 +17,14 @@ public class SimpleLogFormatter
         this.options = options;
     }
 
-    public string Format(LogOutputParameter param)
+    public string Format(LogEvent param)
     {
         StringBuilder sb = new();
         this.Format(sb, param);
         return sb.ToString();
     }
 
-    public void Format(StringBuilder sb, LogOutputParameter param)
+    public void Format(StringBuilder sb, LogEvent param)
     {// [Timestamp Source(EventId) Level] Message (Exception)
         var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
         var logLevelString = this.GetLogLevelString(param.LogLevel);
