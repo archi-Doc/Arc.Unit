@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Text;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -71,11 +72,12 @@ public class Program
                 {// Log source/level -> Resolver() -> Output/filter
                     if (x.LogLevel <= LogLevel.Debug)
                     {
-                        x.SetOutput<ConsoleLogger>();
+                        // x.SetOutput<ConsoleLogger>();
                         return;
                     }
 
-                    x.SetOutput<ConsoleAndFileLogger>();
+                    x.SetOutput<MemoryLogger>();
+                    // x.SetOutput<ConsoleAndFileLogger>();
                 });
             })
             .SetupOptions<TestOptions>((context, options) =>
@@ -118,6 +120,10 @@ public class Program
                 logger.TryGet()?.Log($"{x} - {i}");
             }
         });
+
+        var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
+        var array = memoryLogger.ToArray();
+        var st = Encoding.UTF8.GetString(array);
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

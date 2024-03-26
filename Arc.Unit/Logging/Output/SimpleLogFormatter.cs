@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
 using System.Text;
+using Utf8StringInterpolation;
 
 namespace Arc.Unit;
 
@@ -25,7 +27,7 @@ public class SimpleLogFormatter
     }
 
     public void Format(StringBuilder sb, LogEvent param)
-    {// [Timestamp Source(EventId) Level] Message (Exception)
+    {// Timestamp [Level Source(EventId)] Message
         var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
         var logLevelString = this.GetLogLevelString(param.LogLevel);
 
@@ -65,18 +67,67 @@ public class SimpleLogFormatter
             sb.Append($" {source}({param.EventId.ToString(this.options.EventIdFormat)})");
         }
 
-        // Padding
-        /*var length = sb.Length - position;
-        while (length++ < DefaultPadding)
-        {
-            sb.Append(' ');
-        }*/
-
         this.WriteColoredMessage(sb, "] ", DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
 
         // Message
         var messageColor = param.LogLevel > LogLevel.Debug ? ConsoleColor.White : ConsoleColor.Gray;
         this.WriteColoredMessage(sb, param.Message, DefaultColor, messageColor);
+    }
+
+    public byte[] FormatUtf8(LogEvent param)
+    {
+        using var buffer = Utf8String.CreateWriter(out var writer);
+        this.FormatUtf8(ref writer, param);
+        writer.Flush();
+        return buffer.ToArray();
+    }
+
+    public void FormatUtf8(ref Utf8StringWriter<ArrayBufferWriter<byte>> writer, LogEvent param)
+    {// Timestamp [Level Source(EventId)] Message
+        // Timestamp
+        var timestampFormat = this.options.TimestampFormat;
+        if (timestampFormat != null)
+        {
+            if (this.options.TimestampLocal)
+            {// Local
+                writer.AppendFormatted(param.DateTime.ToLocalTime(), 0, timestampFormat);
+            }
+            else
+            {// Utc
+                writer.AppendFormatted(param.DateTime, 0, timestampFormat);
+            }
+
+            writer.Append(' ');
+        }
+
+        writer.Append('[');
+        writer.AppendUtf8(this.GetLogLevelUtf8String(param.LogLevel));
+
+        // Source(EventId)
+        string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name; // DefaultLogText
+        if (param.EventId == 0 || this.options.EventIdFormat == null)
+        {
+            if (!string.IsNullOrEmpty(source))
+            {
+                writer.Append(' ');
+                writer.AppendLiteral(source);
+            }
+        }
+        else
+        {
+            writer.Append(' ');
+            writer.AppendLiteral(source);
+            writer.Append('(');
+            writer.AppendFormatted(param.EventId, 0, this.options.EventIdFormat);
+            writer.Append(')');
+        }
+
+        writer.AppendUtf8("] "u8);
+
+        // Message
+        writer.Append(param.Message);
+
+        writer.AppendLine();
     }
 
     private void WriteColoredMessage(StringBuilder sb, string message, ConsoleColor background, ConsoleColor foreground)
@@ -120,6 +171,19 @@ public class SimpleLogFormatter
             LogLevel.Error => "ERR",
             LogLevel.Fatal => "FTL",
             _ => string.Empty,
+        };
+    }
+
+    private ReadOnlySpan<byte> GetLogLevelUtf8String(LogLevel logLevel)
+    {
+        return logLevel switch
+        {
+            LogLevel.Debug => "DBG"u8,
+            LogLevel.Information => "INF"u8,
+            LogLevel.Warning => "WRN"u8,
+            LogLevel.Error => "ERR"u8,
+            LogLevel.Fatal => "FTL"u8,
+            _ => ""u8,
         };
     }
 
