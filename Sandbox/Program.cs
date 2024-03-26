@@ -94,10 +94,6 @@ public class Program
                 options.EnableBuffering = true;
             });
 
-        var sb = Cysharp.Text.ZString.CreateUtf8StringBuilder();
-        sb.Append(true);
-        var memo = sb.AsMemory();
-
         var builder2 = new UnitBuilder()
            .Configure(context =>
            {
