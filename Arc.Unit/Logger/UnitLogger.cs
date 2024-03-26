@@ -19,7 +19,7 @@ public class UnitLogger
     {
         // Main
         context.TryAddSingleton<UnitLogger>();
-        context.Services.Add(ServiceDescriptor.Singleton<ILog>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
+        context.Services.Add(ServiceDescriptor.Singleton<ILogWriter>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
@@ -51,7 +51,7 @@ public class UnitLogger
             this.unitLogger = unitLogger;
         }
 
-        public ILog? TryGet<TLogOutput>(LogLevel logLevel)
+        public ILogWriter? TryGet<TLogOutput>(LogLevel logLevel)
         {
             return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), logLevel), x =>
             {
@@ -81,7 +81,7 @@ public class UnitLogger
     public ILogger GetLogger(Type logSource)
         => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
 
-    public ILog? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    public ILogWriter? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
@@ -104,7 +104,7 @@ public class UnitLogger
         });
     }
 
-    public ILog Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    public ILogWriter Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         if (this.TryGet<TLogSource>(logLevel) is { } logger)
         {
@@ -149,6 +149,6 @@ public class UnitLogger
     private LogContext logContext;
     private IServiceProvider serviceProvider;
     private LoggerResolverDelegate[] loggerResolvers;
-    private ConcurrentDictionary<LogSourceLevelPair, ILog?> sourceLevelToLogger = new();
+    private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
 }

@@ -4,7 +4,7 @@ using System.Collections.Concurrent;
 
 namespace Arc.Unit;
 
-internal class LogInstance : ILog
+internal class LogInstance : ILogWriter
 {
     public LogInstance(ILogContext context, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {

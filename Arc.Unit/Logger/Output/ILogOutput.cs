@@ -3,7 +3,7 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// Interface to receive and output logs.
+/// Interface for receiving and outputting log events.
 /// </summary>
 public interface ILogOutput
 {

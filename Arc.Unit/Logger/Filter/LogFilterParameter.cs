@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
 {
-    public LogFilterParameter(ILogContext context, Type logSourceType, LogLevel logLevel, long eventId, ILog originalLogger)
+    public LogFilterParameter(ILogContext context, Type logSourceType, LogLevel logLevel, long eventId, ILogWriter originalLogger)
     {
         this.Context = context;
         this.LogSourceType = logSourceType;
@@ -21,7 +21,7 @@ public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
 
     public readonly long EventId;
 
-    public readonly ILog OriginalLogger;
+    public readonly ILogWriter OriginalLogger;
 
     public bool Equals(LogFilterParameter other)
         => this.LogSourceType == other.LogSourceType &&
