@@ -651,7 +651,7 @@ public class ByteArrayPool
         }
     }
 
-    public void Dump(ILog logger)
+    public void Dump(ILogWriter logger)
     {
         var sb = new StringBuilder();
         for (var i = 32; i >= 0; i--)

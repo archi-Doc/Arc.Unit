@@ -8,7 +8,7 @@ public class EmptyLogger : ILogOutput
     {
     }
 
-    public void Output(LogOutputParameter param)
+    public void Output(LogEvent param)
     {
     }
 }

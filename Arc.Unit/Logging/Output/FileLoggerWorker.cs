@@ -6,6 +6,8 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Arc.Threading;
+using Microsoft.Win32.SafeHandles;
+using Utf8StringInterpolation;
 
 namespace Arc.Unit;
 
@@ -67,16 +69,8 @@ internal class FileLoggerWorker : TaskCore
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            StringBuilder sb = new();
-            var count = 0;
-            while (count < MaxFlush && this.queue.TryDequeue(out var work))
-            {
-                count++;
-                this.formatter.Format(sb, work.Parameter);
-                sb.Append(Environment.NewLine);
-            }
-
-            if (count != 0)
+            (var count, var bytes) = GetUtf8();
+            if (bytes.Length > 0)
             {
                 var path = this.GetCurrentPath();
                 if (Path.GetDirectoryName(path) is { } directory)
@@ -84,13 +78,15 @@ internal class FileLoggerWorker : TaskCore
                     PathHelper.TryCreateDirectory(directory);
                 }
 
-                try
+                await PathHelper.TryAppendAllBytes(path, bytes);
+
+                /*try
                 {
                     await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
                 }
                 catch
                 {
-                }
+                }*/
             }
 
             if (terminate)
@@ -117,12 +113,26 @@ internal class FileLoggerWorker : TaskCore
         {
             this.semaphore.Release();
         }
+
+        (int Count, byte[] Bytes) GetUtf8()
+        {
+            using var buffer = Utf8String.CreateWriter(out var writer);
+            var count = 0;
+            while (count < MaxFlush && this.queue.TryDequeue(out var work))
+            {
+                count++;
+                this.formatter.FormatUtf8(ref writer, work.Parameter);
+            }
+
+            writer.Flush();
+            return (count, buffer.ToArray());
+        }
     }
 
     internal string GetCurrentPath()
         => this.basePath + DateTime.UtcNow.ToString("yyyyMMdd") + this.baseExtension;
 
-    private void LimitLogs(bool removeAll)
+    internal void LimitLogs(bool removeAll)
     {
         var currentPath = this.GetCurrentPath();
         var directory = Path.GetDirectoryName(currentPath);
@@ -195,10 +205,10 @@ internal class FileLoggerWorker : TaskCore
 
 internal class FileLoggerWork
 {
-    public FileLoggerWork(LogOutputParameter parameter)
+    public FileLoggerWork(LogEvent parameter)
     {
         this.Parameter = parameter;
     }
 
-    public LogOutputParameter Parameter { get; }
+    public LogEvent Parameter { get; }
 }

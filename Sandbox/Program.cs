@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Text;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,7 +48,7 @@ public class Program
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            ThreadCore.Root.TerminationEvent.WaitOne(2000); // Wait until the termination process is complete (#1).
+            ThreadCore.Root.TerminationEvent.WaitOne(2_000); // Wait until the termination process is complete (#1).
         };
 
         Console.CancelKeyPress += (s, e) =>
@@ -64,6 +65,20 @@ public class Program
                 context.AddSingleton<ITestInterface, TestClass>();
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>), typeof(TestClassFactory<>)));
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>).MakeGenericType(typeof(int)), new TestClass()));
+
+                // Logger
+                context.ClearLoggerResolver();
+                context.AddLoggerResolver(x =>
+                {// Log source/level -> Resolver() -> Output/filter
+                    if (x.LogLevel <= LogLevel.Debug)
+                    {
+                        // x.SetOutput<ConsoleLogger>();
+                        return;
+                    }
+
+                    // x.SetOutput<MemoryLogger>();
+                    x.SetOutput<ConsoleAndFileLogger>();
+                });
             })
             .SetupOptions<TestOptions>((context, options) =>
             {
@@ -80,12 +95,6 @@ public class Program
             {
                 options.EnableBuffering = true;
             });
-
-        var ba = ByteArrayPool.Default.Rent(10);
-        ba.TryIncrement();
-        ba.Return();
-        ba.Return();
-        ba.TryIncrement();
 
         var builder2 = new UnitBuilder()
            .Configure(context =>
@@ -111,6 +120,10 @@ public class Program
                 logger.TryGet()?.Log($"{x} - {i}");
             }
         });
+
+        var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
+        var array = memoryLogger.ToArray();
+        var st = Encoding.UTF8.GetString(array);
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.

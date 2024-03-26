@@ -6,6 +6,25 @@ namespace Arc.Unit;
 
 public static class PathHelper
 {
+    public static async Task<bool> TryAppendAllBytes(string path, byte[] bytes, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        ArgumentNullException.ThrowIfNull(bytes);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        try
+        {
+            using var fileHandle = File.OpenHandle(path, FileMode.Append, FileAccess.Write, FileShare.Read, FileOptions.Asynchronous);
+            var fileOffset = RandomAccess.GetLength(fileHandle);
+            await RandomAccess.WriteAsync(fileHandle, bytes, fileOffset, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     /// <summary>
     /// Creates a path from <paramref name="directory"/>.<br/>
     /// If <paramref name="directory"/> is empty, returns <paramref name="baseDirectory"/>.<br/>

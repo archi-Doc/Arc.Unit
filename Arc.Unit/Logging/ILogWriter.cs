@@ -3,10 +3,10 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// Interface for log output.<br/>
+/// Interface for log writing.<br/>
 /// Log levels and log output are fixed.
 /// </summary>
-public interface ILog
+public interface ILogWriter
 {
     /// <summary>
     /// Send a log to the log output.

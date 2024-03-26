@@ -2,9 +2,9 @@
 
 namespace Arc.Unit;
 
-public readonly struct LogOutputParameter : IEquatable<LogOutputParameter>
+public readonly struct LogEvent : IEquatable<LogEvent>
 {
-    public LogOutputParameter(Type logSourceType, LogLevel logLevel, long eventId, string message, Exception? exception)
+    public LogEvent(Type logSourceType, LogLevel logLevel, long eventId, string message, Exception? exception)
     {
         this.LogSourceType = logSourceType;
         this.LogLevel = logLevel;
@@ -26,7 +26,7 @@ public readonly struct LogOutputParameter : IEquatable<LogOutputParameter>
 
     public readonly DateTimeOffset DateTime;
 
-    public bool Equals(LogOutputParameter other)
+    public bool Equals(LogEvent other)
         => this.LogSourceType == other.LogSourceType &&
         this.LogLevel == other.LogLevel &&
         this.EventId == other.EventId &&
