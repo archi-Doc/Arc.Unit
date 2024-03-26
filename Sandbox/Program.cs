@@ -76,8 +76,8 @@ public class Program
                         return;
                     }
 
-                    x.SetOutput<MemoryLogger>();
-                    // x.SetOutput<ConsoleAndFileLogger>();
+                    // x.SetOutput<MemoryLogger>();
+                    x.SetOutput<ConsoleAndFileLogger>();
                 });
             })
             .SetupOptions<TestOptions>((context, options) =>

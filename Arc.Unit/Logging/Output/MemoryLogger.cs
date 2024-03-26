@@ -41,6 +41,15 @@ public class MemoryLogger : ILogOutput
         }
     }
 
+    public void Clear()
+    {
+        lock (this.syncObject)
+        {
+            this.queue.Clear();
+            this.memoryUsage = 0;
+        }
+    }
+
     public byte[] ToArray()
     {
         lock (this.syncObject)
