@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public readonly partial struct LogSourceLevelPair : IEquatable<LogSourceLevelPair>
+public readonly struct LogSourceLevelPair : IEquatable<LogSourceLevelPair>
 {
     public LogSourceLevelPair(Type logSourceType, LogLevel logLevel)
     {
