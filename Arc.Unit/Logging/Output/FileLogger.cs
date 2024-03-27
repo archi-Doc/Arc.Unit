@@ -4,7 +4,16 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
-public class FileLogger<TOption> : BufferedLogOutput
+public interface IFileLogger
+{
+    string GetCurrentPath();
+
+    void DeleteAllLogs();
+
+    Task<int> Flush(bool terminate);
+}
+
+public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     where TOption : FileLoggerOptions
 {
     public FileLogger(UnitCore core, UnitLogger unitLogger, TOption options)
