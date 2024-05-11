@@ -143,4 +143,21 @@ public static class PathHelper
             return Path.Combine(rootDirectory, file);
         }
     }
+
+    public static bool RunningInContainer
+    {
+        get
+        {
+            if (!containerChecked)
+            {
+                inContainer = File.Exists("/.dockerenv");
+                containerChecked = true;
+            }
+
+            return inContainer;
+        }
+    }
+
+    private static bool containerChecked;
+    private static bool inContainer;
 }
