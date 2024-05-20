@@ -5,6 +5,8 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
+#pragma warning disable SA1124
+
 namespace Arc.Unit;
 
 /// <summary>
@@ -12,7 +14,8 @@ namespace Arc.Unit;
 /// <see cref="ByteArrayPool"/> is slightly slower than 'new byte[]' or <see cref="System.Buffers.ArrayPool{T}"/> (especially byte arrays of 1kbytes or less), but it has some advantages.<br/>
 /// 1. Can handle a rent byte array and a created ('new byte[]') byte array in the same way.<br/>
 /// 2. By using <see cref="ByteArrayPool.MemoryOwner"/>, you can handle a rent byte array in the same way as <see cref="Memory{T}"/>.<br/>
-/// 3. Can be used by multiple users by incrementing the reference count.
+/// 3. Can be used by multiple users by incrementing the reference count.<br/>
+/// ! It is recommended to use this within a class, and not between classes, as the responsibility for returning the buffer becomes unclear.
 /// </summary>
 public class ByteArrayPool
 {
@@ -21,12 +24,11 @@ public class ByteArrayPool
 
     private const int DefaultMaxPool = 100;
     private const int StandardSize = 32 * 1024; // 32KB
-    private const int StandardMaxPool = 500;
 
     static ByteArrayPool()
     {
         Default = new ByteArrayPool(0, DefaultMaxPool);
-        Default.SetMaxPoolBelow(StandardSize, StandardMaxPool);
+        Default.SetMaxPoolBelow(StandardSize, DefaultMaxPool);
     }
 
     public static ByteArrayPool Default { get; }
@@ -514,16 +516,19 @@ public class ByteArrayPool
 
         public int MaxPool { get; private set; }
 
-        internal void SetMaxPool(int maxPool)
-        {
-            this.MaxPool = maxPool;
-        }
-
 #pragma warning disable SA1401 // Fields should be private
         internal ConcurrentQueue<Owner> Queue = new();
 #pragma warning restore SA1401 // Fields should be private
 
         private ByteArrayPool pool;
+
+        public void SetMaxPool(int maxPool)
+        {
+            this.MaxPool = maxPool;
+        }
+
+        public override string ToString()
+            => $"{this.ArrayLength} ({this.Queue.Count}/{this.MaxPool})";
     }
 
     /// <summary>
@@ -569,6 +574,22 @@ public class ByteArrayPool
             }
         }
     }
+
+    #region FieldAndProperty
+
+    /// <summary>
+    /// Gets the maximum length of a byte array instance that may be stored in the pool.
+    /// </summary>
+    public int MaxLength { get; }
+
+    /// <summary>
+    /// Gets the maximum number of array instances that may be stored in each bucket in the pool.
+    /// </summary>
+    public int MaxPool { get; }
+
+    private Bucket?[] buckets;
+
+    #endregion
 
     /// <summary>
     /// Gets a byte array from the pool or allocate a new byte array if not available.<br/>
@@ -668,15 +689,8 @@ public class ByteArrayPool
         logger.Log(sb.ToString());
     }
 
-    /// <summary>
-    /// Gets the maximum length of a byte array instance that may be stored in the pool.
-    /// </summary>
-    public int MaxLength { get; }
-
-    /// <summary>
-    /// Gets the maximum number of array instances that may be stored in each bucket in the pool.
-    /// </summary>
-    public int MaxPool { get; }
-
-    private Bucket?[] buckets;
+    public long CalculateMaxMemoryUsage()
+    {
+        return 0;
+    }
 }

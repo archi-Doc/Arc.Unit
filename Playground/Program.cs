@@ -124,6 +124,9 @@ public class Program
         var ff = PathHelper.RunningInContainer;
         ff = PathHelper.RunningInContainer;
 
+        var owner = ByteArrayPool.Default.Rent(10);
+        var usage = ByteArrayPool.Default.CalculateMaxMemoryUsage();
+
         var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
         var array = memoryLogger.ToArray();
         var st = Encoding.UTF8.GetString(array);
