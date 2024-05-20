@@ -3,7 +3,9 @@
 using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
+
+#pragma warning disable SA1124
+#pragma warning disable SA1202
 
 namespace Arc.Unit;
 
@@ -12,24 +14,21 @@ namespace Arc.Unit;
 /// <see cref="ByteArrayPool"/> is slightly slower than 'new byte[]' or <see cref="System.Buffers.ArrayPool{T}"/> (especially byte arrays of 1kbytes or less), but it has some advantages.<br/>
 /// 1. Can handle a rent byte array and a created ('new byte[]') byte array in the same way.<br/>
 /// 2. By using <see cref="ByteArrayPool.MemoryOwner"/>, you can handle a rent byte array in the same way as <see cref="Memory{T}"/>.<br/>
-/// 3. Can be used by multiple users by incrementing the reference count.
+/// 3. Can be used by multiple users by incrementing the reference count.<br/>
+/// ! It is recommended to use <see cref="ByteArrayPool"/> within a class, and not between classes, as the responsibility for returning the buffer becomes unclear.
 /// </summary>
 public class ByteArrayPool
 {
-    private const int UpperBoundLength = 1024 * 1024 * 1024; // 1 GB
-    private const int LowerBoundBits = 3;
+    private const int DefaultMaxArrayLength = 1024 * 1024 * 16; // 16MB
+    private const int DefaultPoolLimit = 100;
 
-    private const int DefaultMaxPool = 100;
-    private const int StandardSize = 32 * 1024; // 32KB
-    private const int StandardMaxPool = 500;
-
-    static ByteArrayPool()
+    /*static ByteArrayPool()
     {
-        Default = new ByteArrayPool(0, DefaultMaxPool);
-        Default.SetMaxPoolBelow(StandardSize, StandardMaxPool);
-    }
+        Default = new ByteArrayPool(0, DefaultPoolLimit);
+        // Default.SetMaxPoolBelow(StandardSize, DefaultPoolLimit);
+    }*/
 
-    public static ByteArrayPool Default { get; }
+    public static readonly ByteArrayPool Default = ByteArrayPool.Create();
 
     /// <summary>
     /// Represents an owner of a byte array (one owner instance for each byte array).<br/>
@@ -114,9 +113,10 @@ public class ByteArrayPool
             var count = Interlocked.Decrement(ref this.count);
             if (count == 0 && this.bucket != null)
             {
-                if (this.bucket.MaxPool == 0 || this.bucket.Queue.Count < this.bucket.MaxPool)
+                if (this.bucket.QueueCount < this.bucket.PoolLimit)
                 {
                     this.bucket.Queue.Enqueue(this);
+                    Interlocked.Increment(ref this.bucket.QueueCount);
                 }
             }
 
@@ -503,72 +503,88 @@ public class ByteArrayPool
 
     internal sealed class Bucket
     {
-        public Bucket(ByteArrayPool pool, int arrayLength, int maxPool)
+        public Bucket(ByteArrayPool pool, int arrayLength, int poolLimit)
         {
             this.pool = pool;
             this.ArrayLength = arrayLength;
-            this.MaxPool = maxPool;
+            this.PoolLimit = poolLimit;
         }
 
         public int ArrayLength { get; }
 
-        public int MaxPool { get; private set; }
-
-        internal void SetMaxPool(int maxPool)
-        {
-            this.MaxPool = maxPool;
-        }
+        public int PoolLimit { get; private set; }
 
 #pragma warning disable SA1401 // Fields should be private
         internal ConcurrentQueue<Owner> Queue = new();
+        internal int QueueCount; // Queue.Count is slow.
 #pragma warning restore SA1401 // Fields should be private
 
         private ByteArrayPool pool;
+
+        public void SetMaxPool(int poolLimit)
+        {
+            this.PoolLimit = poolLimit;
+        }
+
+        public override string ToString()
+            => $"{this.ArrayLength} ({this.QueueCount}/{this.PoolLimit})";
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ByteArrayPool"/> class.<br/>
     /// </summary>
-    /// <param name="maxLength">The maximum length of a byte array instance that may be stored in the pool (0 for max 1GB).</param>
-    /// <param name="maxPool">The maximum number of array instances that may be stored in each bucket in the pool (0 for unlimited).</param>
-    public ByteArrayPool(int maxLength = 0, int maxPool = 100)
+    /// <param name="maxArrayLength">The maximum length of a byte array instance that may be stored in the pool.</param>
+    /// <param name="poolLimit">The maximum number of array instances that may be stored in each bucket in the pool.</param>
+    private ByteArrayPool(int maxArrayLength, int poolLimit)
     {
-        if (maxLength <= 0 || maxLength > UpperBoundLength)
+        if (maxArrayLength <= 0)
         {
-            maxLength = UpperBoundLength;
+            maxArrayLength = DefaultMaxArrayLength;
         }
 
-        var leadingZero = BitOperations.LeadingZeroCount((uint)maxLength - 1);
-        var lowerBound = 32 - LowerBoundBits;
-        if (leadingZero > lowerBound)
-        {
-            leadingZero = lowerBound;
-        }
-        else if (leadingZero < 2)
-        {
-            leadingZero = 2;
-        }
-
-        this.MaxLength = 1 << (32 - leadingZero);
-        this.MaxPool = maxPool >= 0 ? maxPool : 0;
-
+        var leadingZero = BitOperations.LeadingZeroCount((uint)maxArrayLength - 1);
         this.buckets = new Bucket[33];
+        var limit = 1;
         for (var i = 0; i <= 32; i++)
         {
             if (i < leadingZero)
             {
                 this.buckets[i] = null;
             }
-            else if (i > lowerBound)
-            {
-                this.buckets[i] = this.buckets[lowerBound];
-            }
             else
             {
-                this.buckets[i] = new(this, 1 << (32 - i), this.MaxPool);
+                this.buckets[i] = new(this, 1 << (32 - i), limit);
+                limit <<= 1;
+                limit = limit > poolLimit ? poolLimit : limit;
             }
         }
     }
+
+    /// <summary>
+    /// Creates a new instance of the <see cref="ByteArrayPool"/> class.<br/>
+    /// </summary>
+    /// <param name="maxArrayLength">The maximum length of a byte array instance that may be stored in the pool.</param>
+    /// <param name="poolLimit">The maximum number of array instances that may be stored in each bucket in the pool.</param>
+    /// <returns>A new instance of the <see cref="ByteArrayPool"/> class.</returns>
+    public static ByteArrayPool Create(int maxArrayLength = DefaultMaxArrayLength, int poolLimit = DefaultPoolLimit)
+        => new(maxArrayLength, poolLimit);
+
+    #region FieldAndProperty
+
+    /*
+    /// <summary>
+    /// Gets the maximum length of a byte array instance that may be stored in the pool.
+    /// </summary>
+    public int MaxLength { get; }
+
+    /// <summary>
+    /// Gets the maximum number of array instances that may be stored in each bucket in the pool.
+    /// </summary>
+    public int MaxPool { get; }*/
+
+    private Bucket?[] buckets;
+
+    #endregion
 
     /// <summary>
     /// Gets a byte array from the pool or allocate a new byte array if not available.<br/>
@@ -580,15 +596,8 @@ public class ByteArrayPool
     {
         var bucket = this.buckets[BitOperations.LeadingZeroCount((uint)minimumLength - 1)];
         if (bucket == null)
-        {
-            if (minimumLength == 0)
-            {
-                bucket = this.buckets[32]!;
-            }
-            else
-            {
-                throw new ArgumentOutOfRangeException(nameof(minimumLength));
-            }
+        {// Since the bucket is empty, allocate and return the byte array using the conventional method.
+            return new Owner(new byte[minimumLength]);
         }
 
         if (!bucket.Queue.TryDequeue(out var owner))
@@ -596,10 +605,13 @@ public class ByteArrayPool
             return new Owner(bucket);
         }
 
+        // Rent a byte array from the pool.
+        Interlocked.Decrement(ref bucket.QueueCount);
         owner.SetCount1();
         return owner;
     }
 
+    /*
     /// <summary>
     /// Sets the maximum number of pooled byte arrays in the bucket corresponding to the specified size.
     /// </summary>
@@ -657,26 +669,28 @@ public class ByteArrayPool
         for (var i = 32; i >= 0; i--)
         {
             var b = this.buckets[i];
-            if (b == null || b.Queue.Count == 0)
+            if (b == null || b.QueueCount == 0)
             {
                 continue;
             }
 
-            sb.Append($"{b.Queue.Count}({b.ArrayLength}) ");
+            sb.Append($"{b.QueueCount}({b.ArrayLength}) ");
         }
 
         logger.Log(sb.ToString());
+    }*/
+
+    public long CalculateMaxMemoryUsage()
+    {
+        var usage = 0L;
+        foreach (var x in this.buckets)
+        {
+            if (x is not null)
+            {
+                usage += (long)x.ArrayLength * (long)x.PoolLimit;
+            }
+        }
+
+        return usage;
     }
-
-    /// <summary>
-    /// Gets the maximum length of a byte array instance that may be stored in the pool.
-    /// </summary>
-    public int MaxLength { get; }
-
-    /// <summary>
-    /// Gets the maximum number of array instances that may be stored in each bucket in the pool.
-    /// </summary>
-    public int MaxPool { get; }
-
-    private Bucket?[] buckets;
 }
