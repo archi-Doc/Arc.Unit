@@ -15,20 +15,21 @@ namespace Arc.Unit;
 /// 1. Can handle a rent byte array and a created ('new byte[]') byte array in the same way.<br/>
 /// 2. By using <see cref="ByteArrayPool.MemoryOwner"/>, you can handle a rent byte array in the same way as <see cref="Memory{T}"/>.<br/>
 /// 3. Can be used by multiple users by incrementing the reference count.<br/>
-/// ! It is recommended to use this within a class, and not between classes, as the responsibility for returning the buffer becomes unclear.
+/// ! It is recommended to use <see cref="ByteArrayPool"/> within a class, and not between classes, as the responsibility for returning the buffer becomes unclear.
 /// </summary>
 public class ByteArrayPool
 {
     private const int UpperBoundLength = 1024 * 1024 * 1024; // 1 GB
     private const int LowerBoundBits = 3;
 
-    private const int DefaultMaxPool = 100;
+    private const int DefaultMaxArrayLength = 100;
+    private const int DefaultPoolLimit = 100;
     private const int StandardSize = 32 * 1024; // 32KB
 
     static ByteArrayPool()
     {
-        Default = new ByteArrayPool(0, DefaultMaxPool);
-        Default.SetMaxPoolBelow(StandardSize, DefaultMaxPool);
+        Default = new ByteArrayPool(0, DefaultPoolLimit);
+        // Default.SetMaxPoolBelow(StandardSize, DefaultPoolLimit);
     }
 
     public static ByteArrayPool Default { get; }
@@ -691,6 +692,15 @@ public class ByteArrayPool
 
     public long CalculateMaxMemoryUsage()
     {
-        return 0;
+        var usage = 0L;
+        foreach (var x in this.buckets)
+        {
+            if (x is not null)
+            {
+                usage += (long)x.ArrayLength * (long)x.MaxPool;
+            }
+        }
+
+        return usage;
     }
 }
