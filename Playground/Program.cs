@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using System.Text;
 using Arc.Threading;
 using Arc.Unit;
@@ -124,9 +125,9 @@ public class Program
         var ff = PathHelper.RunningInContainer;
         ff = PathHelper.RunningInContainer;
 
-        var owner = ByteArrayPool.Default.Rent(10);
-        var usage = ByteArrayPool.Default.CalculateMaxMemoryUsage();
-        var owner2 = ByteArrayPool.Default.Rent(0);
+        var owner = ByteRental.Default.Rent(10);
+        var usage = ByteRental.Default.CalculateMaxMemoryUsage();
+        var owner2 = ByteRental.Default.Rent(0);
         owner.Return();
         owner2.Return();
 

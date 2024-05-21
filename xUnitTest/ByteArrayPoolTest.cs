@@ -4,12 +4,12 @@ using Arc.Unit;
 
 namespace XUnitTest;
 
-public class ByteArrayPoolTest
+public class ByteRentalTest
 {
     [Fact]
     public void Test1()
     {
-        var owner = ByteArrayPool.Default.Rent(10);
+        var owner = ByteRental.Default.Rent(10);
         owner.Count.Is(1);
         owner.IsRent.IsTrue();
         owner.IsReturned.IsFalse();
@@ -18,11 +18,11 @@ public class ByteArrayPoolTest
         owner.IsRent.IsFalse();
         owner.IsReturned.IsTrue();
 
-        owner = ByteArrayPool.Default.Rent(10);
+        owner = ByteRental.Default.Rent(10);
         owner.Count.Is(1);
         owner.Return();
 
-        owner = ByteArrayPool.Default.Rent(0);
+        owner = ByteRental.Default.Rent(0);
         owner.Count.Is(1);
         owner.Return();
     }
