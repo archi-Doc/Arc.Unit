@@ -269,9 +269,10 @@ public class ByteRental
         public Span<byte> Span => new(this.byteArray, this.start, this.length);
 
         /// <summary>
-        /// Gets a span from <see cref="Memory"/>.
+        /// Gets a <see cref="Memory{T}"/> from <see cref="Memory"/>.
         /// </summary>
-        public Memory<byte> AsMemory => new(this.byteArray, this.start, this.length);
+        /// <returns><see cref="Memory{T}"/>.</returns>
+        public Memory<byte> AsMemory() => new(this.byteArray, this.start, this.length);
 
         #endregion
 
