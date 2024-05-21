@@ -42,7 +42,7 @@ public class ByteArrayPool
         /// The byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
         /// <param name="byteArray">A byte array (allocated with 'new').</param>
-        public Owner(byte[] byteArray)
+        internal Owner(byte[] byteArray)
         {
             this.bucket = null;
             this.ByteArray = byteArray;

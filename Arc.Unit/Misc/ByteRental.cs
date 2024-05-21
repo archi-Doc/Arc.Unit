@@ -114,8 +114,16 @@ public class ByteRental
         /// Create a <see cref="Memory"/> object from <see cref="Array"/>.
         /// </summary>
         /// <returns><see cref="Memory"/>.</returns>
-        public Memory ToMemory()
-            => new Memory(this);
+        public Memory AsMemory()
+            => new(this);
+
+        /// <summary>
+        /// Create a <see cref="Memory"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns><see cref="Memory"/>.</returns>
+        public Memory AsMemory(int start)
+            => new(this, this.ByteArray, start, this.ByteArray.Length - start);
 
         /// <summary>
         /// Create a <see cref="Memory"/> object by specifying the index and length.
@@ -123,13 +131,23 @@ public class ByteRental
         /// <param name="start">The index at which to begin the slice.</param>
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="Memory"/>.</returns>
-        public Memory ToMemory(int start, int length) => new Memory(this, this.ByteArray, start, length);
+        public Memory AsMemory(int start, int length)
+            => new(this, this.ByteArray, start, length);
 
         /// <summary>
         /// Create a <see cref="ReadOnlyMemory"/> object from <see cref="Array"/>.
         /// </summary>
         /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory ToReadOnlyMemory() => new ReadOnlyMemory(this);
+        public ReadOnlyMemory AsReadOnly()
+            => new(this);
+
+        /// <summary>
+        /// Create a <see cref="Memory"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns><see cref="Memory"/>.</returns>
+        public ReadOnlyMemory AsReadOnly(int start)
+            => new(this, this.ByteArray, start, this.ByteArray.Length - start);
 
         /// <summary>
         /// Create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
@@ -137,9 +155,11 @@ public class ByteRental
         /// <param name="start">The index at which to begin the slice.</param>
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory ToReadOnlyMemoryOwner(int start, int length) => new(this, this.ByteArray, start, length);
+        public ReadOnlyMemory AsReadOnly(int start, int length)
+            => new(this, this.ByteArray, start, length);
 
-        internal void SetCount1() => Volatile.Write(ref this.count, 1);
+        internal void SetCount1()
+            => Volatile.Write(ref this.count, 1);
 
         /// <summary>
         /// Decrement the reference count.<br/>
@@ -206,6 +226,15 @@ public class ByteRental
 
         internal Memory(ByteRental.Array? array, byte[]? byteArray, int start, int length)
         {
+            if (byteArray is null)
+            {
+                return;
+            }
+            else if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)byteArray.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
             this.array = array;
             this.byteArray = byteArray;
             this.start = start;
@@ -273,11 +302,6 @@ public class ByteRental
                 throw new InvalidOperationException();
             }
 
-            if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)this.length)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-
             return new(this.array.IncrementAndShare(), this.byteArray, start, length);
         }
 
@@ -308,11 +332,6 @@ public class ByteRental
                 throw new InvalidOperationException();
             }
 
-            if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)this.length)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-
             return new(this.array.IncrementAndShare(), this.byteArray, start, length);
         }
 
@@ -336,9 +355,7 @@ public class ByteRental
         /// <param name="start">The index at which to begin the slice.</param>
         /// <returns><see cref="Memory"/>.</returns>
         public Memory Slice(int start)
-        {
-            return new(this.array, this.byteArray, this.start + start, this.length - start);
-        }
+            => new(this.array, this.byteArray, this.start + start, this.length - start);
 
         /// <summary>
         /// Forms a slice out of the current memory starting at a specified index for a specified length.
@@ -347,14 +364,31 @@ public class ByteRental
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="Memory"/>.</returns>
         public Memory Slice(int start, int length)
-        {
-            return new(this.array, this.byteArray, this.start + start, length);
-        }
+            => new(this.array, this.byteArray, this.start + start, length);
 
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemory"/> object from <see cref="Memory"/>.
+        /// </summary>
+        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
         public ReadOnlyMemory AsReadOnly()
-        {
-            return new(this.array, this.byteArray, this.start, this.length);
-        }
+            => new(this.array, this.byteArray, this.start, this.length);
+
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
+        public ReadOnlyMemory AsReadOnly(int start)
+            => new(this.array, this.byteArray, this.start + start, this.length - start);
+
+        /// <summary>
+        /// Create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
+        public ReadOnlyMemory AsReadOnly(int start, int length)
+            => new(this.array, this.byteArray, this.start + start, length);
 
         /// <summary>
         /// Decrement the reference count.<br/>
@@ -411,6 +445,15 @@ public class ByteRental
 
         internal ReadOnlyMemory(ByteRental.Array? array, byte[]? byteArray, int start, int length)
         {
+            if (byteArray is null)
+            {
+                return;
+            }
+            else if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)byteArray.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
             this.array = array;
             this.byteArray = byteArray;
             this.start = start;
@@ -553,9 +596,9 @@ public class ByteRental
 
     internal sealed class Bucket
     {
-        public Bucket(ByteRental pool, int arrayLength, int poolLimit)
+        public Bucket(ByteRental byteRental, int arrayLength, int poolLimit)
         {
-            this.pool = pool;
+            this.byteRental = byteRental;
             this.ArrayLength = arrayLength;
             this.PoolLimit = poolLimit;
         }
@@ -569,9 +612,9 @@ public class ByteRental
         internal int QueueCount; // Queue.Count is slow.
 #pragma warning restore SA1401 // Fields should be private
 
-        private ByteRental pool;
+        private ByteRental byteRental;
 
-        public void SetMaxPool(int poolLimit)
+        public void SetPoolLimit(int poolLimit)
         {
             this.PoolLimit = poolLimit;
         }

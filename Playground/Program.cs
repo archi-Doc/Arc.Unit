@@ -131,15 +131,6 @@ public class Program
         owner.Return();
         owner2.Return();
 
-        var x = Unsafe.SizeOf<ByteRental.Memory>();
-        var mem2 = new ByteRental.Memory();
-        var mem = new Memory<byte>();
-        mem.Slice(9, 9);
-        var byteArray = new byte[10];
-        mem = byteArray.AsMemory();
-        byteArray.AsReadOnly();
-        
-
         var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
         var array = memoryLogger.ToArray();
         var st = Encoding.UTF8.GetString(array);
