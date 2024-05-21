@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using System.Text;
 using Arc.Threading;
 using Arc.Unit;
@@ -129,6 +130,15 @@ public class Program
         var owner2 = ByteArrayPool.Default.Rent(0);
         owner.Return();
         owner2.Return();
+
+        var x = Unsafe.SizeOf<ByteRental.Memory>();
+        var mem2 = new ByteRental.Memory();
+        var mem = new Memory<byte>();
+        mem.Slice(9, 9);
+        var byteArray = new byte[10];
+        mem = byteArray.AsMemory();
+        byteArray.AsReadOnly();
+        
 
         var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
         var array = memoryLogger.ToArray();
