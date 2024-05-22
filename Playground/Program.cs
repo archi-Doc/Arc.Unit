@@ -125,9 +125,9 @@ public class Program
         var ff = PathHelper.RunningInContainer;
         ff = PathHelper.RunningInContainer;
 
-        var owner = ByteRental.Default.Rent(10);
-        var usage = ByteRental.Default.CalculateMaxMemoryUsage();
-        var owner2 = ByteRental.Default.Rent(0);
+        var owner = BytePool.Default.Rent(10);
+        var usage = BytePool.Default.CalculateMaxMemoryUsage();
+        var owner2 = BytePool.Default.Rent(0);
         owner.Return();
         owner2.Return();
 

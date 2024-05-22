@@ -9,7 +9,7 @@ public class ByteRentalTest
     [Fact]
     public void Test1()
     {
-        var owner = ByteRental.Default.Rent(10);
+        var owner = BytePool.Default.Rent(10);
         owner.Count.Is(1);
         owner.IsRent.IsTrue();
         owner.IsReturned.IsFalse();
@@ -18,11 +18,11 @@ public class ByteRentalTest
         owner.IsRent.IsFalse();
         owner.IsReturned.IsTrue();
 
-        owner = ByteRental.Default.Rent(10);
+        owner = BytePool.Default.Rent(10);
         owner.Count.Is(1);
         owner.Return();
 
-        owner = ByteRental.Default.Rent(0);
+        owner = BytePool.Default.Rent(0);
         owner.Count.Is(1);
         owner.Return();
     }
