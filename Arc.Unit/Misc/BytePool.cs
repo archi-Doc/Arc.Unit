@@ -302,6 +302,11 @@ public class BytePool
         /// </summary>
         public Memory<byte> Memory => new(this.byteArray, this.start, this.length);
 
+        /// <summary>
+        /// Gets a <see cref="RentReadOnlyMemory"/> from <see cref="RentMemory"/>.
+        /// </summary>
+        public RentReadOnlyMemory ReadOnly => new(this.array, this.byteArray, this.start, this.length);
+
         #endregion
 
         /// <summary>
@@ -319,22 +324,6 @@ public class BytePool
         }
 
         /// <summary>
-        ///  Increment the reference count and create a <see cref="RentMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="RentMemory"/> object.</returns>
-        public RentMemory IncrementAndShare(int start, int length)
-        {
-            if (this.array == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.array.IncrementAndShare(), this.byteArray, this.start + start, length);
-        }
-
-        /// <summary>
         ///  Increment the reference count.
         /// </summary>
         /// <returns><see cref="RentArray"/> instance (<see langword="this"/>).</returns>
@@ -346,22 +335,6 @@ public class BytePool
             }
 
             return new(this.array.IncrementAndShare(), this.byteArray, this.start, this.length);
-        }
-
-        /// <summary>
-        ///  Increment the reference count and create a <see cref="RentMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="RentMemory"/> object.</returns>
-        public RentReadOnlyMemory IncrementAndShareReadOnly(int start, int length)
-        {
-            if (this.array == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.array.IncrementAndShare(), this.byteArray, start, length);
         }
 
         /// <summary>
@@ -393,30 +366,6 @@ public class BytePool
         /// <param name="length">The number of elements to include in the slice.</param>
         /// <returns><see cref="RentMemory"/>.</returns>
         public RentMemory Slice(int start, int length)
-            => new(this.array, this.byteArray, this.start + start, length);
-
-        /// <summary>
-        /// Create a <see cref="RentReadOnlyMemory"/> object from <see cref="RentMemory"/>.
-        /// </summary>
-        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
-        public RentReadOnlyMemory AsReadOnly()
-            => new(this.array, this.byteArray, this.start, this.length);
-
-        /// <summary>
-        /// Create a <see cref="RentReadOnlyMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
-        public RentReadOnlyMemory AsReadOnly(int start)
-            => new(this.array, this.byteArray, this.start + start, this.length - start);
-
-        /// <summary>
-        /// Create a <see cref="RentReadOnlyMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
-        public RentReadOnlyMemory AsReadOnly(int start, int length)
             => new(this.array, this.byteArray, this.start + start, length);
 
         /// <summary>
@@ -524,7 +473,7 @@ public class BytePool
         /// <summary>
         /// Gets a span from <see cref="RentReadOnlyMemory"/>.
         /// </summary>
-        public ReadOnlyMemory<byte> AsMemory => new(this.byteArray, this.start, this.length);
+        public ReadOnlyMemory<byte> Memory => new(this.byteArray, this.start, this.length);
 
         #endregion
 
@@ -540,22 +489,6 @@ public class BytePool
             }
 
             return new(this.array.IncrementAndShare(), this.byteArray, this.start, this.length);
-        }
-
-        /// <summary>
-        ///  Increment the reference count and create a <see cref="RentReadOnlyMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="RentReadOnlyMemory"/> object.</returns>
-        public RentReadOnlyMemory IncrementAndShare(int start, int length)
-        {
-            if (this.array == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.array.IncrementAndShare(), this.byteArray, this.start + start, length);
         }
 
         /// <summary>
