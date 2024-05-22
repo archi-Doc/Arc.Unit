@@ -11,42 +11,42 @@ namespace Arc.Unit;
 
 /// <summary>
 /// A thread-safe pool of byte arrays (uses <see cref="ConcurrentQueue{T}"/>).<br/>
-/// <see cref="ByteRental"/> is slightly slower than 'new byte[]' or <see cref="System.Buffers.ArrayPool{T}"/> (especially byte arrays of 1kbytes or less), but it has some advantages.<br/>
+/// <see cref="BytePool"/> is slightly slower than 'new byte[]' or <see cref="System.Buffers.ArrayPool{T}"/> (especially byte arrays of 1kbytes or less), but it has some advantages.<br/>
 /// 1. Can handle a rent byte array and a created ('new byte[]') byte array in the same way.<br/>
-/// 2. By using <see cref="ByteRental.Memory"/>, you can handle a rent byte array in the same way as <see cref="Memory{T}"/>.<br/>
+/// 2. By using <see cref="BytePool.RentMemory"/>, you can handle a rent byte array in the same way as <see cref="Memory{T}"/>.<br/>
 /// 3. Can be used by multiple users by incrementing the reference count.<br/>
-/// ! It is recommended to use <see cref="ByteRental"/> within a class, and not between classes, as the responsibility for returning the buffer becomes unclear.
+/// ! It is recommended to use <see cref="BytePool"/> within a class, and not between classes, as the responsibility for returning the buffer becomes unclear.
 /// </summary>
-public class ByteRental
+public class BytePool
 {
     private const int DefaultMaxArrayLength = 1024 * 1024 * 16; // 16MB
     private const int DefaultPoolLimit = 100;
 
-    public static readonly ByteRental Default = ByteRental.Create();
+    public static readonly BytePool Default = BytePool.Create();
 
     /// <summary>
     /// Represents an owner of a byte array (one owner instance for each byte array).<br/>
-    /// <see cref="Array"/> has a reference count, and when it reaches zero, it returns the byte array to the pool.
+    /// <see cref="RentArray"/> has a reference count, and when it reaches zero, it returns the byte array to the pool.
     /// </summary>
-    public class Array : IDisposable
+    public class RentArray : IDisposable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Array"/> class from a byte array.<br/>
+        /// Initializes a new instance of the <see cref="RentArray"/> class from a byte array.<br/>
         /// This is a feature for compatibility with conventional memory management (e.g new byte[]), <br/>
         /// The byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (allocated with 'new').</param>
-        public Array(byte[] byteArray)
+        /// <param name="array">A byte array (allocated with 'new').</param>
+        internal RentArray(byte[] array)
         {
             this.bucket = null;
-            this.ByteArray = byteArray;
+            this.Array = array;
             this.SetCount1();
         }
 
-        internal Array(Bucket bucket)
+        internal RentArray(Bucket bucket)
         {
             this.bucket = bucket;
-            this.ByteArray = new byte[bucket.ArrayLength];
+            this.Array = new byte[bucket.ArrayLength];
             this.SetCount1();
         }
 
@@ -55,7 +55,7 @@ public class ByteRental
         /// <summary>
         /// Gets a rent byte array.
         /// </summary>
-        public byte[] ByteArray { get; }
+        public byte[] Array { get; }
 
         private Bucket? bucket;
         private int count;
@@ -78,10 +78,10 @@ public class ByteRental
         #endregion
 
         /// <summary>
-        ///  Increment the reference count and get an <see cref="Array"/> instance.
+        ///  Increment the reference count and get an <see cref="RentArray"/> instance.
         /// </summary>
-        /// <returns><see cref="Array"/> instance (<see langword="this"/>).</returns>
-        public Array IncrementAndShare()
+        /// <returns><see cref="RentArray"/> instance (<see langword="this"/>).</returns>
+        public RentArray IncrementAndShare()
         {
             Interlocked.Increment(ref this.count);
             return this;
@@ -111,52 +111,76 @@ public class ByteRental
         }
 
         /// <summary>
-        /// Create a <see cref="Memory"/> object from <see cref="Array"/>.
+        /// Create a <see cref="RentMemory"/> object from <see cref="RentArray"/>.
         /// </summary>
-        /// <returns><see cref="Memory"/>.</returns>
-        public Memory AsMemory()
+        /// <returns><see cref="RentMemory"/>.</returns>
+        public RentMemory AsMemory()
             => new(this);
 
         /// <summary>
-        /// Create a <see cref="Memory"/> object by specifying the index and length.
+        /// Create a <see cref="RentMemory"/> object by specifying the index and length.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
-        /// <returns><see cref="Memory"/>.</returns>
-        public Memory AsMemory(int start)
-            => new(this, this.ByteArray, start, this.ByteArray.Length - start);
+        /// <returns><see cref="RentMemory"/>.</returns>
+        public RentMemory AsMemory(int start)
+            => new(this, this.Array, start, this.Array.Length - start);
 
         /// <summary>
-        /// Create a <see cref="Memory"/> object by specifying the index and length.
+        /// Create a <see cref="RentMemory"/> object by specifying the index and length.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
         /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="Memory"/>.</returns>
-        public Memory AsMemory(int start, int length)
-            => new(this, this.ByteArray, start, length);
+        /// <returns><see cref="RentMemory"/>.</returns>
+        public RentMemory AsMemory(int start, int length)
+            => new(this, this.Array, start, length);
 
         /// <summary>
-        /// Create a <see cref="ReadOnlyMemory"/> object from <see cref="Array"/>.
+        /// Create a <see cref="RentReadOnlyMemory"/> object from <see cref="RentArray"/>.
         /// </summary>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory AsReadOnly()
+        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
+        public RentReadOnlyMemory AsReadOnly()
             => new(this);
 
         /// <summary>
-        /// Create a <see cref="Memory"/> object by specifying the index and length.
+        /// Create a <see cref="RentMemory"/> object by specifying the index and length.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
-        /// <returns><see cref="Memory"/>.</returns>
-        public ReadOnlyMemory AsReadOnly(int start)
-            => new(this, this.ByteArray, start, this.ByteArray.Length - start);
+        /// <returns><see cref="RentMemory"/>.</returns>
+        public RentReadOnlyMemory AsReadOnly(int start)
+            => new(this, this.Array, start, this.Array.Length - start);
 
         /// <summary>
-        /// Create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
+        /// Create a <see cref="RentReadOnlyMemory"/> object by specifying the index and length.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
         /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory AsReadOnly(int start, int length)
-            => new(this, this.ByteArray, start, length);
+        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
+        public RentReadOnlyMemory AsReadOnly(int start, int length)
+            => new(this, this.Array, start, length);
+
+        /// <summary>
+        /// Create a <see cref="Span{T}"/> object from <see cref="RentArray"/>.
+        /// </summary>
+        /// <returns><see cref="Span{T}"/>.</returns>
+        public Span<byte> AsSpan()
+            => new(this.Array);
+
+        /// <summary>
+        /// Create a <see cref="Span{T}"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <returns><see cref="Span{T}"/>.</returns>
+        public Span<byte> AsSpan(int start)
+            => new(this.Array, start, this.Array.Length - start);
+
+        /// <summary>
+        /// Create a <see cref="Span{T}"/> object by specifying the index and length.
+        /// </summary>
+        /// <param name="start">The index at which to begin the slice.</param>
+        /// <param name="length">The number of elements to include in the slice.</param>
+        /// <returns><see cref="Span{T}"/>.</returns>
+        public Span<byte> AsSpan(int start, int length)
+            => new(this.Array, start, length);
 
         internal void SetCount1()
             => Volatile.Write(ref this.count, 1);
@@ -168,7 +192,7 @@ public class ByteRental
         /// </summary>
         /// <returns><see langword="null"></see>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Array? Return()
+        public RentArray? Return()
         {
             var count = Interlocked.Decrement(ref this.count);
             if (count == 0 && this.bucket != null)
@@ -190,41 +214,46 @@ public class ByteRental
     /// <summary>
     /// Represents an owner of a byte array and a <see cref="Memory{T}"/> object.
     /// </summary>
-    public readonly struct Memory : IDisposable
+    public readonly struct RentMemory : IDisposable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Memory"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteRental"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// Initializes a new instance of the <see cref="RentMemory"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="BytePool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteRental"/>).</param>
-        public Memory(byte[] byteArray)
+        /// <param name="byteArray">A byte array (other than <see cref="BytePool"/>).</param>
+        public RentMemory(byte[] byteArray)
         {
             this.byteArray = byteArray;
             this.length = byteArray.Length;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Memory"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteRental"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// Initializes a new instance of the <see cref="RentMemory"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="BytePool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteRental"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="BytePool"/>).</param>
         /// <param name="start">The index at which to begin the memory.</param>
         /// <param name="length">The number of items in the memory.</param>
-        public Memory(byte[] byteArray, int start, int length)
+        public RentMemory(byte[] byteArray, int start, int length)
         {
+            if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)byteArray.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
             this.byteArray = byteArray;
             this.start = start;
             this.length = length;
         }
 
-        internal Memory(Array array)
+        internal RentMemory(RentArray array)
         {
             this.array = array;
-            this.byteArray = array.ByteArray;
-            this.length = array.ByteArray.Length;
+            this.byteArray = array.Array;
+            this.length = array.Array.Length;
         }
 
-        internal Memory(ByteRental.Array? array, byte[]? byteArray, int start, int length)
+        internal RentMemory(BytePool.RentArray? array, byte[]? byteArray, int start, int length)
         {
             if (byteArray is null)
             {
@@ -243,7 +272,7 @@ public class ByteRental
 
         #region FieldAndProperty
 
-        private readonly ByteRental.Array? array;
+        private readonly BytePool.RentArray? array;
         private readonly byte[]? byteArray;
         private readonly int start;
         private readonly int length;
@@ -264,22 +293,27 @@ public class ByteRental
         public bool IsEmpty => this.length == 0;
 
         /// <summary>
-        /// Gets a <see cref="Span{T}"/> from <see cref="Memory"/>.
+        /// Gets a <see cref="Span{T}"/> from <see cref="RentMemory"/>.
         /// </summary>
         public Span<byte> Span => new(this.byteArray, this.start, this.length);
 
         /// <summary>
-        /// Gets a span from <see cref="Memory"/>.
+        /// Gets a <see cref="Memory{T}"/> from <see cref="RentMemory"/>.
         /// </summary>
-        public Memory<byte> AsMemory => new(this.byteArray, this.start, this.length);
+        public Memory<byte> Memory => new(this.byteArray, this.start, this.length);
+
+        /// <summary>
+        /// Gets a <see cref="RentReadOnlyMemory"/> from <see cref="RentMemory"/>.
+        /// </summary>
+        public RentReadOnlyMemory ReadOnly => new(this.array, this.byteArray, this.start, this.length);
 
         #endregion
 
         /// <summary>
         ///  Increment the reference count.
         /// </summary>
-        /// <returns><see cref="Array"/> instance (<see langword="this"/>).</returns>
-        public Memory IncrementAndShare()
+        /// <returns><see cref="RentArray"/> instance (<see langword="this"/>).</returns>
+        public RentMemory IncrementAndShare()
         {
             if (this.array == null)
             {
@@ -287,29 +321,13 @@ public class ByteRental
             }
 
             return new(this.array.IncrementAndShare(), this.byteArray, this.start, this.length);
-        }
-
-        /// <summary>
-        ///  Increment the reference count and create a <see cref="Memory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="Memory"/> object.</returns>
-        public Memory IncrementAndShare(int start, int length)
-        {
-            if (this.array == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.array.IncrementAndShare(), this.byteArray, start, length);
         }
 
         /// <summary>
         ///  Increment the reference count.
         /// </summary>
-        /// <returns><see cref="Array"/> instance (<see langword="this"/>).</returns>
-        public ReadOnlyMemory IncrementAndShareReadOnly()
+        /// <returns><see cref="RentArray"/> instance (<see langword="this"/>).</returns>
+        public RentReadOnlyMemory IncrementAndShareReadOnly()
         {
             if (this.array == null)
             {
@@ -320,23 +338,7 @@ public class ByteRental
         }
 
         /// <summary>
-        ///  Increment the reference count and create a <see cref="Memory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="Memory"/> object.</returns>
-        public ReadOnlyMemory IncrementAndShareReadOnly(int start, int length)
-        {
-            if (this.array == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            return new(this.array.IncrementAndShare(), this.byteArray, start, length);
-        }
-
-        /// <summary>
-        ///  Increment the counter and attempt to share the <see cref="Array"/>.
+        ///  Increment the counter and attempt to share the <see cref="RentArray"/>.
         /// </summary>
         /// <returns><see langword="true"/>; Success.</returns>
         public bool TryIncrement()
@@ -353,8 +355,8 @@ public class ByteRental
         /// Forms a slice out of the current memory that begins at a specified index.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
-        /// <returns><see cref="Memory"/>.</returns>
-        public Memory Slice(int start)
+        /// <returns><see cref="RentMemory"/>.</returns>
+        public RentMemory Slice(int start)
             => new(this.array, this.byteArray, this.start + start, this.length - start);
 
         /// <summary>
@@ -362,41 +364,17 @@ public class ByteRental
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
         /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="Memory"/>.</returns>
-        public Memory Slice(int start, int length)
-            => new(this.array, this.byteArray, this.start + start, length);
-
-        /// <summary>
-        /// Create a <see cref="ReadOnlyMemory"/> object from <see cref="Memory"/>.
-        /// </summary>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory AsReadOnly()
-            => new(this.array, this.byteArray, this.start, this.length);
-
-        /// <summary>
-        /// Create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory AsReadOnly(int start)
-            => new(this.array, this.byteArray, this.start + start, this.length - start);
-
-        /// <summary>
-        /// Create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory AsReadOnly(int start, int length)
+        /// <returns><see cref="RentMemory"/>.</returns>
+        public RentMemory Slice(int start, int length)
             => new(this.array, this.byteArray, this.start + start, length);
 
         /// <summary>
         /// Decrement the reference count.<br/>
-        /// When it reaches zero, it returns the <see cref="Array"/> to the pool.<br/>
+        /// When it reaches zero, it returns the <see cref="RentArray"/> to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
         /// </summary>
         /// <returns><see langword="default"></see>.</returns>
-        public Memory Return()
+        public RentMemory Return()
         {
             this.array?.Return();
             return default;
@@ -409,41 +387,46 @@ public class ByteRental
     /// <summary>
     /// Represents an owner of a byte array and a <see cref="Memory{T}"/> object.
     /// </summary>
-    public readonly struct ReadOnlyMemory : IDisposable
+    public readonly struct RentReadOnlyMemory : IDisposable
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="ReadOnlyMemory"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteRental"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// Initializes a new instance of the <see cref="RentReadOnlyMemory"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="BytePool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteRental"/>).</param>
-        public ReadOnlyMemory(byte[] byteArray)
+        /// <param name="byteArray">A byte array (other than <see cref="BytePool"/>).</param>
+        public RentReadOnlyMemory(byte[] byteArray)
         {
             this.byteArray = byteArray;
             this.length = byteArray.Length;
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="ReadOnlyMemory"/> struct from a byte array.<br/>
-        /// This is a feature for compatibility with <see cref="ByteRental"/>, and the byte array will not be returned when <see cref="Return"/> is called.
+        /// Initializes a new instance of the <see cref="RentReadOnlyMemory"/> struct from a byte array.<br/>
+        /// This is a feature for compatibility with <see cref="BytePool"/>, and the byte array will not be returned when <see cref="Return"/> is called.
         /// </summary>
-        /// <param name="byteArray">A byte array (other than <see cref="ByteRental"/>).</param>
+        /// <param name="byteArray">A byte array (other than <see cref="BytePool"/>).</param>
         /// <param name="start">The index at which to begin the memory.</param>
         /// <param name="length">The number of items in the memory.</param>
-        public ReadOnlyMemory(byte[] byteArray, int start, int length)
+        public RentReadOnlyMemory(byte[] byteArray, int start, int length)
         {
+            if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)byteArray.Length)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
             this.byteArray = byteArray;
             this.start = start;
             this.length = length;
         }
 
-        internal ReadOnlyMemory(Array array)
+        internal RentReadOnlyMemory(RentArray array)
         {
             this.array = array;
-            this.byteArray = array.ByteArray;
-            this.length = array.ByteArray.Length;
+            this.byteArray = array.Array;
+            this.length = array.Array.Length;
         }
 
-        internal ReadOnlyMemory(ByteRental.Array? array, byte[]? byteArray, int start, int length)
+        internal RentReadOnlyMemory(BytePool.RentArray? array, byte[]? byteArray, int start, int length)
         {
             if (byteArray is null)
             {
@@ -462,7 +445,7 @@ public class ByteRental
 
         #region FieldAndProperty
 
-        private readonly ByteRental.Array? array;
+        private readonly BytePool.RentArray? array;
         private readonly byte[]? byteArray;
         private readonly int start;
         private readonly int length;
@@ -483,22 +466,22 @@ public class ByteRental
         public bool IsEmpty => this.length == 0;
 
         /// <summary>
-        /// Gets a <see cref="Span{T}"/> from <see cref="ReadOnlyMemory"/>.
+        /// Gets a <see cref="Span{T}"/> from <see cref="RentReadOnlyMemory"/>.
         /// </summary>
         public Span<byte> Span => new(this.byteArray, this.start, this.length);
 
         /// <summary>
-        /// Gets a span from <see cref="ReadOnlyMemory"/>.
+        /// Gets a span from <see cref="RentReadOnlyMemory"/>.
         /// </summary>
-        public ReadOnlyMemory<byte> AsMemory => new(this.byteArray, this.start, this.length);
+        public ReadOnlyMemory<byte> Memory => new(this.byteArray, this.start, this.length);
 
         #endregion
 
         /// <summary>
         ///  Increment the reference count.
         /// </summary>
-        /// <returns><see cref="Array"/> instance (<see langword="this"/>).</returns>
-        public ReadOnlyMemory IncrementAndShare()
+        /// <returns><see cref="RentArray"/> instance (<see langword="this"/>).</returns>
+        public RentReadOnlyMemory IncrementAndShare()
         {
             if (this.array == null)
             {
@@ -506,34 +489,13 @@ public class ByteRental
             }
 
             return new(this.array.IncrementAndShare(), this.byteArray, this.start, this.length);
-        }
-
-        /// <summary>
-        ///  Increment the reference count and create a <see cref="ReadOnlyMemory"/> object by specifying the index and length.
-        /// </summary>
-        /// <param name="start">The index at which to begin the slice.</param>
-        /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="ReadOnlyMemory"/> object.</returns>
-        public ReadOnlyMemory IncrementAndShare(int start, int length)
-        {
-            if (this.array == null)
-            {
-                throw new InvalidOperationException();
-            }
-
-            if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)this.length)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
-
-            return new(this.array.IncrementAndShare(), this.byteArray, start, length);
         }
 
         /// <summary>
         ///  Increment the reference count.
         /// </summary>
-        /// <returns><see cref="Array"/> instance (<see langword="this"/>).</returns>
-        public ReadOnlyMemory IncrementAndShareReadOnly()
+        /// <returns><see cref="RentArray"/> instance (<see langword="this"/>).</returns>
+        public RentReadOnlyMemory IncrementAndShareReadOnly()
         {
             if (this.array == null)
             {
@@ -544,7 +506,7 @@ public class ByteRental
         }
 
         /// <summary>
-        ///  Increment the counter and attempt to share the <see cref="Array"/>.
+        ///  Increment the counter and attempt to share the <see cref="RentArray"/>.
         /// </summary>
         /// <returns><see langword="true"/>; Success.</returns>
         public bool TryIncrement()
@@ -561,8 +523,8 @@ public class ByteRental
         /// Forms a slice out of the current memory that begins at a specified index.
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory Slice(int start)
+        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
+        public RentReadOnlyMemory Slice(int start)
         {
             return new(this.array, this.byteArray, this.start + start, this.length - start);
         }
@@ -572,19 +534,19 @@ public class ByteRental
         /// </summary>
         /// <param name="start">The index at which to begin the slice.</param>
         /// <param name="length">The number of elements to include in the slice.</param>
-        /// <returns><see cref="ReadOnlyMemory"/>.</returns>
-        public ReadOnlyMemory Slice(int start, int length)
+        /// <returns><see cref="RentReadOnlyMemory"/>.</returns>
+        public RentReadOnlyMemory Slice(int start, int length)
         {
             return new(this.array, this.byteArray, this.start + start, length);
         }
 
         /// <summary>
         /// Decrement the reference count.<br/>
-        /// When it reaches zero, it returns the <see cref="Array"/> to the pool.<br/>
+        /// When it reaches zero, it returns the <see cref="RentArray"/> to the pool.<br/>
         /// Failure to return a rented array is not a fatal error (eventually be garbage-collected).
         /// </summary>
         /// <returns><see langword="default"></see>.</returns>
-        public ReadOnlyMemory Return()
+        public RentReadOnlyMemory Return()
         {
             this.array?.Return();
             return default;
@@ -596,9 +558,9 @@ public class ByteRental
 
     internal sealed class Bucket
     {
-        public Bucket(ByteRental byteRental, int arrayLength, int poolLimit)
+        public Bucket(BytePool bytePool, int arrayLength, int poolLimit)
         {
-            this.byteRental = byteRental;
+            this.bytePool = bytePool;
             this.ArrayLength = arrayLength;
             this.PoolLimit = poolLimit;
         }
@@ -608,11 +570,11 @@ public class ByteRental
         public int PoolLimit { get; private set; }
 
 #pragma warning disable SA1401 // Fields should be private
-        internal ConcurrentQueue<Array> Queue = new();
+        internal ConcurrentQueue<RentArray> Queue = new();
         internal int QueueCount; // Queue.Count is slow.
 #pragma warning restore SA1401 // Fields should be private
 
-        private ByteRental byteRental;
+        private BytePool bytePool;
 
         public void SetPoolLimit(int poolLimit)
         {
@@ -624,11 +586,11 @@ public class ByteRental
     }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ByteRental"/> class.<br/>
+    /// Initializes a new instance of the <see cref="BytePool"/> class.<br/>
     /// </summary>
     /// <param name="maxArrayLength">The maximum length of a byte array instance that may be stored in the pool.</param>
     /// <param name="poolLimit">The maximum number of array instances that may be stored in each bucket in the pool.</param>
-    private ByteRental(int maxArrayLength, int poolLimit)
+    private BytePool(int maxArrayLength, int poolLimit)
     {
         if (maxArrayLength <= 0)
         {
@@ -654,12 +616,12 @@ public class ByteRental
     }
 
     /// <summary>
-    /// Creates a new instance of the <see cref="ByteRental"/> class.<br/>
+    /// Creates a new instance of the <see cref="BytePool"/> class.<br/>
     /// </summary>
     /// <param name="maxArrayLength">The maximum length of a byte array instance that may be stored in the pool.</param>
     /// <param name="poolLimit">The maximum number of array instances that may be stored in each bucket in the pool.</param>
-    /// <returns>A new instance of the <see cref="ByteRental"/> class.</returns>
-    public static ByteRental Create(int maxArrayLength = DefaultMaxArrayLength, int poolLimit = DefaultPoolLimit)
+    /// <returns>A new instance of the <see cref="BytePool"/> class.</returns>
+    public static BytePool Create(int maxArrayLength = DefaultMaxArrayLength, int poolLimit = DefaultPoolLimit)
         => new(maxArrayLength, poolLimit);
 
     #region FieldAndProperty
@@ -669,22 +631,22 @@ public class ByteRental
     #endregion
 
     /// <summary>
-    /// Gets a <see cref="Array"/> from the pool or allocate a new byte array if not available.<br/>
+    /// Gets a <see cref="RentArray"/> from the pool or allocate a new byte array if not available.<br/>
     /// </summary>
     /// <param name="minimumLength">The minimum length of the byte array.</param>
-    /// <returns>A rent <see cref="Array"/>.</returns>
+    /// <returns>A rent <see cref="RentArray"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Array Rent(int minimumLength)
+    public RentArray Rent(int minimumLength)
     {
         var bucket = this.buckets[BitOperations.LeadingZeroCount((uint)minimumLength - 1)];
         if (bucket == null)
         {// Since the bucket is empty, allocate and return the byte array using the conventional method.
-            return new Array(new byte[minimumLength]);
+            return new RentArray(new byte[minimumLength]);
         }
 
         if (!bucket.Queue.TryDequeue(out var array))
         {// Allocate a new byte array.
-            return new Array(bucket);
+            return new RentArray(bucket);
         }
 
         // Rent a byte array from the pool.
