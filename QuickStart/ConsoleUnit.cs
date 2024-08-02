@@ -44,9 +44,17 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 });
             });
 
-            this.SetupOptions<UnitOptions>((context, options) =>
-            {// UnitOptions
-                options.DataDirectory = "test";
+            this.Preload(context =>
+            {
+                if (string.IsNullOrEmpty(context.RootDirectory))
+                {
+                    context.RootDirectory = "root";
+                }
+
+                if (string.IsNullOrEmpty(context.DataDirectory))
+                {
+                    context.DataDirectory = "test";
+                }
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
