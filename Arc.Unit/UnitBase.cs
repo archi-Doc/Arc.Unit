@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using CrossChannel;
+
 namespace Arc.Unit;
 
 /// <summary>
@@ -22,7 +24,8 @@ public abstract class UnitBase
 /// <summary>
 /// An interface for the preparation process of unit objects.
 /// </summary>
-public interface IUnitPreparable
+[RadioServiceInterface]
+public interface IUnitPreparable : IRadioService
 {
     /// <summary>
     /// Performs the initialization process for unit objects.<br/>
@@ -35,7 +38,8 @@ public interface IUnitPreparable
 /// <summary>
 /// An interface for the execution process of unit objects.
 /// </summary>
-public interface IUnitExecutable
+[RadioServiceInterface]
+public interface IUnitExecutable : IRadioService
 {
     /// <summary>
     /// Performs the start-up process for the unit objects.<br/>
@@ -66,7 +70,8 @@ public interface IUnitExecutable
 /// <summary>
 /// An interface for the serialization process of unit objects.
 /// </summary>
-public interface IUnitSerializable
+[RadioServiceInterface]
+public interface IUnitSerializable : IRadioService
 {
     /// <summary>
     /// Performs the loading process for unit objects.<br/>
