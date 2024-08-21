@@ -48,22 +48,22 @@ public sealed class UnitContext
     }
 
     public void SendPrepare(UnitMessage.Prepare message)
-        => this.Radio.Send(message);
+        => this.Radio.Send<IUnitPreparable>().Prepare(message);
 
     public async Task SendStartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
+        => await this.Radio.Send<IUnitExecutable>().StartAsync(message, cancellationToken).ConfigureAwait(false);
 
     public void SendStop(UnitMessage.Stop message)
-        => this.Radio.Send(message);
+        => this.Radio.Send<IUnitExecutable>().Stop(message);
 
     public async Task SendTerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
+        => await this.Radio.Send<IUnitExecutable>().TerminateAsync(message, cancellationToken).ConfigureAwait(false);
 
     public async Task SendLoadAsync(UnitMessage.LoadAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
+        => await this.Radio.Send<IUnitSerializable>().LoadAsync(message, cancellationToken).ConfigureAwait(false);
 
     public async Task SendSaveAsync(UnitMessage.SaveAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.SendAsync((message, cancellationToken)).ConfigureAwait(false);
+        => await this.Radio.Send<IUnitSerializable>().SaveAsync(message, cancellationToken).ConfigureAwait(false);
 
     /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
@@ -121,22 +121,19 @@ public sealed class UnitContext
 
     internal void AddRadio(UnitBase unit)
     {
-        if (unit is IUnitPreparable configurable)
+        if (unit is IUnitPreparable preparable)
         {
-            this.Radio.Open<UnitMessage.Prepare>(x => configurable.Prepare(x), unit);
+            this.Radio.Open(preparable, true);
         }
 
         if (unit is IUnitExecutable executable)
         {
-            this.Radio.OpenAsync<(UnitMessage.StartAsync, CancellationToken)>(x => executable.StartAsync(x.Item1, x.Item2), unit);
-            this.Radio.Open<UnitMessage.Stop>(x => executable.Stop(x), unit);
-            this.Radio.OpenAsync<(UnitMessage.TerminateAsync, CancellationToken)>(x => executable.TerminateAsync(x.Item1, x.Item2), unit);
+            this.Radio.Open(executable, true);
         }
 
         if (unit is IUnitSerializable serializable)
         {
-            this.Radio.OpenAsync<(UnitMessage.LoadAsync, CancellationToken)>(x => serializable.LoadAsync(x.Item1, x.Item2), unit);
-            this.Radio.OpenAsync<(UnitMessage.SaveAsync, CancellationToken)>(x => serializable.SaveAsync(x.Item1, x.Item2), unit);
+            this.Radio.Open(serializable, true);
         }
     }
 }
