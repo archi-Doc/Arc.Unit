@@ -43,11 +43,11 @@ public static class IUnitConfigurationContextExtentions
     public static void TryAddTransient<TService>(this IUnitConfigurationContext context)
         where TService : class => context.Services.TryAddTransient<TService>();
 
-    public static void TryAddSingleton(this IUnitConfigurationContext context, Type serviceType) => context.Services.AddSingleton(serviceType);
+    public static void TryAddSingleton(this IUnitConfigurationContext context, Type serviceType) => context.Services.TryAddSingleton(serviceType);
 
-    public static void TryAddScoped(this IUnitConfigurationContext context, Type serviceType) => context.Services.AddSingleton(serviceType);
+    public static void TryAddScoped(this IUnitConfigurationContext context, Type serviceType) => context.Services.TryAddScoped(serviceType);
 
-    public static void TryAddTransient(this IUnitConfigurationContext context, Type serviceType) => context.Services.AddTransient(serviceType);
+    public static void TryAddTransient(this IUnitConfigurationContext context, Type serviceType) => context.Services.TryAddTransient(serviceType);
 
     public static void TryAddSingleton<TService, TImplementation>(this IUnitConfigurationContext context)
         where TService : class
