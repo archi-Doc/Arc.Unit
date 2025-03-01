@@ -88,7 +88,7 @@ public class Program
             .SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/TestLog.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.Path = Path.Combine(context.ProgramDirectory, logfile);
                 options.MaxLogCapacity = 1;
             })
             .SetupOptions<ConsoleLoggerOptions>((context, options) =>

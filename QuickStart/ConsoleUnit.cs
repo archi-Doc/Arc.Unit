@@ -46,21 +46,21 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             this.Preload(context =>
             {
-                if (string.IsNullOrEmpty(context.RootDirectory))
+                if (string.IsNullOrEmpty(context.ProgramDirectory))
                 {
-                    context.RootDirectory = "root";
+                    context.ProgramDirectory = "Program";
                 }
 
                 if (string.IsNullOrEmpty(context.DataDirectory))
                 {
-                    context.DataDirectory = "test";
+                    context.DataDirectory = "Test";
                 }
             });
 
             this.SetupOptions<FileLoggerOptions>((context, options) =>
             {// FileLoggerOptions
                 var logfile = "Logs/Log.txt";
-                options.Path = Path.Combine(context.RootDirectory, logfile);
+                options.Path = Path.Combine(context.DataDirectory, logfile);
                 options.MaxLogCapacity = 2;
                 options.ClearLogsAtStartup = true;
             });
@@ -143,7 +143,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
     void IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         this.logger.TryGet()?.Log("Unit prepared.");
-        this.logger.TryGet()?.Log($"Root: {this.options.RootDirectory}");
+        this.logger.TryGet()?.Log($"Program: {this.options.ProgramDirectory}");
         this.logger.TryGet()?.Log($"Data: {this.options.DataDirectory}");
     }
 

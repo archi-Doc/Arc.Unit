@@ -11,13 +11,13 @@ namespace Arc.Unit;
 /// </summary>
 internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationContext, IUnitSetupContext
 {
-    private const string RootDirectoryOption = "rootdir";
-    private const string DataDirectoryOption = "datadir";
+    private const string RootDirectoryOption = "ProgramDirectory";
+    private const string DataDirectoryOption = "DataDirectory";
 
     public UnitBuilderContext()
     {
         this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        this.RootDirectory = string.Empty;
+        this.ProgramDirectory = string.Empty;
         this.DataDirectory = string.Empty;
     }
 
@@ -29,9 +29,9 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
     public string UnitName { get; set; }
 
     /// <summary>
-    /// Gets or sets a root directory.
+    /// Gets or sets a program directory.
     /// </summary>
-    public string RootDirectory { get; set; }
+    public string ProgramDirectory { get; set; }
 
     /// <summary>
     /// Gets or sets a data directory.
@@ -169,16 +169,16 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
         {// Root Directory
             if (Path.IsPathRooted(value))
             {
-                this.RootDirectory = value;
+                this.ProgramDirectory = value;
             }
             else
             {
-                this.RootDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
+                this.ProgramDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
             }
         }
         else
         {
-            this.RootDirectory = Directory.GetCurrentDirectory();
+            this.ProgramDirectory = Directory.GetCurrentDirectory();
         }
 
         if (this.arguments.TryGetOption(DataDirectoryOption, out value))
