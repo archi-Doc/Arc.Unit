@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Arc.CrossChannel" Version="2.4.3" />
+    <PackageReference Include="Arc.CrossChannel" Version="2.5.0" />
     <PackageReference Include="Arc.Threading" Version="0.30.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
     <PackageReference Include="SimpleCommandLine" Version="0.26.0" />

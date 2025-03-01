@@ -11,7 +11,7 @@ public interface IUnitPreloadSetupContext
 {
     string UnitName { get; set; }
 
-    string RootDirectory { get; set; }
+    string ProgramDirectory { get; set; }
 
     string DataDirectory { get; set; }
 

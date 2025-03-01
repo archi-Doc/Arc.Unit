@@ -13,7 +13,7 @@ public class UnitOptions
         {
             options = new UnitOptions();
             options.UnitName = context.UnitName;
-            options.RootDirectory = context.RootDirectory;
+            options.ProgramDirectory = context.ProgramDirectory;
             options.DataDirectory = context.DataDirectory;
             context.SetOptions(options);
         }
@@ -29,9 +29,9 @@ public class UnitOptions
     public string UnitName { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a root directory.
+    /// Gets or sets a program directory.
     /// </summary>
-    public string RootDirectory { get; set; } = string.Empty;
+    public string ProgramDirectory { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a data directory.
