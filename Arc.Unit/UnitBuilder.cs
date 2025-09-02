@@ -132,6 +132,22 @@ public class UnitBuilder
         return this;
     }
 
+    /// <summary>
+    /// Adds a delegate to the builder for setting up the option.<br/>
+    /// This can be called multiple times and the results will be additive.
+    /// </summary>
+    /// <typeparam name="TOptions">The type of options class.</typeparam>
+    /// <param name="delegate">The delegate for setting up the unit.</param>
+    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
+    public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+        where TOptions : class
+    {
+        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOptions)options));
+        var item = new SetupItem(typeof(TOptions), ac);
+        this.setupItems.Add(item);
+        return this;
+    }
+
     public virtual BuiltUnit GetBuiltUnit()
     {
         if (this.builtUnit == null)

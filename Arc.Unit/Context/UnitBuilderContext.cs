@@ -78,7 +78,7 @@ internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationConte
 
     public void SetOptions<TOptions>(TOptions options)
         where TOptions : class
-    {
+    {//
         this.OptionTypeToInstance[typeof(TOptions)] = options;
     }
 
