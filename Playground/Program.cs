@@ -97,9 +97,9 @@ public class Program
             });
 
         var builder2 = new UnitBuilder()
-           .Configure(context =>
-           {
-           });
+            .Configure(context =>
+            {
+            });
         builder.AddBuilder(builder2);
 
         var unit = builder.Build();
