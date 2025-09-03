@@ -2,12 +2,9 @@
 
 namespace Arc.Unit;
 
-/// <summary>
-/// Contextual information used by Preload delegate and provided to <see cref="UnitBuilder"/>.
-/// </summary>
 public interface IUnitPreConfigurationContext : IUnitSharedConfigurationContext
 {
-    bool FirstBuilderRun { get; }
+    bool IsFirstBuilderRun { get; }
 
     void SetOptions<TOptions>(TOptions options)
         where TOptions : class;

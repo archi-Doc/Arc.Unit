@@ -33,8 +33,8 @@ public class UnitBuilder<TUnit> : UnitBuilder
         => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> Preload(Action<IUnitPreConfigurationContext> @delegate)
-        => (UnitBuilder<TUnit>)base.Preload(@delegate);
+    public override UnitBuilder<TUnit> PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
+        => (UnitBuilder<TUnit>)base.PreConfigure(@delegate);
 
     /// <inheritdoc/>
     public override UnitBuilder<TUnit> Configure(Action<IUnitConfigurationContext> configureDelegate)
@@ -58,8 +58,9 @@ public class UnitBuilder
     #region FieldAndProperty
 
     private BuiltUnit? builtUnit;
-    private List<Action<IUnitPreConfigurationContext>> preloadActions = new();
+    private List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
     private List<Action<IUnitConfigurationContext>> configureActions = new();
+    private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
     private List<SetupItem> setupItems = new();
     private List<UnitBuilder> unitBuilders = new();
 
@@ -103,26 +104,38 @@ public class UnitBuilder
     }
 
     /// <summary>
-    /// Adds a delegate to the builder for preloading the unit.<br/>
-    /// This can be called multiple times and the results will be additive.
+    /// Adds a delegate to the builder to pre-configure the unit.<br/>
+    /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate for preloading the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder Preload(Action<IUnitPreConfigurationContext> @delegate)
+    /// <param name="delegate">The delegate used to pre-configure the unit.</param>
+    /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
+    public virtual UnitBuilder PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
     {
-        this.preloadActions.Add(@delegate);
+        this.preConfigureActions.Add(@delegate);
         return this;
     }
 
     /// <summary>
-    /// Adds a delegate to the builder for configuring the unit.<br/>
-    /// This can be called multiple times and the results will be additive.
+    /// Adds a delegate to the builder to configure the unit.<br/>
+    /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate for configuring the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
+    /// <param name="delegate">The delegate used to configure the unit.</param>
+    /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
     public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
     {
         this.configureActions.Add(@delegate);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a delegate to the builder to post-configure the unit.<br/>
+    /// This method can be called multiple times, and all delegates will be combined.
+    /// </summary>
+    /// <param name="delegate">The delegate used to post-configure the unit.</param>
+    /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
+    public virtual UnitBuilder PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
+    {
+        this.postConfigureActions.Add(@delegate);
         return this;
     }
 
@@ -268,8 +281,8 @@ public class UnitBuilder
         }
 
         // Preload actions
-        context.FirstBuilderRun = firstRun;
-        foreach (var x in this.preloadActions)
+        context.IsFirstBuilderRun = firstRun;
+        foreach (var x in this.preConfigureActions)
         {
             x(context);
         }
@@ -288,7 +301,7 @@ public class UnitBuilder
         }
 
         // Configure actions
-        context.FirstBuilderRun = firstRun;
+        context.IsFirstBuilderRun = firstRun;
         foreach (var x in this.configureActions)
         {
             x(context);

@@ -7,12 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Arc.Unit;
 
 /// <summary>
-/// Contextual information provided to <see cref="UnitBuilder"/>.<br/>
+/// Provides contextual information throughout the entire unit build process (PreConfigure, Configure, PostConfigure).
 /// </summary>
 internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigurationContext, IUnitPostConfigurationContext
 {
-    private const string RootDirectoryOption = "ProgramDirectory";
-    private const string DataDirectoryOption = "DataDirectory";
+    public const string DefaultRootDirectory = "ProgramDirectory";
+    public const string DefaultDataDirectory = "DataDirectory";
 
     public UnitBuilderContext()
     {
@@ -21,7 +21,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         this.DataDirectory = string.Empty;
     }
 
-    public bool FirstBuilderRun { get; set; }
+    public bool IsFirstBuilderRun { get; set; }
 
     /// <summary>
     /// Gets or sets a unit name.
@@ -165,7 +165,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     internal void SetDirectory()
     {
-        if (this.arguments.TryGetOption(RootDirectoryOption, out var value))
+        if (this.arguments.TryGetOption(DefaultRootDirectory, out var value))
         {// Root Directory
             if (Path.IsPathRooted(value))
             {
@@ -181,7 +181,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
             this.ProgramDirectory = Directory.GetCurrentDirectory();
         }
 
-        if (this.arguments.TryGetOption(DataDirectoryOption, out value))
+        if (this.arguments.TryGetOption(DefaultDataDirectory, out value))
         {// Data Directory
             if (Path.IsPathRooted(value))
             {

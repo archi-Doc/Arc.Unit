@@ -44,7 +44,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 });
             });
 
-            this.Preload(context =>
+            this.PreConfigure(context =>
             {
                 if (string.IsNullOrEmpty(context.ProgramDirectory))
                 {
