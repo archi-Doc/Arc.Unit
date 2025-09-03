@@ -33,7 +33,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
         => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> Preload(Action<IUnitPreloadContext> @delegate)
+    public override UnitBuilder<TUnit> Preload(Action<IUnitPreConfigurationContext> @delegate)
         => (UnitBuilder<TUnit>)base.Preload(@delegate);
 
     /// <inheritdoc/>
@@ -41,7 +41,7 @@ public class UnitBuilder<TUnit> : UnitBuilder
         => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+    public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
         where TOptions : class
         => (UnitBuilder<TUnit>)base.SetupOptions(@delegate);
 
@@ -55,7 +55,17 @@ public class UnitBuilder<TUnit> : UnitBuilder
 /// </summary>
 public class UnitBuilder
 {
-    private record SetupItem(Type Type, Action<IUnitSetupContext, object> Action);
+    #region FieldAndProperty
+
+    private BuiltUnit? builtUnit;
+    private List<Action<IUnitPreConfigurationContext>> preloadActions = new();
+    private List<Action<IUnitConfigurationContext>> configureActions = new();
+    private List<SetupItem> setupItems = new();
+    private List<UnitBuilder> unitBuilders = new();
+
+    #endregion
+
+    private record SetupItem(Type Type, Action<IUnitPostConfigurationContext, object> Action);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitBuilder"/> class.
@@ -98,7 +108,7 @@ public class UnitBuilder
     /// </summary>
     /// <param name="delegate">The delegate for preloading the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder Preload(Action<IUnitPreloadContext> @delegate)
+    public virtual UnitBuilder Preload(Action<IUnitPreConfigurationContext> @delegate)
     {
         this.preloadActions.Add(@delegate);
         return this;
@@ -123,10 +133,10 @@ public class UnitBuilder
     /// <typeparam name="TOptions">The type of options class.</typeparam>
     /// <param name="delegate">The delegate for setting up the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+    public virtual UnitBuilder SetupOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
         where TOptions : class
     {
-        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOptions)options));
+        var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
         var item = new SetupItem(typeof(TOptions), ac);
         this.setupItems.Add(item);
         return this;
@@ -139,10 +149,10 @@ public class UnitBuilder
     /// <typeparam name="TOptions">The type of options class.</typeparam>
     /// <param name="delegate">The delegate for setting up the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+    public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
         where TOptions : class
     {
-        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOptions)options));
+        var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
         var item = new SetupItem(typeof(TOptions), ac);
         this.setupItems.Add(item);
         return this;
@@ -176,10 +186,10 @@ public class UnitBuilder
         // Builder context.
         var builderContext = new UnitBuilderContext();
 
-        // Preload
+        // Pre-Configuration
         builderContext.BuilderRun.Clear();
         builderContext.BuilderRun.Add(this.GetType());
-        this.PreloadInternal(builderContext, args, true);
+        this.PreConfigure(builderContext, args, true);
 
         // Custom
         /*foreach (var x in builderContext.CustomContexts.Values)
@@ -240,7 +250,7 @@ public class UnitBuilder
         return unit;
     }
 
-    internal void PreloadInternal(UnitBuilderContext context, string? args, bool firstRun)
+    private void PreConfigure(UnitBuilderContext context, string? args, bool firstRun)
     {
         // Arguments
         if (args != null)
@@ -254,7 +264,7 @@ public class UnitBuilder
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.PreloadInternal(context, args, context.BuilderRun.Add(x.GetType()));
+            x.PreConfigure(context, args, context.BuilderRun.Add(x.GetType()));
         }
 
         // Preload actions
@@ -265,7 +275,7 @@ public class UnitBuilder
         }
     }
 
-    internal void ConfigureInternal(UnitBuilderContext context, bool firstRun)
+    private void ConfigureInternal(UnitBuilderContext context, bool firstRun)
     {
         // Unit builders
         foreach (var x in this.unitBuilders)
@@ -285,7 +295,7 @@ public class UnitBuilder
         }
     }
 
-    internal void SetupInternal(UnitBuilderContext builderContext)
+    private void SetupInternal(UnitBuilderContext builderContext)
     {
         // Unit builders
         foreach (var x in this.unitBuilders)
@@ -300,10 +310,4 @@ public class UnitBuilder
             x.Action(builderContext, instance);
         }
     }
-
-    private BuiltUnit? builtUnit;
-    private List<Action<IUnitPreloadContext>> preloadActions = new();
-    private List<Action<IUnitConfigurationContext>> configureActions = new();
-    private List<SetupItem> setupItems = new();
-    private List<UnitBuilder> unitBuilders = new();
 }

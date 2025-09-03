@@ -9,7 +9,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information provided to <see cref="UnitBuilder"/>.<br/>
 /// </summary>
-internal class UnitBuilderContext : IUnitPreloadContext, IUnitConfigurationContext, IUnitSetupContext
+internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigurationContext, IUnitPostConfigurationContext
 {
     private const string RootDirectoryOption = "ProgramDirectory";
     private const string DataDirectoryOption = "DataDirectory";

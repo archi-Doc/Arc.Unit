@@ -5,7 +5,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information used by Preload delegate and provided to <see cref="UnitBuilder"/>.
 /// </summary>
-public interface IUnitPreloadContext : IUnitPreloadSetupContext
+public interface IUnitPreConfigurationContext : IUnitSharedConfigurationContext
 {
     bool FirstBuilderRun { get; }
 

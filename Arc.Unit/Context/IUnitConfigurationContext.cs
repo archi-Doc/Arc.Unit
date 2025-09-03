@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information used by Configuration delegate and provided to <see cref="UnitBuilder"/>.
 /// </summary>
-public interface IUnitConfigurationContext : IUnitPreloadContext
+public interface IUnitConfigurationContext : IUnitPreConfigurationContext
 {
     /// <summary>
     /// Gets <see cref="IServiceCollection"/>.
