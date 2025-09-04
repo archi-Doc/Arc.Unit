@@ -246,7 +246,7 @@ public class UnitBuilder
 
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();
-        unitContext.FromBuilderToUnit(serviceProvider, builderContext);
+        unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
 
         // Setup
         this.SetupInternal(builderContext);

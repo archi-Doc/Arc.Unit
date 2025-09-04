@@ -60,7 +60,7 @@ public class Program
         var builder = new UnitBuilder()
             .PreConfigure(context =>
             {
-                context.SetOptions(context.GetOptions<TestOptions>());
+                // context.SetOptions(context.GetOptions<TestOptions>());
             })
             .Configure(context =>
             {
