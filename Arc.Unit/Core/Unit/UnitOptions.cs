@@ -5,18 +5,16 @@ namespace Arc.Unit;
 /// <summary>
 /// Manages basic unit options.
 /// </summary>
-public class UnitOptions
+public record class UnitOptions
 {
     public static void Configure(IUnitConfigurationContext context)
     {
-        if (!context.TryGetOptions<UnitOptions>(out var options))
+        context.SetOptions(context.GetOptions<UnitOptions>() with
         {
-            options = new UnitOptions();
-            options.UnitName = context.UnitName;
-            options.ProgramDirectory = context.ProgramDirectory;
-            options.DataDirectory = context.DataDirectory;
-            context.SetOptions(options);
-        }
+            UnitName = context.UnitName,
+            ProgramDirectory = context.ProgramDirectory,
+            DataDirectory = context.DataDirectory,
+        });
     }
 
     public UnitOptions()

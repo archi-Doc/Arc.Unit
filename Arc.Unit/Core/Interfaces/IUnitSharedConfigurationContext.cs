@@ -14,12 +14,15 @@ public interface IUnitSharedConfigurationContext
 
     UnitArguments Arguments { get; }
 
-    void GetOptions<TOptions>(out TOptions options)
-        where TOptions : class;
+    TOptions GetOptions<TOptions>()
+        where TOptions : class, new();
 
-    bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
+    void SetOptions<TOptions>(TOptions options)
+        where TOptions : class, new();
+
+    /*bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
         where TOptions : class;
 
     TOptions GetOrCreateOptions<TOptions>()
-        where TOptions : class, new();
+        where TOptions : class, new();*/
 }

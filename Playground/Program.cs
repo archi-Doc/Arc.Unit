@@ -60,7 +60,7 @@ public class Program
         var builder = new UnitBuilder()
             .PreConfigure(context =>
             {
-                context.GetOptions<TestOptions>();
+                context.SetOptions(context.GetOptions<TestOptions>());
             })
             .Configure(context =>
             {
@@ -103,6 +103,13 @@ public class Program
         var builder2 = new UnitBuilder()
             .Configure(context =>
             {
+            })
+            .PostConfigure(context =>
+            {
+                context.SetOptions(context.GetOptions<UnitOptions>() with
+                {
+                    UnitName = "mod",
+                });
             });
         builder.AddBuilder(builder2);
         builder.AddBuilder(builder2);

@@ -2,6 +2,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
@@ -93,28 +94,11 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return (TContext)context;
     }
 
-    void IUnitPreConfigurationContext.SetOptions<TOptions>(TOptions options)
-    {//
-        this.OptionTypeToInstance[typeof(TOptions)] = options;
-    }
-
     #endregion
 
-    public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
-        where TOptions : class
-    {
-        options = null;
-        if (!this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
-        {
-            return false;
-        }
+    #region IUnitSharedConfigurationContext
 
-        options = instance as TOptions;
-        return options != null;
-    }
-
-    public TOptions GetOptions<TOptions>()
-        where TOptions : class, new()
+    TOptions IUnitSharedConfigurationContext.GetOptions<TOptions>()
     {
         var options = this.ServiceProvider?.GetService<TOptions>();
         if (options is not null)
@@ -136,8 +120,28 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return options;
     }
 
-    public TOptions GetOrCreateOptions<TOptions>()
-        where TOptions : class, new()
+    void IUnitSharedConfigurationContext.SetOptions<TOptions>(TOptions options)
+    {
+        var baseOptions = ((IUnitSharedConfigurationContext)this).GetOptions<TOptions>();
+        if (baseOptions != options)
+        {
+            GhostCopy.Copy(ref options, ref baseOptions);
+        }
+    }
+
+    /*bool IUnitSharedConfigurationContext.TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
+    {
+        options = null;
+        if (!this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
+        {
+            return false;
+        }
+
+        options = instance as TOptions;
+        return options != null;
+    }
+
+    TOptions IUnitSharedConfigurationContext.GetOrCreateOptions<TOptions>()
     {
         TOptions? options = null;
         if (this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
@@ -153,7 +157,9 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         this.OptionTypeToInstance[typeof(TOptions)] = options;
 
         return options;
-    }
+    }*/
+
+    #endregion
 
     public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
