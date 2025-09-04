@@ -196,20 +196,22 @@ public class UnitBuilder
             throw new InvalidOperationException();
         }
 
-        // Builder context.
+        // Builder context
         var builderContext = new UnitBuilderContext(args);
 
-        // Pre-Configuration
+        // Pre-configuration
         builderContext.ProcessedBuilderTypes.Clear();
         this.PreConfigureInternal(builderContext);
 
-        // Configure
-        UnitOptions.Configure(builderContext); // Unit options
-        UnitLogger.Configure(builderContext); // Logger
+        // Configuration: UnitOptions, UnitLogger
+        UnitOptions.Configure(builderContext);
+        UnitLogger.Configure(builderContext);
+
+        // Configuration
         builderContext.ProcessedBuilderTypes.Clear();
         this.ConfigureInternal(builderContext);
 
-        // Custom
+        // Custom configuration
         foreach (var x in builderContext.CustomContexts.Values)
         {
             if (x is IUnitCustomContext context)
@@ -218,12 +220,13 @@ public class UnitBuilder
             }
         }
 
+        // Register other services
         builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
         builderContext.TryAddSingleton<UnitOptions>();
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<IConsoleService, ConsoleService>();
-        builderContext.TryAddSingleton<RadioClass>(); // Unit radio
+        builderContext.TryAddSingleton<RadioClass>();
 
         // Setup classes
         foreach (var x in this.setupItems)
@@ -237,6 +240,7 @@ public class UnitBuilder
             builderContext.Services.Add(ServiceDescriptor.Singleton(x.Key, x.Value));
         }
 
+        // Create a service provider
         var serviceProvider = builderContext.Services.BuildServiceProvider();
         builderContext.ServiceProvider = serviceProvider;
 
@@ -246,6 +250,10 @@ public class UnitBuilder
 
         // Setup
         this.SetupInternal(builderContext);
+
+        // Post-configuration
+        builderContext.ProcessedBuilderTypes.Clear();
+        this.PostConfigureInternal(builderContext);
 
         var unit = serviceProvider.GetRequiredService<TUnit>();
         this.builtUnit = unit;
@@ -289,8 +297,28 @@ public class UnitBuilder
             }
         }
 
-        // Configure actions
+        // Actions
         foreach (var x in this.configureActions)
+        {
+            x(context);
+        }
+    }
+
+    private void PostConfigureInternal(UnitBuilderContext context)
+    {// Post-configuration
+        if (!context.ProcessedBuilderTypes.Add(this))
+        {// Already processed.
+            return;
+        }
+
+        // Unit builders
+        foreach (var x in this.unitBuilders)
+        {
+            x.PostConfigureInternal(context);
+        }
+
+        // Actions
+        foreach (var x in this.postConfigureActions)
         {
             x(context);
         }

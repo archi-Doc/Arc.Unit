@@ -9,7 +9,7 @@ namespace Sandbox;
 
 public record TestOptions
 {
-    public string Name { get; init; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }
 
 public interface ITestInterface
@@ -84,8 +84,8 @@ public class Program
                 });
             })
             .SetupOptions<TestOptions>((context, options) =>
-            {//
-                // options.Name = "test";
+            {
+                options.Name = "test";
                 // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
             })
             .SetupOptions<FileLoggerOptions>((context, options) =>
