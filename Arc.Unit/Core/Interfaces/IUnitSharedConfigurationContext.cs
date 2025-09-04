@@ -4,9 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Arc.Unit;
 
-/// <summary>
-/// Contextual information used by Preload delegate and provided to <see cref="UnitBuilder"/>.
-/// </summary>
 public interface IUnitSharedConfigurationContext
 {
     string UnitName { get; set; }
