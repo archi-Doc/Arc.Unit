@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Contextual information used by Configuration delegate and provided to <see cref="UnitBuilder"/>.
 /// </summary>
-public interface IUnitConfigurationContext : IUnitPreConfigurationContext
+public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPreConfigurationContext
 {
     /// <summary>
     /// Gets <see cref="IServiceCollection"/>.
@@ -23,32 +23,6 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext
     void ClearLoggerResolver();
 
     /// <summary>
-    /// Adds the specified <see cref="Type"/> to the creation list.
-    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
-    /// </summary>
-    /// <typeparam name="T">The type to be instantiated.</typeparam>
-    void CreateInstance<T>();
-
-    /// <summary>
-    /// Gets <see cref="CommandGroup"/> of the specified command type.
-    /// </summary>
-    /// <param name="type">The command type.</param>
-    /// <returns><see cref="CommandGroup"/>.</returns>
-    CommandGroup GetCommandGroup(Type type);
-
-    /// <summary>
-    /// Gets <see cref="CommandGroup"/> of command.
-    /// </summary>
-    /// <returns><see cref="CommandGroup"/>.</returns>
-    CommandGroup GetCommandGroup();
-
-    /// <summary>
-    /// Gets <see cref="CommandGroup"/> of subcommand.
-    /// </summary>
-    /// <returns><see cref="CommandGroup"/>.</returns>
-    CommandGroup GetSubcommandGroup();
-
-    /// <summary>
     /// Adds command.
     /// </summary>
     /// <param name="commandType">The command type.</param>
@@ -61,4 +35,11 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext
     /// <param name="commandType">The command type.</param>
     /// <returns><see langword="true"/>: Successfully added.</returns>
     bool AddSubcommand(Type commandType);
+
+    /// <summary>
+    /// Adds the specified <see cref="Type"/> to the creation list.
+    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
+    /// </summary>
+    /// <typeparam name="T">The type to be instantiated.</typeparam>
+    void RegisterInstanceCreation<T>();
 }

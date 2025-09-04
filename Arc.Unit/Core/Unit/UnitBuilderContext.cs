@@ -60,7 +60,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     public IServiceProvider ServiceProvider { get; internal set; } = default!;
 
-    internal HashSet<Type> CreateInstanceSet { get; } = new();
+    internal HashSet<Type> InstanceCreationSet { get; } = new();
 
     internal Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
 
@@ -125,45 +125,29 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         }
     }
 
-    /*bool IUnitSharedConfigurationContext.TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
-    {
-        options = null;
-        if (!this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
-        {
-            return false;
-        }
-
-        options = instance as TOptions;
-        return options != null;
-    }
-
-    TOptions IUnitSharedConfigurationContext.GetOrCreateOptions<TOptions>()
-    {
-        TOptions? options = null;
-        if (this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
-        {
-            options = instance as TOptions;
-            if (options != null)
-            {
-                return options;
-            }
-        }
-
-        options = new();
-        this.OptionTypeToInstance[typeof(TOptions)] = options;
-
-        return options;
-    }*/
-
     #endregion
 
-    public void ClearLoggerResolver() => this.LoggerResolvers.Clear();
+    void IUnitConfigurationContext.ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
-    public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
+    void IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
-    public void CreateInstance<T>() => this.CreateInstanceSet.Add(typeof(T));
+    void IUnitConfigurationContext.RegisterInstanceCreation<T>() => this.InstanceCreationSet.Add(typeof(T));
 
-    public CommandGroup GetCommandGroup(Type type)
+    public bool AddCommand(Type commandType)
+    {
+        var group = ((IUnitConfigurationAndPreConfigurationContext)this).GetCommandGroup();
+        return group.AddCommand(commandType);
+    }
+
+    public bool AddSubcommand(Type commandType)
+    {
+        var group = ((IUnitConfigurationAndPreConfigurationContext)this).GetSubcommandGroup();
+        return group.AddCommand(commandType);
+    }
+
+    #region IUnitConfigurationAndPreConfigurationContext
+
+    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetCommandGroup(Type type)
     {
         if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
         {
@@ -175,21 +159,11 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return commandGroup;
     }
 
-    public CommandGroup GetCommandGroup() => this.GetCommandGroup(typeof(TopCommand));
+    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetCommandGroup() => this.GetCommandGroup(typeof(TopCommand));
 
-    public CommandGroup GetSubcommandGroup() => this.GetCommandGroup(typeof(SubCommand));
+    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetSubcommandGroup() => this.GetCommandGroup(typeof(SubCommand));
 
-    public bool AddCommand(Type commandType)
-    {
-        var group = this.GetCommandGroup();
-        return group.AddCommand(commandType);
-    }
-
-    public bool AddSubcommand(Type commandType)
-    {
-        var group = this.GetSubcommandGroup();
-        return group.AddCommand(commandType);
-    }
+    #endregion
 
     [MemberNotNull(nameof(ProgramDirectory), nameof(DataDirectory))]
     internal void SetDirectory()

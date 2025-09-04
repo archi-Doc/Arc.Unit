@@ -17,7 +17,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingleton<ConsoleUnit>();
-                context.CreateInstance<ConsoleUnit>();
+                context.RegisterInstanceCreation<ConsoleUnit>();
 
                 // Command
                 context.AddCommand(typeof(ConsoleCommand));

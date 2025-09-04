@@ -76,7 +76,7 @@ public sealed class UnitContext
     }
 
     /// <summary>
-    /// Create instances registered by <see cref="UnitBuilderContext.CreateInstance{T}()"/>.
+    /// Create instances registered by <see cref="UnitBuilderContext.RegisterInstanceCreation{T}()"/>.
     /// </summary>
     public void CreateInstances()
     {
@@ -114,7 +114,7 @@ public sealed class UnitContext
         this.ServiceProvider = serviceProvider;
         this.optionTypeToInstance = builderContext.OptionTypeToInstance;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
-        this.CreateInstanceTypes = builderContext.CreateInstanceSet.ToArray();
+        this.CreateInstanceTypes = builderContext.InstanceCreationSet.ToArray();
 
         builderContext.GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
         builderContext.GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
