@@ -10,8 +10,9 @@ namespace Arc.Unit;
 /// </summary>
 public class UnitArguments
 {
-    public UnitArguments()
+    public UnitArguments(string? args)
     {
+        this.Setup(args);
     }
 
     public string RawArguments => this.rawArguments;
@@ -24,7 +25,7 @@ public class UnitArguments
     {// this.options.TryGetValue(option.ToLower(), out value);
         foreach (var x in this.options)
         {
-            if (x.Key == option)
+            if (x.Key.Equals(option, StringComparison.InvariantCultureIgnoreCase))
             {
                 value = x.Value;
                 return true;
@@ -48,8 +49,13 @@ public class UnitArguments
         }
     }
 
-    internal void Add(string args)
+    internal void Setup(string? args)
     {
+        if (string.IsNullOrEmpty(args))
+        {
+            return;
+        }
+
         this.rawArguments = args;
         string? previousOption = null;
 
@@ -59,7 +65,7 @@ public class UnitArguments
             {// -option
                 if (previousOption != null)
                 {
-                    ProcessOptionString(previousOption, string.Empty); // Previous option
+                    AddOptionAndValue(previousOption, string.Empty); // Previous option
                     previousOption = null;
                 }
 
@@ -69,7 +75,7 @@ public class UnitArguments
             {// value
                 if (previousOption != null)
                 {// -option value
-                    ProcessOptionString(previousOption, ProcessValueString(x));
+                    AddOptionAndValue(previousOption, ProcessValueString(x));
                     previousOption = null;
                 }
                 else
@@ -81,25 +87,22 @@ public class UnitArguments
 
         if (previousOption != null)
         {
-            ProcessOptionString(previousOption, string.Empty); // Previous option
+            AddOptionAndValue(previousOption, string.Empty); // Previous option
         }
 
-        void ProcessOptionString(string option, string value)
+        void AddOptionAndValue(string option, string value)
         {
-            option = option.ToLower();
+            // option = option.ToLower();
             this.options.Add(new(option, value));
-
-            /*if (this.options.TryGetValue(option, out var v) && !string.IsNullOrEmpty(v))
-            {// Contains a valid value.
-                return;
-            }
-
-            this.options[option] = value;*/
         }
 
         static string ProcessValueString(string value)
         {
             if (value.Length >= 2 && value.StartsWith('\"') && value.EndsWith('\"'))
+            {
+                return value.Substring(1, value.Length - 2);
+            }
+            else if (value.Length >= 2 && value.StartsWith('\'') && value.EndsWith('\''))
             {
                 return value.Substring(1, value.Length - 2);
             }

@@ -50,7 +50,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     /// <summary>
     /// Gets command-line arguments.
     /// </summary>
-    public UnitArguments Arguments { get; private set; } = new();
+    public UnitArguments Arguments { get; private set; }
 
     /// <summary>
     /// Gets <see cref="IServiceCollection"/>.
@@ -76,13 +76,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     public UnitBuilderContext(string? args)
     {
         this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-
-        // Arguments
-        if (args != null)
-        {
-            this.Arguments.Add(args);
-        }
-
+        this.Arguments = new(args); // Arguments
         this.SetDirectory(); // Directory
     }
 
