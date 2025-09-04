@@ -41,9 +41,8 @@ public class UnitBuilder<TUnit> : UnitBuilder
         => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
-        where TOptions : class
-        => (UnitBuilder<TUnit>)base.SetupOptions(@delegate);
+    public override UnitBuilder<TUnit> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
+        => (UnitBuilder<TUnit>)base.PostConfigure(configureDelegate);
 
     /// <inheritdoc/>
     public override TUnit GetBuiltUnit() => (TUnit)base.GetBuiltUnit();
@@ -61,12 +60,9 @@ public class UnitBuilder
     private List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
     private List<Action<IUnitConfigurationContext>> configureActions = new();
     private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
-    private List<SetupItem> setupItems = new();
     private List<UnitBuilder> unitBuilders = new();
 
     #endregion
-
-    private record SetupItem(Type Type, Action<IUnitPostConfigurationContext, object> Action);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitBuilder"/> class.
@@ -146,28 +142,10 @@ public class UnitBuilder
     /// <typeparam name="TOptions">The type of options class.</typeparam>
     /// <param name="delegate">The delegate for setting up the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder SetupOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
-        where TOptions : class
-    {
-        var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
-        var item = new SetupItem(typeof(TOptions), ac);
-        this.setupItems.Add(item);
-        return this;
-    }
-
-    /// <summary>
-    /// Adds a delegate to the builder for setting up the option.<br/>
-    /// This can be called multiple times and the results will be additive.
-    /// </summary>
-    /// <typeparam name="TOptions">The type of options class.</typeparam>
-    /// <param name="delegate">The delegate for setting up the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
     public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
         where TOptions : class
     {
         var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
-        var item = new SetupItem(typeof(TOptions), ac);
-        this.setupItems.Add(item);
         return this;
     }
 
@@ -228,12 +206,6 @@ public class UnitBuilder
         builderContext.TryAddSingleton<IConsoleService, ConsoleService>();
         builderContext.TryAddSingleton<RadioClass>();
 
-        // Setup classes
-        foreach (var x in this.setupItems)
-        {
-            builderContext.TryAddSingleton(x.Type);
-        }
-
         // Options instances
         foreach (var x in builderContext.OptionTypeToInstance)
         {
@@ -247,9 +219,6 @@ public class UnitBuilder
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();
         unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
-
-        // Setup
-        this.SetupInternal(builderContext);
 
         // Post-configuration
         builderContext.ProcessedBuilderTypes.Clear();
@@ -321,22 +290,6 @@ public class UnitBuilder
         foreach (var x in this.postConfigureActions)
         {
             x(context);
-        }
-    }
-
-    private void SetupInternal(UnitBuilderContext builderContext)
-    {
-        // Unit builders
-        foreach (var x in this.unitBuilders)
-        {
-            x.SetupInternal(builderContext);
-        }
-
-        // Actions
-        foreach (var x in this.setupItems)
-        {
-            var instance = builderContext.ServiceProvider!.GetRequiredService(x.Type);
-            x.Action(builderContext, instance);
         }
     }
 }
