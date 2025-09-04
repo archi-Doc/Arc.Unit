@@ -58,6 +58,9 @@ public class Program
         };
 
         var builder = new UnitBuilder()
+            .PreConfigure(context =>
+            {
+            })
             .Configure(context =>
             {
                 var custom = context.GetCustomContext<CustomContext>();
@@ -103,7 +106,7 @@ public class Program
         builder.AddBuilder(builder2);
         builder.AddBuilder(builder2);
 
-        var unit = builder.Build();
+        var unit = builder.Build("-datadirectory 'a'");
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
         var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();

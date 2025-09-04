@@ -11,8 +11,8 @@ namespace Arc.Unit;
 /// </summary>
 internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigurationContext, IUnitPostConfigurationContext
 {
-    public const string DefaultRootDirectory = "ProgramDirectory";
-    public const string DefaultDataDirectory = "DataDirectory";
+    public const string RootDirectoryOptionName = "ProgramDirectory";
+    public const string DataDirectoryOptionName = "DataDirectory";
 
     /// <summary>
     /// Represents the top-level command group used for identifying types in the unit build process.
@@ -57,7 +57,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     /// </summary>
     public IServiceCollection Services { get; } = new ServiceCollection();
 
-    public IServiceProvider ServiceProvider { get; internal set; }
+    public IServiceProvider ServiceProvider { get; internal set; } = default!;
 
     internal HashSet<Type> CreateInstanceSet { get; } = new();
 
@@ -67,18 +67,26 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
 
-    internal HashSet<Type> ProcessedBuilderTypes { get; } = new();
+    internal HashSet<UnitBuilder> ProcessedBuilderTypes { get; } = new();
 
     internal Dictionary<Type, object> CustomContexts { get; } = new();
 
     #endregion
 
-    public UnitBuilderContext()
+    public UnitBuilderContext(string? args)
     {
         this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        this.ProgramDirectory = string.Empty;
-        this.DataDirectory = string.Empty;
+
+        // Arguments
+        if (args != null)
+        {
+            this.Arguments.Add(args);
+        }
+
+        this.SetDirectory(); // Directory
     }
+
+    #region IUnitPreConfigurationContext
 
     TContext IUnitPreConfigurationContext.GetCustomContext<TContext>()
     {
@@ -91,11 +99,12 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return (TContext)context;
     }
 
-    public void SetOptions<TOptions>(TOptions options)
-        where TOptions : class
+    void IUnitPreConfigurationContext.SetOptions<TOptions>(TOptions options)
     {//
         this.OptionTypeToInstance[typeof(TOptions)] = options;
     }
+
+    #endregion
 
     public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
         where TOptions : class
@@ -169,9 +178,10 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return group.AddCommand(commandType);
     }
 
+    [MemberNotNull(nameof(ProgramDirectory), nameof(DataDirectory))]
     internal void SetDirectory()
     {
-        if (this.Arguments.TryGetOption(DefaultRootDirectory, out var value))
+        if (this.Arguments.TryGetOption(RootDirectoryOptionName, out var value))
         {// Root Directory
             if (Path.IsPathRooted(value))
             {
@@ -187,7 +197,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
             this.ProgramDirectory = Directory.GetCurrentDirectory();
         }
 
-        if (this.Arguments.TryGetOption(DefaultDataDirectory, out value))
+        if (this.Arguments.TryGetOption(DataDirectoryOptionName, out value))
         {// Data Directory
             if (Path.IsPathRooted(value))
             {
@@ -197,6 +207,10 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
             {
                 this.DataDirectory = Path.Combine(Directory.GetCurrentDirectory(), value);
             }
+        }
+        else
+        {
+            this.DataDirectory = string.Empty;
         }
     }
 }

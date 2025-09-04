@@ -40,7 +40,7 @@ public class UnitArguments
         return this.options.Any(x => x.Key == option);
     }
 
-    public IEnumerable<(string Option, string Value)> GetOptions()
+    public IEnumerable<(string Option, string Value)> GetOptionsAndValues()
     {
         foreach (var x in this.options)
         {

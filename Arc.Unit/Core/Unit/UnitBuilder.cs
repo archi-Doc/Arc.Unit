@@ -197,11 +197,11 @@ public class UnitBuilder
         }
 
         // Builder context.
-        var builderContext = new UnitBuilderContext();
+        var builderContext = new UnitBuilderContext(args);
 
         // Pre-Configuration
         builderContext.ProcessedBuilderTypes.Clear();
-        this.PreConfigureInternal(builderContext, args);
+        this.PreConfigureInternal(builderContext);
 
         // Configure
         UnitOptions.Configure(builderContext); // Unit options
@@ -252,26 +252,17 @@ public class UnitBuilder
         return unit;
     }
 
-    private void PreConfigureInternal(UnitBuilderContext context, string? args)
+    private void PreConfigureInternal(UnitBuilderContext context)
     {// Pre-configuration
-        if (!context.ProcessedBuilderTypes.Add(this.GetType()))
+        if (!context.ProcessedBuilderTypes.Add(this))
         {// Already processed.
             return;
         }
 
-        // Arguments
-        if (args != null)
-        {
-            context.Arguments.Add(args);
-        }
-
-        // Directory
-        context.SetDirectory();
-
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.PreConfigureInternal(context, args);
+            x.PreConfigureInternal(context);
         }
 
         // Actions
@@ -283,7 +274,7 @@ public class UnitBuilder
 
     private void ConfigureInternal(UnitBuilderContext context)
     {// Configuration
-        if (!context.ProcessedBuilderTypes.Add(this.GetType()))
+        if (!context.ProcessedBuilderTypes.Add(this))
         {// Already processed.
             return;
         }
