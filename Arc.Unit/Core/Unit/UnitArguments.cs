@@ -6,21 +6,42 @@ using SimpleCommandLine;
 namespace Arc.Unit;
 
 /// <summary>
-/// Manages command line arguments..
+/// Parses and stores command-line arguments, supporting both options (prefixed with '-') and values.
 /// </summary>
 public class UnitArguments
 {
     private static readonly StringComparison DefaultStringComparison = StringComparison.InvariantCultureIgnoreCase;
 
-    public UnitArguments(string? args)
+    #region FieldAndProperty
+
+    private string rawArguments = string.Empty;
+    private List<string> values = new();
+    private List<KeyValuePair<string, string>> options = new();
+
+    #endregion
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UnitArguments"/> class with the specified argument string.
+    /// </summary>
+    /// <param name="args">The raw argument string to parse.</param>
+    internal UnitArguments(string? args)
     {
         this.Initialize(args);
     }
 
+    /// <summary>
+    /// Gets the raw argument string as provided.
+    /// </summary>
     public string RawArguments => this.rawArguments;
 
+    /// <summary>
+    /// Attempts to get the value associated with the specified option name.
+    /// </summary>
+    /// <param name="optionName">The name of the option to search for.</param>
+    /// <param name="optionValue">When this method returns, contains the value associated with the option, if found; otherwise, <c>null</c>.</param>
+    /// <returns><c>true</c> if the option was found; otherwise, <c>false</c>.</returns>
     public bool TryGetOptionValue(string optionName, [MaybeNullWhen(false)] out string optionValue)
-    {// this.options.TryGetValue(option.ToLower(), out value);
+    {
         foreach (var x in this.options)
         {
             if (x.Key.Equals(optionName, DefaultStringComparison))
@@ -34,15 +55,33 @@ public class UnitArguments
         return false;
     }
 
+    /// <summary>
+    /// Determines whether the specified option exists in the argument list.
+    /// </summary>
+    /// <param name="option">The option name to check for.</param>
+    /// <returns><c>true</c> if the option exists; otherwise, <c>false</c>.</returns>
     public bool ContainsOption(string option)
-    {// this.options.ContainsKey(option.ToLower());
+    {
         return this.options.Any(x => x.Key.Equals(option, DefaultStringComparison));
     }
 
+    /// <summary>
+    /// Determines whether the specified value exists in the argument list.
+    /// </summary>
+    /// <param name="value">The value to check for.</param>
+    /// <returns><c>true</c> if the value exists; otherwise, <c>false</c>.</returns>
     public bool ContainsValue(string value) => this.values.Contains(value);
 
+    /// <summary>
+    /// Gets an enumerable collection of all values (non-option arguments).
+    /// </summary>
+    /// <returns>An enumerable of argument values.</returns>
     public IEnumerable<string> GetValues() => this.values;
 
+    /// <summary>
+    /// Gets an enumerable collection of all options and their associated values.
+    /// </summary>
+    /// <returns>An enumerable of option name and value pairs.</returns>
     public IEnumerable<(string OptionName, string OptionValue)> GetOptions()
     {
         foreach (var x in this.options)
@@ -114,8 +153,4 @@ public class UnitArguments
             }
         }
     }
-
-    private string rawArguments = string.Empty;
-    private List<string> values = new();
-    private List<KeyValuePair<string, string>> options = new();
 }
