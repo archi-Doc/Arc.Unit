@@ -21,7 +21,7 @@ public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     {
         if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
         {
-            options.Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path);
+            options = options with { Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path), };
         }
 
         this.worker = new(core, unitLogger, options);

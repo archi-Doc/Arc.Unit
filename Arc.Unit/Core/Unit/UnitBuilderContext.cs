@@ -159,9 +159,9 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return commandGroup;
     }
 
-    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetCommandGroup() => this.GetCommandGroup(typeof(TopCommand));
+    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetCommandGroup() => ((IUnitConfigurationAndPreConfigurationContext)this).GetCommandGroup(typeof(TopCommand));
 
-    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetSubcommandGroup() => this.GetCommandGroup(typeof(SubCommand));
+    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetSubcommandGroup() => ((IUnitConfigurationAndPreConfigurationContext)this).GetCommandGroup(typeof(SubCommand));
 
     #endregion
 

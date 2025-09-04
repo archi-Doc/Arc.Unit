@@ -9,20 +9,20 @@ public record class SimpleLogFormatterOptions
         this.EnableColor = enableColor;
     }
 
-    public bool EnableColor { get; set; }
+    public bool EnableColor { get; init; }
 
     /// <summary>
-    /// Gets or sets the timestamp format (default is "HH:mm:ss.fff").
+    /// Gets the timestamp format (default is "HH:mm:ss.fff").
     /// </summary>
-    public string? TimestampFormat { get; set; } = "HH:mm:ss.fff";
+    public string? TimestampFormat { get; init; } = "HH:mm:ss.fff";
 
     /// <summary>
-    /// Gets or sets a value indicating whether timestamps are displayed as local time or not.
+    /// Gets a value indicating whether timestamps are displayed as local time or not.
     /// </summary>
-    public bool TimestampLocal { get; set; } = true;
+    public bool TimestampLocal { get; init; } = true;
 
     /// <summary>
-    /// Gets or sets the event id format (default is "X4").
+    /// Gets the event id format (default is "X4").
     /// </summary>
-    public string? EventIdFormat { get; set; } = "X4";
+    public string? EventIdFormat { get; init; } = "X4";
 }

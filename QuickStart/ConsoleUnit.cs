@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.Serialization;
 using Arc.Threading;
 using Arc.Unit;
 using SimpleCommandLine;
@@ -57,17 +58,21 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 }
             });
 
-            this.SetupOptions<FileLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
+            this.PostConfigure(context =>
+            {
                 var logfile = "Logs/Log.txt";
-                options.Path = Path.Combine(context.DataDirectory, logfile);
-                options.MaxLogCapacity = 2;
-                options.ClearLogsAtStartup = true;
-            });
+                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+                {
+                    Path = Path.Combine(context.DataDirectory, logfile),
+                    MaxLogCapacity = 2,
+                    ClearLogsAtStartup = true,
+                });
 
-            this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
-            {// ConsoleLoggerOptions
-                options.Formatter.EnableColor = true;
+                var consoleLoggerOptions = context.GetOptions<ConsoleLoggerOptions>();
+                context.SetOptions(consoleLoggerOptions with
+                {
+                    FormatterOptions = consoleLoggerOptions.FormatterOptions with { EnableColor = true },
+                });
             });
         }
     }

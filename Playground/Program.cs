@@ -4,6 +4,7 @@ using System.Text;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
+using static SimpleCommandLine.SimpleParser;
 
 namespace Sandbox;
 
@@ -84,20 +85,24 @@ public class Program
                     x.SetOutput<ConsoleAndFileLogger>();
                 });
             })
-            .SetupOptions<TestOptions>((context, options) =>
+            .PostConfigure(context =>
             {
-                options.Name = "test";
-                // context.SetOptionsForUnitContext(new TestOptions() with { Name = "test", });
-            })
-            .SetupOptions<FileLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
+                context.SetOptions(context.GetOptions<TestOptions>() with
+                {
+                    Name = "test",
+                });
+
                 var logfile = "Logs/TestLog.txt";
-                options.Path = Path.Combine(context.ProgramDirectory, logfile);
-                options.MaxLogCapacity = 1;
-            })
-            .SetupOptions<ConsoleLoggerOptions>((context, options) =>
-            {
-                options.EnableBuffering = true;
+                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+                {
+                    Path = Path.Combine(context.ProgramDirectory, logfile),
+                    MaxLogCapacity = 1,
+                });
+
+                context.SetOptions(context.GetOptions<ConsoleLoggerOptions>() with
+                {
+                    EnableBuffering = true,
+                });
             });
 
         var builder2 = new UnitBuilder()
