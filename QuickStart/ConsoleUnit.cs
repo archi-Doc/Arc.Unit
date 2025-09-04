@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.Serialization;
 using Arc.Threading;
 using Arc.Unit;
 using SimpleCommandLine;
@@ -14,7 +13,20 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         public Builder()
             : base()
         {
-            // Configuration for Unit.
+            // Configuration of the unit
+            this.PreConfigure(context =>
+            {
+                if (string.IsNullOrEmpty(context.ProgramDirectory))
+                {
+                    context.ProgramDirectory = "Program";
+                }
+
+                if (string.IsNullOrEmpty(context.DataDirectory))
+                {
+                    context.DataDirectory = "Test";
+                }
+            });
+
             this.Configure(context =>
             {
                 context.AddSingleton<ConsoleUnit>();
@@ -43,19 +55,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                         x.SetFilter<ExampleLogFilter>();
                     }
                 });
-            });
-
-            this.PreConfigure(context =>
-            {
-                if (string.IsNullOrEmpty(context.ProgramDirectory))
-                {
-                    context.ProgramDirectory = "Program";
-                }
-
-                if (string.IsNullOrEmpty(context.DataDirectory))
-                {
-                    context.DataDirectory = "Test";
-                }
             });
 
             this.PostConfigure(context =>

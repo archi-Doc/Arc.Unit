@@ -26,6 +26,6 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.logger.TryGet(LogLevel.Debug)?.Log("End");
     }
 
-    private ILogger<ConsoleCommand> logger;
-    private IConsoleService consoleService;
+    private readonly ILogger logger;
+    private readonly IConsoleService consoleService;
 }

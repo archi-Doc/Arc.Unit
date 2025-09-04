@@ -100,6 +100,7 @@ public class UnitBuilder
     }
 
     /// <summary>
+    /// <b>Pre-configuration: Handles tasks such as setting options from the command line and handling load operations.</b><br/>
     /// Adds a delegate to the builder to pre-configure the unit.<br/>
     /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
@@ -112,6 +113,7 @@ public class UnitBuilder
     }
 
     /// <summary>
+    /// <b>Configuration: Handles registration with the DI container, adding commands, setting up the logger, and similar configuration tasks.</b><br/>
     /// Adds a delegate to the builder to configure the unit.<br/>
     /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
@@ -124,6 +126,7 @@ public class UnitBuilder
     }
 
     /// <summary>
+    /// <b>Post-configuration: Executed after creating the instance (ServiceProvider), performing follow-up operations such as option settings.</b><br/>
     /// Adds a delegate to the builder to post-configure the unit.<br/>
     /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>

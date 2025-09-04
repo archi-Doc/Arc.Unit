@@ -22,17 +22,17 @@ public record class UnitOptions
     }
 
     /// <summary>
-    /// Gets or sets a unit name.
+    /// Gets a unit name.
     /// </summary>
-    public string UnitName { get; set; } = string.Empty;
+    public string UnitName { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a program directory.
+    /// Gets a program directory.
     /// </summary>
-    public string ProgramDirectory { get; set; } = string.Empty;
+    public string ProgramDirectory { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets a data directory.
+    /// Gets a data directory.
     /// </summary>
-    public string DataDirectory { get; set; } = string.Empty;
+    public string DataDirectory { get; init; } = string.Empty;
 }

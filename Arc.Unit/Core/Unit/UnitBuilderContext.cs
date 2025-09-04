@@ -127,23 +127,27 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     #endregion
 
+    #region IUnitConfigurationContext
+
     void IUnitConfigurationContext.ClearLoggerResolver() => this.LoggerResolvers.Clear();
 
     void IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
     void IUnitConfigurationContext.RegisterInstanceCreation<T>() => this.InstanceCreationSet.Add(typeof(T));
 
-    public bool AddCommand(Type commandType)
+    bool IUnitConfigurationContext.AddCommand(Type commandType)
     {
         var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup();
         return group.AddCommand(commandType);
     }
 
-    public bool AddSubcommand(Type commandType)
+    bool IUnitConfigurationContext.AddSubcommand(Type commandType)
     {
         var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetSubcommandGroup();
         return group.AddCommand(commandType);
     }
+
+    #endregion
 
     #region IUnitConfigurationAndPreConfigurationContext
 

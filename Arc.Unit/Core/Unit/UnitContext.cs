@@ -28,7 +28,7 @@ public sealed class UnitContext
     /// Gets an array of <see cref="Type"/> which is registered in the creation list.<br/>
     /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
     /// </summary>
-    public Type[] CreateInstanceTypes { get; private set; } = default!;
+    public Type[] InstanceCreationTypes { get; private set; } = default!;
 
     /// <summary>
     /// Gets an array of command <see cref="Type"/>.
@@ -59,6 +59,32 @@ public sealed class UnitContext
     }
 
     /// <summary>
+    /// Retrieves an options instance of type <typeparamref name="TOptions"/> from the <see cref="ServiceProvider"/> or internal storage.
+    /// </summary>
+    /// <typeparam name="TOptions">
+    /// The type of the options class to retrieve. Must be a reference type with a parameterless constructor.
+    /// </typeparam>
+    /// <returns>
+    /// An instance of <typeparamref name="TOptions"/> if available; otherwise, <c>null</c>.
+    /// </returns>
+    public TOptions? GetOptions<TOptions>()
+        where TOptions : class, new()
+    {
+        var options = this.ServiceProvider?.GetService<TOptions>();
+        if (options is not null)
+        {
+            return options;
+        }
+
+        if (this.optionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
+        {
+            options = instance as TOptions;
+        }
+
+        return options;
+    }
+
+    /// <summary>
     /// Gets an array of command <see cref="Type"/> which belong to the specified command type.
     /// </summary>
     /// <param name="commandType">The command type.</param>
@@ -80,7 +106,7 @@ public sealed class UnitContext
     /// </summary>
     public void CreateInstances()
     {
-        foreach (var x in this.CreateInstanceTypes)
+        foreach (var x in this.InstanceCreationTypes)
         {
             this.ServiceProvider.GetService(x);
         }
@@ -114,7 +140,7 @@ public sealed class UnitContext
         this.ServiceProvider = serviceProvider;
         this.optionTypeToInstance = builderContext.OptionTypeToInstance;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
-        this.CreateInstanceTypes = builderContext.InstanceCreationSet.ToArray();
+        this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
 
         ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
         ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));

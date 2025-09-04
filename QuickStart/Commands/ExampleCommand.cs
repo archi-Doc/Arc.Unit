@@ -18,11 +18,11 @@ public class ExampleCommand : ISimpleCommandAsync<ExampleCommandOptions>
         this.logger.TryGet(LogLevel.Debug)?.Log($"Example command: {option.String}");
     }
 
-    private ILogger<ExampleCommand> logger;
+    private readonly ILogger logger;
 }
 
 public record ExampleCommandOptions
 {
     [SimpleOption("string", Description = "String", Required = true)]
-    public string String { get; set; } = string.Empty;
+    public string String { get; init; } = string.Empty;
 }
