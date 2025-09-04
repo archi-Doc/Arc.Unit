@@ -14,14 +14,23 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     public const string DefaultRootDirectory = "ProgramDirectory";
     public const string DefaultDataDirectory = "DataDirectory";
 
-    public UnitBuilderContext()
+    /// <summary>
+    /// Represents the top-level command group used for identifying types in the unit build process.
+    /// </summary>
+    internal class TopCommand
     {
-        this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        this.ProgramDirectory = string.Empty;
-        this.DataDirectory = string.Empty;
     }
 
-    public bool IsFirstBuilderRun { get; set; }
+    /// <summary>
+    /// Represents a subcommand group used for identifying types in the unit build process.
+    /// </summary>
+    internal class SubCommand
+    {
+    }
+
+    #region FieldAndProperty
+
+    // public bool IsFirstBuilderRun { get; set; }
 
     /// <summary>
     /// Gets or sets a unit name.
@@ -41,16 +50,14 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     /// <summary>
     /// Gets command-line arguments.
     /// </summary>
-    public UnitArguments Arguments => this.arguments;
+    public UnitArguments Arguments { get; private set; } = new();
 
     /// <summary>
     /// Gets <see cref="IServiceCollection"/>.
     /// </summary>
     public IServiceCollection Services { get; } = new ServiceCollection();
 
-#pragma warning disable CS8766
-    public IServiceProvider? ServiceProvider { get; internal set; }
-#pragma warning restore CS8766
+    public IServiceProvider ServiceProvider { get; internal set; }
 
     internal HashSet<Type> CreateInstanceSet { get; } = new();
 
@@ -60,12 +67,20 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
 
-    internal HashSet<Type> BuilderRun { get; } = new();
+    internal HashSet<Type> ProcessedBuilderTypes { get; } = new();
 
     internal Dictionary<Type, object> CustomContexts { get; } = new();
 
-    public TContext GetCustomContext<TContext>()
-        where TContext : IUnitCustomContext, new()
+    #endregion
+
+    public UnitBuilderContext()
+    {
+        this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
+        this.ProgramDirectory = string.Empty;
+        this.DataDirectory = string.Empty;
+    }
+
+    TContext IUnitPreConfigurationContext.GetCustomContext<TContext>()
     {
         if (!this.CustomContexts.TryGetValue(typeof(TContext), out var context))
         {
@@ -124,8 +139,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     public void AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
-    public void CreateInstance<T>()
-        => this.CreateInstanceSet.Add(typeof(T));
+    public void CreateInstance<T>() => this.CreateInstanceSet.Add(typeof(T));
 
     public CommandGroup GetCommandGroup(Type type)
     {
@@ -155,17 +169,9 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return group.AddCommand(commandType);
     }
 
-    internal class TopCommand
-    {
-    }
-
-    internal class SubCommand
-    {
-    }
-
     internal void SetDirectory()
     {
-        if (this.arguments.TryGetOption(DefaultRootDirectory, out var value))
+        if (this.Arguments.TryGetOption(DefaultRootDirectory, out var value))
         {// Root Directory
             if (Path.IsPathRooted(value))
             {
@@ -181,7 +187,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
             this.ProgramDirectory = Directory.GetCurrentDirectory();
         }
 
-        if (this.arguments.TryGetOption(DefaultDataDirectory, out value))
+        if (this.Arguments.TryGetOption(DefaultDataDirectory, out value))
         {// Data Directory
             if (Path.IsPathRooted(value))
             {
@@ -193,10 +199,4 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
             }
         }
     }
-
-#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
-#pragma warning disable SA1401
-    internal UnitArguments arguments = new();
-#pragma warning restore SA1401
-#pragma warning restore SA1307 // Accessible fields should begin with upper-case letter
 }

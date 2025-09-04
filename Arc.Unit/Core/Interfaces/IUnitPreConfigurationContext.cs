@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public interface IUnitPreConfigurationContext : IUnitSharedConfigurationContext
 {
-    bool IsFirstBuilderRun { get; }
+    // bool IsFirstBuilderRun { get; }
 
     void SetOptions<TOptions>(TOptions options)
         where TOptions : class;

@@ -75,7 +75,7 @@ public class UnitBuilder
     {
     }
 
-    protected Action<IUnitConfigurationContext>? CustomConfigure { get; set; }
+    protected Action<IUnitConfigurationContext>? CustomConfiguration { get; set; }
 
     /// <summary>
     /// Runs the given actions and build a unit.
@@ -200,25 +200,14 @@ public class UnitBuilder
         var builderContext = new UnitBuilderContext();
 
         // Pre-Configuration
-        builderContext.BuilderRun.Clear();
-        builderContext.BuilderRun.Add(this.GetType());
-        this.PreConfigure(builderContext, args, true);
-
-        // Custom
-        /*foreach (var x in builderContext.CustomContexts.Values)
-        {
-            if (x is IUnitCustomContext context)
-            {
-                context.Preload(builderContext);
-            }
-        }*/
+        builderContext.ProcessedBuilderTypes.Clear();
+        this.PreConfigureInternal(builderContext, args);
 
         // Configure
         UnitOptions.Configure(builderContext); // Unit options
         UnitLogger.Configure(builderContext); // Logger
-        builderContext.BuilderRun.Clear();
-        builderContext.BuilderRun.Add(this.GetType());
-        this.ConfigureInternal(builderContext, true);
+        builderContext.ProcessedBuilderTypes.Clear();
+        this.ConfigureInternal(builderContext);
 
         // Custom
         foreach (var x in builderContext.CustomContexts.Values)
@@ -263,12 +252,17 @@ public class UnitBuilder
         return unit;
     }
 
-    private void PreConfigure(UnitBuilderContext context, string? args, bool firstRun)
-    {
+    private void PreConfigureInternal(UnitBuilderContext context, string? args)
+    {// Pre-configuration
+        if (!context.ProcessedBuilderTypes.Add(this.GetType()))
+        {// Already processed.
+            return;
+        }
+
         // Arguments
         if (args != null)
         {
-            context.arguments.Add(args);
+            context.Arguments.Add(args);
         }
 
         // Directory
@@ -277,31 +271,34 @@ public class UnitBuilder
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.PreConfigure(context, args, context.BuilderRun.Add(x.GetType()));
+            x.PreConfigureInternal(context, args);
         }
 
-        // Preload actions
-        context.IsFirstBuilderRun = firstRun;
+        // Actions
         foreach (var x in this.preConfigureActions)
         {
             x(context);
         }
     }
 
-    private void ConfigureInternal(UnitBuilderContext context, bool firstRun)
-    {
+    private void ConfigureInternal(UnitBuilderContext context)
+    {// Configuration
+        if (!context.ProcessedBuilderTypes.Add(this.GetType()))
+        {// Already processed.
+            return;
+        }
+
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.ConfigureInternal(context, context.BuilderRun.Add(x.GetType()));
-            if (x.CustomConfigure is { } customConfigure)
+            x.ConfigureInternal(context);
+            if (x.CustomConfiguration is { } customConfiguration)
             {
-                customConfigure(context);
+                customConfiguration(context);
             }
         }
 
         // Configure actions
-        context.IsFirstBuilderRun = firstRun;
         foreach (var x in this.configureActions)
         {
             x(context);

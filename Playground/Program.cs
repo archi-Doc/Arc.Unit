@@ -101,6 +101,7 @@ public class Program
             {
             });
         builder.AddBuilder(builder2);
+        builder.AddBuilder(builder2);
 
         var unit = builder.Build();
 

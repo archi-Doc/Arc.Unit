@@ -4,7 +4,5 @@ namespace Arc.Unit;
 
 public interface IUnitCustomContext
 {
-    // void Preload(IUnitPreloadContext context);
-
     void Configure(IUnitConfigurationContext context);
 }
