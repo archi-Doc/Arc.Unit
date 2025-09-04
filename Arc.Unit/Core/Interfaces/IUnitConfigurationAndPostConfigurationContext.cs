@@ -5,9 +5,9 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Arc.Unit;
 
 /// <summary>
-/// Contextual information used by Setup delegate and provided to <see cref="UnitBuilder"/>.
+/// Provides contextual information and configuration methods used during the configuration and post-configuration phase of a unit.
 /// </summary>
-public interface IUnitConfigurationAndPreConfigurationContext
+public interface IUnitConfigurationAndPostConfigurationContext
 {
     /// <summary>
     /// Gets <see cref="CommandGroup"/> of the specified command type.

@@ -3,9 +3,9 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// Contextual information used by Setup delegate and provided to <see cref="UnitBuilder"/>.
+/// Provides contextual information and configuration methods used during the post-configuration phase of a unit.
 /// </summary>
-public interface IUnitPostConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPreConfigurationContext
+public interface IUnitPostConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPostConfigurationContext
 {
     /// <summary>
     /// Gets <see cref="IServiceProvider"/>.

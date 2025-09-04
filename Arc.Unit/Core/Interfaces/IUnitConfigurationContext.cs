@@ -5,41 +5,45 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Arc.Unit;
 
 /// <summary>
-/// Contextual information used by Configuration delegate and provided to <see cref="UnitBuilder"/>.
+/// Provides contextual information and configuration methods used during the configuration phase of a unit.
 /// </summary>
-public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPreConfigurationContext
+public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPostConfigurationContext
 {
     /// <summary>
-    /// Gets <see cref="IServiceCollection"/>.
+    /// Gets the <see cref="IServiceCollection"/> used for dependency injection and service registration.
     /// </summary>
     IServiceCollection Services { get; }
 
     /// <summary>
-    /// Adds a logger resolver which determines appropriate <see cref="ILogOutput"/> and <see cref="ILogFilter"/> from Log source and <see cref="LogLevel"/>.
+    /// Adds a logger resolver delegate that determines the appropriate <see cref="ILogOutput"/> and <see cref="ILogFilter"/>
+    /// based on the log source and <see cref="LogLevel"/>.
     /// </summary>
-    /// <param name="resolver"><see cref="LoggerResolverDelegate"/>.</param>
+    /// <param name="resolver">The <see cref="LoggerResolverDelegate"/> to add.</param>
     void AddLoggerResolver(LoggerResolverDelegate resolver);
 
+    /// <summary>
+    /// Clears all registered logger resolvers from the context.
+    /// </summary>
     void ClearLoggerResolver();
 
     /// <summary>
-    /// Adds command.
+    /// Adds a command type to the configuration context.
     /// </summary>
-    /// <param name="commandType">The command type.</param>
-    /// <returns><see langword="true"/>: Successfully added.</returns>
+    /// <param name="commandType">The <see cref="Type"/> of the command to add.</param>
+    /// <returns><see langword="true"/> if the command was successfully added; otherwise, <see langword="false"/>.</returns>
     bool AddCommand(Type commandType);
 
     /// <summary>
-    /// Adds subcommand.
+    /// Adds a subcommand type to the configuration context.
     /// </summary>
-    /// <param name="commandType">The command type.</param>
-    /// <returns><see langword="true"/>: Successfully added.</returns>
+    /// <param name="commandType">The <see cref="Type"/> of the subcommand to add.</param>
+    /// <returns><see langword="true"/> if the subcommand was successfully added; otherwise, <see langword="false"/>.</returns>
     bool AddSubcommand(Type commandType);
 
     /// <summary>
-    /// Adds the specified <see cref="Type"/> to the creation list.
-    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
+    /// Registers the specified type for instance creation.<br/>
+    /// Instances are created by calling <see cref="UnitContext.CreateInstances()"/>.
     /// </summary>
-    /// <typeparam name="T">The type to be instantiated.</typeparam>
+    /// <typeparam name="T">The type to be instantiated and registered for creation.</typeparam>
     void RegisterInstanceCreation<T>();
 }

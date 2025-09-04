@@ -116,8 +116,8 @@ public sealed class UnitContext
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.CreateInstanceTypes = builderContext.InstanceCreationSet.ToArray();
 
-        ((IUnitConfigurationAndPreConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
-        ((IUnitConfigurationAndPreConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
+        ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
+        ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
         foreach (var x in builderContext.CommandGroups)
         {
             this.CommandDictionary[x.Key] = x.Value.ToArray();

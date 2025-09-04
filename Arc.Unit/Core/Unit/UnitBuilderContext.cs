@@ -135,19 +135,19 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     public bool AddCommand(Type commandType)
     {
-        var group = ((IUnitConfigurationAndPreConfigurationContext)this).GetCommandGroup();
+        var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup();
         return group.AddCommand(commandType);
     }
 
     public bool AddSubcommand(Type commandType)
     {
-        var group = ((IUnitConfigurationAndPreConfigurationContext)this).GetSubcommandGroup();
+        var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetSubcommandGroup();
         return group.AddCommand(commandType);
     }
 
     #region IUnitConfigurationAndPreConfigurationContext
 
-    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetCommandGroup(Type type)
+    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetCommandGroup(Type type)
     {
         if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
         {
@@ -159,9 +159,9 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return commandGroup;
     }
 
-    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetCommandGroup() => ((IUnitConfigurationAndPreConfigurationContext)this).GetCommandGroup(typeof(TopCommand));
+    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetCommandGroup() => ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup(typeof(TopCommand));
 
-    CommandGroup IUnitConfigurationAndPreConfigurationContext.GetSubcommandGroup() => ((IUnitConfigurationAndPreConfigurationContext)this).GetCommandGroup(typeof(SubCommand));
+    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetSubcommandGroup() => ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup(typeof(SubCommand));
 
     #endregion
 
