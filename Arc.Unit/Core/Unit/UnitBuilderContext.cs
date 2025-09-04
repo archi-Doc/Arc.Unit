@@ -94,11 +94,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return (TContext)context;
     }
 
-    #endregion
-
-    #region IUnitSharedConfigurationContext
-
-    TOptions IUnitSharedConfigurationContext.GetOptions<TOptions>()
+    TOptions IUnitPreConfigurationContext.GetOptions<TOptions>()
     {
         var options = this.ServiceProvider?.GetService<TOptions>();
         if (options is not null)
@@ -120,9 +116,9 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return options;
     }
 
-    void IUnitSharedConfigurationContext.SetOptions<TOptions>(TOptions options)
+    void IUnitPreConfigurationContext.SetOptions<TOptions>(TOptions options)
     {
-        var baseOptions = ((IUnitSharedConfigurationContext)this).GetOptions<TOptions>();
+        var baseOptions = ((IUnitPreConfigurationContext)this).GetOptions<TOptions>();
         if (baseOptions != options)
         {
             GhostCopy.Copy(ref options, ref baseOptions);
@@ -198,7 +194,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     [MemberNotNull(nameof(ProgramDirectory), nameof(DataDirectory))]
     internal void SetDirectory()
     {
-        if (this.Arguments.TryGetOption(RootDirectoryOptionName, out var value))
+        if (this.Arguments.TryGetOptionValue(RootDirectoryOptionName, out var value))
         {// Root Directory
             if (Path.IsPathRooted(value))
             {
@@ -214,7 +210,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
             this.ProgramDirectory = Directory.GetCurrentDirectory();
         }
 
-        if (this.Arguments.TryGetOption(DataDirectoryOptionName, out value))
+        if (this.Arguments.TryGetOptionValue(DataDirectoryOptionName, out value))
         {// Data Directory
             if (Path.IsPathRooted(value))
             {

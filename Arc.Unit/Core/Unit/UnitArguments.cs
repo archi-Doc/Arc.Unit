@@ -10,38 +10,40 @@ namespace Arc.Unit;
 /// </summary>
 public class UnitArguments
 {
+    private static readonly StringComparison DefaultStringComparison = StringComparison.InvariantCultureIgnoreCase;
+
     public UnitArguments(string? args)
     {
-        this.Setup(args);
+        this.Initialize(args);
     }
 
     public string RawArguments => this.rawArguments;
 
-    public bool ContainsValue(string value) => this.values.Contains(value);
-
-    public IEnumerable<string> GetValues() => this.values;
-
-    public bool TryGetOption(string option, [MaybeNullWhen(false)] out string value)
+    public bool TryGetOptionValue(string optionName, [MaybeNullWhen(false)] out string optionValue)
     {// this.options.TryGetValue(option.ToLower(), out value);
         foreach (var x in this.options)
         {
-            if (x.Key.Equals(option, StringComparison.InvariantCultureIgnoreCase))
+            if (x.Key.Equals(optionName, DefaultStringComparison))
             {
-                value = x.Value;
+                optionValue = x.Value;
                 return true;
             }
         }
 
-        value = default;
+        optionValue = default;
         return false;
     }
 
     public bool ContainsOption(string option)
     {// this.options.ContainsKey(option.ToLower());
-        return this.options.Any(x => x.Key == option);
+        return this.options.Any(x => x.Key.Equals(option, DefaultStringComparison));
     }
 
-    public IEnumerable<(string Option, string Value)> GetOptionsAndValues()
+    public bool ContainsValue(string value) => this.values.Contains(value);
+
+    public IEnumerable<string> GetValues() => this.values;
+
+    public IEnumerable<(string OptionName, string OptionValue)> GetOptions()
     {
         foreach (var x in this.options)
         {
@@ -49,7 +51,7 @@ public class UnitArguments
         }
     }
 
-    internal void Setup(string? args)
+    internal void Initialize(string? args)
     {
         if (string.IsNullOrEmpty(args))
         {
