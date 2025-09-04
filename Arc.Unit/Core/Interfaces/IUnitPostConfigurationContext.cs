@@ -1,13 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Arc.Unit;
 
 /// <summary>
-/// Contextual information used by Setup delegate and provided to <see cref="UnitBuilder"/>.
+/// Provides contextual information and configuration methods used during the post-configuration phase of a unit.
 /// </summary>
-public interface IUnitSetupContext : IUnitPreloadSetupContext
+public interface IUnitPostConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPostConfigurationContext
 {
     /// <summary>
     /// Gets <see cref="IServiceProvider"/>.

@@ -2,18 +2,20 @@
 
 namespace Arc.Unit;
 
-public class FileLoggerOptions
+public record class FileLoggerOptions
 {
     public const string DefaultPath = "Log.txt";
     public const int DefaultMaxQueue = 1_000;
 
     public FileLoggerOptions()
     {
-        this.Formatter = new(false);
-        this.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff K";
+        this.Formatter = new SimpleLogFormatterOptions(false) with
+        {
+            TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff K",
+        };
     }
 
-    public string Path { get; set; } = DefaultPath;
+    public string Path { get; init; } = DefaultPath;
 
     /// <summary>
     /// Gets <see cref="SimpleLogFormatterOptions"/>.
@@ -21,17 +23,17 @@ public class FileLoggerOptions
     public SimpleLogFormatterOptions Formatter { get; init; }
 
     /// <summary>
-    /// Gets or sets the maximum number of queued log (0 for unlimited).
+    /// Gets the maximum number of queued log (0 for unlimited).
     /// </summary>
-    public int MaxQueue { get; set; } = DefaultMaxQueue;
+    public int MaxQueue { get; init; } = DefaultMaxQueue;
 
     /// <summary>
-    /// Gets or sets the upper limit of log capacity in megabytes.
+    /// Gets the upper limit of log capacity in megabytes.
     /// </summary>
-    public int MaxLogCapacity { get; set; } = 10;
+    public int MaxLogCapacity { get; init; } = 10;
 
     /// <summary>
-    /// Gets or sets a value indicating whether or not to clear logs at startup.
+    /// Gets a value indicating whether or not to clear logs at startup.
     /// </summary>
-    public bool ClearLogsAtStartup { get; set; } = false;
+    public bool ClearLogsAtStartup { get; init; } = false;
 }

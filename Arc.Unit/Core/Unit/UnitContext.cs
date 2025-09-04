@@ -12,11 +12,76 @@ namespace Arc.Unit;
 /// </summary>
 public sealed class UnitContext
 {
+    #region FieldAndProperty
+
+    /// <summary>
+    /// Gets an instance of <see cref="IServiceProvider"/>.
+    /// </summary>
+    public IServiceProvider ServiceProvider { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets an instance of <see cref="RadioClass"/>.
+    /// </summary>
+    public RadioClass Radio { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets an array of <see cref="Type"/> which is registered in the creation list.<br/>
+    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
+    /// </summary>
+    public Type[] InstanceCreationTypes { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets an array of command <see cref="Type"/>.
+    /// </summary>
+    public Type[] Commands => this.CommandDictionary[typeof(UnitBuilderContext.TopCommand)];
+
+    /// <summary>
+    /// Gets an array of subcommand <see cref="Type"/>.
+    /// </summary>
+    public Type[] Subcommands => this.CommandDictionary[typeof(UnitBuilderContext.SubCommand)];
+
+    /// <summary>
+    /// Gets a collection of command <see cref="Type"/> (keys) and subcommand <see cref="Type"/> (values).
+    /// </summary>
+    public Dictionary<Type, Type[]> CommandDictionary { get; private set; } = new();
+
+    public LoggerResolverDelegate[] LoggerResolvers { get; private set; } = Array.Empty<LoggerResolverDelegate>();
+
+    private Dictionary<Type, object> optionTypeToInstance = new();
+
+    #endregion
+
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitContext"/> class.
     /// </summary>
     public UnitContext()
     {
+    }
+
+    /// <summary>
+    /// Retrieves an options instance of type <typeparamref name="TOptions"/> from the <see cref="ServiceProvider"/> or internal storage.
+    /// </summary>
+    /// <typeparam name="TOptions">
+    /// The type of the options class to retrieve. Must be a reference type with a parameterless constructor.
+    /// </typeparam>
+    /// <returns>
+    /// An instance of <typeparamref name="TOptions"/> if available; otherwise, <c>null</c>.
+    /// </returns>
+    public TOptions? GetOptions<TOptions>()
+        where TOptions : class, new()
+    {
+        var options = this.ServiceProvider?.GetService<TOptions>();
+        if (options is not null)
+        {
+            return options;
+        }
+
+        if (this.optionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
+        {
+            options = instance as TOptions;
+        }
+
+        return options;
     }
 
     /// <summary>
@@ -37,11 +102,11 @@ public sealed class UnitContext
     }
 
     /// <summary>
-    /// Create instances registered by <see cref="UnitBuilderContext.CreateInstance{T}()"/>.
+    /// Create instances registered by <see cref="IUnitConfigurationContext.RegisterInstanceCreation{T}()"/>.
     /// </summary>
     public void CreateInstances()
     {
-        foreach (var x in this.CreateInstanceTypes)
+        foreach (var x in this.InstanceCreationTypes)
         {
             this.ServiceProvider.GetService(x);
         }
@@ -66,51 +131,19 @@ public sealed class UnitContext
         => await this.Radio.Send<IUnitSerializable>().SaveAsync(message, cancellationToken).ConfigureAwait(false);
 
     /// <summary>
-    /// Gets an instance of <see cref="IServiceProvider"/>.
-    /// </summary>
-    public IServiceProvider ServiceProvider { get; private set; } = default!;
-
-    /// <summary>
-    /// Gets an instance of <see cref="RadioClass"/>.
-    /// </summary>
-    public RadioClass Radio { get; private set; } = default!;
-
-    /// <summary>
-    /// Gets an array of <see cref="Type"/> which is registered in the creation list.<br/>
-    /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
-    /// </summary>
-    public Type[] CreateInstanceTypes { get; private set; } = default!;
-
-    /// <summary>
-    /// Gets an array of command <see cref="Type"/>.
-    /// </summary>
-    public Type[] Commands => this.CommandDictionary[typeof(UnitBuilderContext.TopCommand)];
-
-    /// <summary>
-    /// Gets an array of subcommand <see cref="Type"/>.
-    /// </summary>
-    public Type[] Subcommands => this.CommandDictionary[typeof(UnitBuilderContext.SubCommand)];
-
-    /// <summary>
-    /// Gets a collection of command <see cref="Type"/> (keys) and subcommand <see cref="Type"/> (values).
-    /// </summary>
-    public Dictionary<Type, Type[]> CommandDictionary { get; private set; } = new();
-
-    public LoggerResolverDelegate[] LoggerResolvers { get; private set; } = Array.Empty<LoggerResolverDelegate>();
-
-    /// <summary>
     /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
     /// </summary>
     /// <param name="serviceProvider"><see cref="IServiceCollection"/>.</param>
     /// <param name="builderContext"><see cref="UnitBuilderContext"/>.</param>
-    internal void FromBuilderToUnit(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
+    internal void FromBuilderToUnitContext(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
     {
         this.ServiceProvider = serviceProvider;
+        this.optionTypeToInstance = builderContext.OptionTypeToInstance;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
-        this.CreateInstanceTypes = builderContext.CreateInstanceSet.ToArray();
+        this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
 
-        builderContext.GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
-        builderContext.GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
+        ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
+        ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
         foreach (var x in builderContext.CommandGroups)
         {
             this.CommandDictionary[x.Key] = x.Value.ToArray();

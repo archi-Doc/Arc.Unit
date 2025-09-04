@@ -8,22 +8,22 @@ public record class ConsoleLoggerOptions
 
     public ConsoleLoggerOptions()
     {
-        this.Formatter = new(true);
+        this.FormatterOptions = new(true);
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether logs are buffered for a set period (default is 40 milliseconds) and then output together.<br/>
+    /// Gets a value indicating whether logs are buffered for a set period (default is 40 milliseconds) and then output together.<br/>
     /// This improves performance during log output but may result in logs being out of order with other console outputs.
     /// </summary>
-    public bool EnableBuffering { get; set; } = false;
+    public bool EnableBuffering { get; init; } = false;
 
     /// <summary>
     /// Gets <see cref="SimpleLogFormatterOptions"/>.
     /// </summary>
-    public SimpleLogFormatterOptions Formatter { get; init; }
+    public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
-    /// Gets or sets the maximum number of queued log (0 for unlimited).
+    /// Gets the maximum number of queued log (0 for unlimited).
     /// </summary>
-    public int MaxQueue { get; set; } = DefaultMaxQueue;
+    public int MaxQueue { get; init; } = DefaultMaxQueue;
 }

@@ -8,8 +8,10 @@ public record class MemoryLoggerOptions
 
     public MemoryLoggerOptions()
     {
-        this.Formatter = new(false);
-        this.Formatter.TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K";
+        this.Formatter = new SimpleLogFormatterOptions(false) with
+        {
+            TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K",
+        };
     }
 
     /// <summary>
@@ -18,7 +20,7 @@ public record class MemoryLoggerOptions
     public SimpleLogFormatterOptions Formatter { get; init; }
 
     /// <summary>
-    /// Gets or sets the maximum memory usage in bytes (0 for unlimited, default value is <see cref="DefaultMaxMemoryUsage"/>).
+    /// Gets the maximum memory usage in bytes (0 for unlimited, default value is <see cref="DefaultMaxMemoryUsage"/>).
     /// </summary>
-    public long MaxMemoryUsage { get; set; } = DefaultMaxMemoryUsage;
+    public long MaxMemoryUsage { get; init; } = DefaultMaxMemoryUsage;
 }

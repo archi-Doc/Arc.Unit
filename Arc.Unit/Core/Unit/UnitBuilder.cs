@@ -33,17 +33,16 @@ public class UnitBuilder<TUnit> : UnitBuilder
         => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> Preload(Action<IUnitPreloadContext> @delegate)
-        => (UnitBuilder<TUnit>)base.Preload(@delegate);
+    public override UnitBuilder<TUnit> PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
+        => (UnitBuilder<TUnit>)base.PreConfigure(@delegate);
 
     /// <inheritdoc/>
     public override UnitBuilder<TUnit> Configure(Action<IUnitConfigurationContext> configureDelegate)
         => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
-        where TOptions : class
-        => (UnitBuilder<TUnit>)base.SetupOptions(@delegate);
+    public override UnitBuilder<TUnit> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
+        => (UnitBuilder<TUnit>)base.PostConfigure(configureDelegate);
 
     /// <inheritdoc/>
     public override TUnit GetBuiltUnit() => (TUnit)base.GetBuiltUnit();
@@ -55,7 +54,15 @@ public class UnitBuilder<TUnit> : UnitBuilder
 /// </summary>
 public class UnitBuilder
 {
-    private record SetupItem(Type Type, Action<IUnitSetupContext, object> Action);
+    #region FieldAndProperty
+
+    private BuiltUnit? builtUnit;
+    private List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
+    private List<Action<IUnitConfigurationContext>> configureActions = new();
+    private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
+    private List<UnitBuilder> unitBuilders = new();
+
+    #endregion
 
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitBuilder"/> class.
@@ -64,7 +71,7 @@ public class UnitBuilder
     {
     }
 
-    protected Action<IUnitConfigurationContext>? CustomConfigure { get; set; }
+    protected Action<IUnitConfigurationContext>? CustomConfiguration { get; set; }
 
     /// <summary>
     /// Runs the given actions and build a unit.
@@ -93,26 +100,41 @@ public class UnitBuilder
     }
 
     /// <summary>
-    /// Adds a delegate to the builder for preloading the unit.<br/>
-    /// This can be called multiple times and the results will be additive.
+    /// <b>Pre-configuration: Handles tasks such as setting options from the command line and handling load operations.</b><br/>
+    /// Adds a delegate to the builder to pre-configure the unit.<br/>
+    /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate for preloading the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder Preload(Action<IUnitPreloadContext> @delegate)
+    /// <param name="delegate">The delegate used to pre-configure the unit.</param>
+    /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
+    public virtual UnitBuilder PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
     {
-        this.preloadActions.Add(@delegate);
+        this.preConfigureActions.Add(@delegate);
         return this;
     }
 
     /// <summary>
-    /// Adds a delegate to the builder for configuring the unit.<br/>
-    /// This can be called multiple times and the results will be additive.
+    /// <b>Configuration: Handles registration with the DI container, adding commands, setting up the logger, and similar configuration tasks.</b><br/>
+    /// Adds a delegate to the builder to configure the unit.<br/>
+    /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate for configuring the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
+    /// <param name="delegate">The delegate used to configure the unit.</param>
+    /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
     public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
     {
         this.configureActions.Add(@delegate);
+        return this;
+    }
+
+    /// <summary>
+    /// <b>Post-configuration: Executed after creating the instance (ServiceProvider), performing follow-up operations such as option settings.</b><br/>
+    /// Adds a delegate to the builder to post-configure the unit.<br/>
+    /// This method can be called multiple times, and all delegates will be combined.
+    /// </summary>
+    /// <param name="delegate">The delegate used to post-configure the unit.</param>
+    /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
+    public virtual UnitBuilder PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
+    {
+        this.postConfigureActions.Add(@delegate);
         return this;
     }
 
@@ -123,12 +145,10 @@ public class UnitBuilder
     /// <typeparam name="TOptions">The type of options class.</typeparam>
     /// <param name="delegate">The delegate for setting up the unit.</param>
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder SetupOptions<TOptions>(Action<IUnitSetupContext, TOptions> @delegate)
+    public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
         where TOptions : class
     {
-        var ac = new Action<IUnitSetupContext, object>((context, options) => @delegate(context, (TOptions)options));
-        var item = new SetupItem(typeof(TOptions), ac);
-        this.setupItems.Add(item);
+        var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
         return this;
     }
 
@@ -157,31 +177,22 @@ public class UnitBuilder
             throw new InvalidOperationException();
         }
 
-        // Builder context.
-        var builderContext = new UnitBuilderContext();
+        // Builder context
+        var builderContext = new UnitBuilderContext(args);
 
-        // Preload
-        builderContext.BuilderRun.Clear();
-        builderContext.BuilderRun.Add(this.GetType());
-        this.PreloadInternal(builderContext, args, true);
+        // Pre-configuration
+        builderContext.ProcessedBuilderTypes.Clear();
+        this.PreConfigureInternal(builderContext);
 
-        // Custom
-        /*foreach (var x in builderContext.CustomContexts.Values)
-        {
-            if (x is IUnitCustomContext context)
-            {
-                context.Preload(builderContext);
-            }
-        }*/
+        // Configuration: UnitOptions, UnitLogger
+        UnitOptions.Configure(builderContext);
+        UnitLogger.Configure(builderContext);
 
-        // Configure
-        UnitOptions.Configure(builderContext); // Unit options
-        UnitLogger.Configure(builderContext); // Logger
-        builderContext.BuilderRun.Clear();
-        builderContext.BuilderRun.Add(this.GetType());
-        this.ConfigureInternal(builderContext, true);
+        // Configuration
+        builderContext.ProcessedBuilderTypes.Clear();
+        this.ConfigureInternal(builderContext);
 
-        // Custom
+        // Custom configuration
         foreach (var x in builderContext.CustomContexts.Values)
         {
             if (x is IUnitCustomContext context)
@@ -190,18 +201,13 @@ public class UnitBuilder
             }
         }
 
+        // Register other services
         builderContext.TryAddSingleton<UnitCore>();
         builderContext.TryAddSingleton<UnitContext>();
         builderContext.TryAddSingleton<UnitOptions>();
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<IConsoleService, ConsoleService>();
-        builderContext.TryAddSingleton<RadioClass>(); // Unit radio
-
-        // Setup classes
-        foreach (var x in this.setupItems)
-        {
-            builderContext.TryAddSingleton(x.Type);
-        }
+        builderContext.TryAddSingleton<RadioClass>();
 
         // Options instances
         foreach (var x in builderContext.OptionTypeToInstance)
@@ -209,85 +215,84 @@ public class UnitBuilder
             builderContext.Services.Add(ServiceDescriptor.Singleton(x.Key, x.Value));
         }
 
+        // Create a service provider
         var serviceProvider = builderContext.Services.BuildServiceProvider();
         builderContext.ServiceProvider = serviceProvider;
 
         // BuilderContext to UnitContext.
         var unitContext = serviceProvider.GetRequiredService<UnitContext>();
-        unitContext.FromBuilderToUnit(serviceProvider, builderContext);
+        unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
 
-        // Setup
-        this.SetupInternal(builderContext);
+        // Post-configuration
+        builderContext.ProcessedBuilderTypes.Clear();
+        this.PostConfigureInternal(builderContext);
 
         var unit = serviceProvider.GetRequiredService<TUnit>();
         this.builtUnit = unit;
         return unit;
     }
 
-    internal void PreloadInternal(UnitBuilderContext context, string? args, bool firstRun)
-    {
-        // Arguments
-        if (args != null)
-        {
-            context.arguments.Add(args);
+    private void PreConfigureInternal(UnitBuilderContext context)
+    {// Pre-configuration
+        if (!context.ProcessedBuilderTypes.Add(this))
+        {// Already processed.
+            return;
         }
-
-        // Directory
-        context.SetDirectory();
 
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.PreloadInternal(context, args, context.BuilderRun.Add(x.GetType()));
+            x.PreConfigureInternal(context);
         }
 
-        // Preload actions
-        context.FirstBuilderRun = firstRun;
-        foreach (var x in this.preloadActions)
+        // Actions
+        foreach (var x in this.preConfigureActions)
         {
             x(context);
         }
     }
 
-    internal void ConfigureInternal(UnitBuilderContext context, bool firstRun)
-    {
+    private void ConfigureInternal(UnitBuilderContext context)
+    {// Configuration
+        if (!context.ProcessedBuilderTypes.Add(this))
+        {// Already processed.
+            return;
+        }
+
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.ConfigureInternal(context, context.BuilderRun.Add(x.GetType()));
-            if (x.CustomConfigure is { } customConfigure)
+            x.ConfigureInternal(context);
+            if (x.CustomConfiguration is { } customConfiguration)
             {
-                customConfigure(context);
+                customConfiguration(context);
             }
         }
 
-        // Configure actions
-        context.FirstBuilderRun = firstRun;
+        // Actions
         foreach (var x in this.configureActions)
         {
             x(context);
         }
     }
 
-    internal void SetupInternal(UnitBuilderContext builderContext)
-    {
+    private void PostConfigureInternal(UnitBuilderContext context)
+    {// Post-configuration
+        if (!context.ProcessedBuilderTypes.Add(this))
+        {// Already processed.
+            return;
+        }
+
         // Unit builders
         foreach (var x in this.unitBuilders)
         {
-            x.SetupInternal(builderContext);
+            x.PostConfigureInternal(context);
         }
 
         // Actions
-        foreach (var x in this.setupItems)
+        foreach (var x in this.postConfigureActions)
         {
-            var instance = builderContext.ServiceProvider!.GetRequiredService(x.Type);
-            x.Action(builderContext, instance);
+            x(context);
         }
     }
-
-    private BuiltUnit? builtUnit;
-    private List<Action<IUnitPreloadContext>> preloadActions = new();
-    private List<Action<IUnitConfigurationContext>> configureActions = new();
-    private List<SetupItem> setupItems = new();
-    private List<UnitBuilder> unitBuilders = new();
 }

@@ -2,11 +2,7 @@
 
 namespace Arc.Unit;
 
-public enum UnitStatus
+public interface IUnitCustomContext
 {
-    Constructed,
-    Prepared,
-    Loaded,
-    Running,
-    Terminated,
+    void Configure(IUnitConfigurationContext context);
 }

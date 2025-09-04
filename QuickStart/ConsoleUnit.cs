@@ -13,11 +13,24 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         public Builder()
             : base()
         {
-            // Configuration for Unit.
+            // Configuration of the unit
+            this.PreConfigure(context =>
+            {
+                if (string.IsNullOrEmpty(context.ProgramDirectory))
+                {
+                    context.ProgramDirectory = "Program";
+                }
+
+                if (string.IsNullOrEmpty(context.DataDirectory))
+                {
+                    context.DataDirectory = "Test";
+                }
+            });
+
             this.Configure(context =>
             {
                 context.AddSingleton<ConsoleUnit>();
-                context.CreateInstance<ConsoleUnit>();
+                context.RegisterInstanceCreation<ConsoleUnit>();
 
                 // Command
                 context.AddCommand(typeof(ConsoleCommand));
@@ -44,30 +57,21 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 });
             });
 
-            this.Preload(context =>
+            this.PostConfigure(context =>
             {
-                if (string.IsNullOrEmpty(context.ProgramDirectory))
-                {
-                    context.ProgramDirectory = "Program";
-                }
-
-                if (string.IsNullOrEmpty(context.DataDirectory))
-                {
-                    context.DataDirectory = "Test";
-                }
-            });
-
-            this.SetupOptions<FileLoggerOptions>((context, options) =>
-            {// FileLoggerOptions
                 var logfile = "Logs/Log.txt";
-                options.Path = Path.Combine(context.DataDirectory, logfile);
-                options.MaxLogCapacity = 2;
-                options.ClearLogsAtStartup = true;
-            });
+                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+                {
+                    Path = Path.Combine(context.DataDirectory, logfile),
+                    MaxLogCapacity = 2,
+                    ClearLogsAtStartup = true,
+                });
 
-            this.SetupOptions<ConsoleLoggerOptions>((context, options) =>
-            {// ConsoleLoggerOptions
-                options.Formatter.EnableColor = true;
+                var consoleLoggerOptions = context.GetOptions<ConsoleLoggerOptions>();
+                context.SetOptions(consoleLoggerOptions with
+                {
+                    FormatterOptions = consoleLoggerOptions.FormatterOptions with { EnableColor = true },
+                });
             });
         }
     }

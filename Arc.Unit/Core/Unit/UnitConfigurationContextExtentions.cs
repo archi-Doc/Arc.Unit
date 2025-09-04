@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Arc.Unit;
 
-public static class IUnitConfigurationContextExtentions
+public static class UnitConfigurationContextExtentions
 {
     public static void AddSingleton<TService>(this IUnitConfigurationContext context)
         where TService : class => context.Services.AddSingleton<TService>();
