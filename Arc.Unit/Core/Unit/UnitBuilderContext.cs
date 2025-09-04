@@ -113,10 +113,27 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return options != null;
     }
 
-    public void GetOptions<TOptions>(out TOptions options)
-        where TOptions : class
+    public TOptions GetOptions<TOptions>()
+        where TOptions : class, new()
     {
-        options = (TOptions)this.OptionTypeToInstance[typeof(TOptions)];
+        var options = this.ServiceProvider?.GetService<TOptions>();
+        if (options is not null)
+        {
+            return options;
+        }
+
+        if (this.OptionTypeToInstance.TryGetValue(typeof(TOptions), out var instance))
+        {
+            options = instance as TOptions;
+            if (options is not null)
+            {
+                return options;
+            }
+        }
+
+        options ??= new();
+        this.OptionTypeToInstance.TryAdd(typeof(TOptions), options);
+        return options;
     }
 
     public TOptions GetOrCreateOptions<TOptions>()
