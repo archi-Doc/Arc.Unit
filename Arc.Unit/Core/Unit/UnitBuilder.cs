@@ -197,7 +197,7 @@ public class UnitBuilder
         {
             if (x is IUnitCustomContext context)
             {
-                context.Configure(builderContext);
+                context.ProcessContext(builderContext);
             }
         }
 

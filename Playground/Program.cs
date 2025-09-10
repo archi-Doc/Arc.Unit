@@ -23,7 +23,7 @@ public interface ITestInterface<T> : ITestInterface
 
 public class CustomContext : IUnitCustomContext
 {
-    void IUnitCustomContext.Configure(IUnitConfigurationContext context)
+    void IUnitCustomContext.ProcessContext(IUnitConfigurationContext context)
     {
     }
 }
