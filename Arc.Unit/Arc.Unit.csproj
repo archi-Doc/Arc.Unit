@@ -24,7 +24,7 @@
     <PackageReference Include="Arc.Collections" Version="1.25.4" />
     <PackageReference Include="Arc.CrossChannel" Version="2.8.1" />
     <PackageReference Include="Arc.Threading" Version="0.33.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
     <PackageReference Include="SimpleCommandLine" Version="0.27.1" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
       <PrivateAssets>all</PrivateAssets>
