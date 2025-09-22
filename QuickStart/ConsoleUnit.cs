@@ -8,7 +8,7 @@ namespace QuickStart;
 
 public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 {
-    public class Builder : UnitBuilder<Unit>
+    public class Builder : UnitBuilder<Product>
     {// Builder class for customizing dependencies.
         public Builder()
             : base()
@@ -76,11 +76,11 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         }
     }
 
-    public class Unit : BuiltUnit
-    {// Unit class for customizing behaviors.
+    public class Product : UnitProduct
+    {// Product class for customizing behaviors.
         public record Param(string[] Args);
 
-        public Unit(UnitContext context)
+        public Product(UnitContext context)
             : base(context)
         {
         }

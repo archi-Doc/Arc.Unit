@@ -9,11 +9,11 @@ namespace Arc.Unit;
 
 /// <summary>
 /// Builder class of unit, for customizing dependencies.<br/>
-/// Unit is an independent unit of function and dependency.<br/>
+/// <b>Unit = Builder + Product(Instance) + Function</b>
 /// </summary>
-/// <typeparam name="TUnit">The type of unit.</typeparam>
-public class UnitBuilder<TUnit> : UnitBuilder
-    where TUnit : BuiltUnit
+/// <typeparam name="TProduct">The type of product.</typeparam>
+public class UnitBuilder<TProduct> : UnitBuilder
+    where TProduct : UnitProduct
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="UnitBuilder{TUnit}"/> class.
@@ -23,29 +23,29 @@ public class UnitBuilder<TUnit> : UnitBuilder
     }
 
     /// <inheritdoc/>
-    public override TUnit Build(string? args = null) => this.Build<TUnit>(args);
+    public override TProduct Build(string? args = null) => this.Build<TProduct>(args);
 
     /// <inheritdoc/>
-    public override TUnit Build(string[] args) => this.Build<TUnit>(args);
+    public override TProduct Build(string[] args) => this.Build<TProduct>(args);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> AddBuilder(UnitBuilder unitBuilder)
-        => (UnitBuilder<TUnit>)base.AddBuilder(unitBuilder);
+    public override UnitBuilder<TProduct> AddBuilder(UnitBuilder unitBuilder)
+        => (UnitBuilder<TProduct>)base.AddBuilder(unitBuilder);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
-        => (UnitBuilder<TUnit>)base.PreConfigure(@delegate);
+    public override UnitBuilder<TProduct> PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
+        => (UnitBuilder<TProduct>)base.PreConfigure(@delegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> Configure(Action<IUnitConfigurationContext> configureDelegate)
-        => (UnitBuilder<TUnit>)base.Configure(configureDelegate);
+    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> configureDelegate)
+        => (UnitBuilder<TProduct>)base.Configure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TUnit> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
-        => (UnitBuilder<TUnit>)base.PostConfigure(configureDelegate);
+    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
+        => (UnitBuilder<TProduct>)base.PostConfigure(configureDelegate);
 
     /// <inheritdoc/>
-    public override TUnit GetBuiltUnit() => (TUnit)base.GetBuiltUnit();
+    public override TProduct GetBuiltUnit() => (TProduct)base.GetBuiltUnit();
 }
 
 /// <summary>
@@ -56,7 +56,7 @@ public class UnitBuilder
 {
     #region FieldAndProperty
 
-    private BuiltUnit? builtUnit;
+    private UnitProduct? builtUnit;
     private List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
     private List<Action<IUnitConfigurationContext>> configureActions = new();
     private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
@@ -77,15 +77,15 @@ public class UnitBuilder
     /// Runs the given actions and build a unit.
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
-    /// <returns><see cref="BuiltUnit"/>.</returns>
-    public virtual BuiltUnit Build(string[] args) => this.Build<BuiltUnit>(args);
+    /// <returns><see cref="UnitProduct"/>.</returns>
+    public virtual UnitProduct Build(string[] args) => this.Build<UnitProduct>(args);
 
     /// <summary>
     /// Runs the given actions and build a unit.
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
-    /// <returns><see cref="BuiltUnit"/>.</returns>
-    public virtual BuiltUnit Build(string? args = null) => this.Build<BuiltUnit>(args);
+    /// <returns><see cref="UnitProduct"/>.</returns>
+    public virtual UnitProduct Build(string? args = null) => this.Build<UnitProduct>(args);
 
     /// <summary>
     /// Adds a <see cref="UnitBuilder"/> instance to the builder.<br/>
@@ -152,7 +152,7 @@ public class UnitBuilder
         return this;
     }
 
-    public virtual BuiltUnit GetBuiltUnit()
+    public virtual UnitProduct GetBuiltUnit()
     {
         if (this.builtUnit == null)
         {
@@ -163,14 +163,14 @@ public class UnitBuilder
     }
 
     internal virtual TUnit Build<TUnit>(string[] args)
-        where TUnit : BuiltUnit
+        where TUnit : UnitProduct
     {
         var s = args == null ? null : string.Join(' ', args);
         return this.Build<TUnit>(s);
     }
 
     internal virtual TUnit Build<TUnit>(string? args)
-        where TUnit : BuiltUnit
+        where TUnit : UnitProduct
     {
         if (this.builtUnit != null)
         {

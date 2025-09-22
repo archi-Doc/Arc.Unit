@@ -1,4 +1,4 @@
-## Arc.Unit
+## Arc.Unit = Builder + Product(Instance) + Function
 Arc.Unit is an independent unit of function and dependency (like .Net Generic Host).
 
 Work in progress
