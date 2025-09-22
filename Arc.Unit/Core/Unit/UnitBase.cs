@@ -6,7 +6,7 @@ namespace Arc.Unit;
 
 /// <summary>
 /// Base class of Unit.<br/>
-/// Unit is an independent unit of function and dependency.<br/>
+/// <b>Unit = Builder + Product(Instance) + Function</b><br/>
 /// By implementing <see cref="IUnitPreparable"/> and other interfaces, methods can be called from <see cref="UnitContext"/>.
 /// </summary>
 public abstract class UnitBase
