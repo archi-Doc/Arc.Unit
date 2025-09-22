@@ -25,7 +25,7 @@ public class TestClass
         }
     }
 
-    public class Unit : BuiltUnit
+    public class Unit : UnitProduct
     {// Unit class for customizing behaviors.
         public record Param();
 
