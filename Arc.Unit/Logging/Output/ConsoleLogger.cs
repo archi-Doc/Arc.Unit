@@ -40,10 +40,11 @@ public class ConsoleLogger : BufferedLogOutput
         }
     }
 
-    public ConsoleLogger(UnitCore core, UnitLogger unitLogger, ConsoleLoggerOptions options)
+    public ConsoleLogger(UnitCore core, UnitLogger unitLogger, ConsoleLoggerOptions options, IConsoleService consoleService)
         : base(unitLogger)
     {
         // Console
+        this.ConsoleService = consoleService;
         SetConsoleMode();
 
         this.Formatter = new(options.FormatterOptions);
@@ -59,13 +60,15 @@ public class ConsoleLogger : BufferedLogOutput
     {
         if (this.worker == null)
         {
-            try
+            this.ConsoleService.WriteLine(this.Formatter.Format(param));
+
+            /*try
             {// Console.WriteLine() might cause unexpected exceptions after console window is closed.
                 Console.WriteLine(this.Formatter.Format(param));
             }
             catch
             {
-            }
+            }*/
 
             return;
         }
@@ -77,6 +80,8 @@ public class ConsoleLogger : BufferedLogOutput
     }
 
     public override Task<int> Flush(bool terminate) => this.worker?.Flush(terminate) ?? Task.FromResult(0);
+
+    internal IConsoleService ConsoleService { get; }
 
     internal SimpleLogFormatter Formatter { get; init; }
 
