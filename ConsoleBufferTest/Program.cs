@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
+using Arc.Collections;
 using Arc.Unit;
 
 namespace ConsoleBufferTest;
@@ -14,6 +15,8 @@ public class SimpleConsole : IConsoleService
     private readonly char[] buffer = new char[BufferSize];
     private int promptLength;
     private int textLength;
+
+    private ObjectPool<char[]> stringPool = new(() => new char[BufferSize]);
 
     private int BufferLength => this.promptLength + this.textLength;
 
@@ -69,7 +72,8 @@ public class SimpleConsole : IConsoleService
                 }
                 else if (key == ConsoleKey.Backspace)
                 {
-                    string? st = default;
+                    char[]? rentString = default;
+                    int rentLength = 0;
                     var cursorTop = Console.CursorTop;
                     var cursorLeft = Console.CursorLeft;
                     using (this.lockObject.EnterScope())
@@ -77,33 +81,30 @@ public class SimpleConsole : IConsoleService
                         var textPosition = cursorLeft - this.promptLength;
                         if (textPosition > 0)
                         {
-                            Array.Copy(
-                                this.buffer,
-                                this.promptLength + textPosition,
-                                this.buffer,
-                                this.promptLength + textPosition - 1,
-                                this.textLength - textPosition);
+                            var sourceSpan = this.buffer.AsSpan(this.promptLength + textPosition, this.textLength - textPosition);
+
+                            rentString = this.stringPool.Rent();
+                            sourceSpan.CopyTo(rentString.AsSpan());
+                            rentString[sourceSpan.Length] = ' ';
+                            rentLength = sourceSpan.Length + 1;
+
+                            sourceSpan.CopyTo(this.buffer.AsSpan(this.promptLength + textPosition - 1));
                             this.textLength--;
 
-                            st = new string(this.buffer, this.promptLength + textPosition - 1, this.textLength - (textPosition - 1)) + " ";
                             cursorLeft = this.promptLength + textPosition - 1;
                         }
                     }
 
-                    if (st is not null)
+                    if (rentString is not null)
                     {
                         Console.CursorLeft = cursorLeft;
-                        Console.Write(st);
+                        Console.Out.Write(rentString.AsSpan(0, rentLength));
                         Console.CursorLeft = cursorLeft;
+
+                        this.stringPool.Return(rentString);
                     }
 
                     continue;
-
-                    /*if (this.textLength > 0)
-                    {
-                        this.textLength--;
-                        Console.Write("\b \b");
-                    }*/
                 }
                 else if (key == ConsoleKey.LeftArrow)
                 {
@@ -148,7 +149,7 @@ public class SimpleConsole : IConsoleService
     {
         try
         {
-            Console.Write(message);
+            Console.Out.Write(message);
         }
         catch
         {
@@ -164,7 +165,7 @@ public class SimpleConsole : IConsoleService
             if (escaped is not null)
             {
                 Console.CursorLeft = 0;
-                Console.Write(this.whitespaceBuffer.AsSpan(0, escaped.Length));
+                Console.Out.Write(this.whitespaceBuffer.AsSpan(0, escaped.Length));
                 Console.CursorLeft = 0;
             }
 
@@ -172,7 +173,7 @@ public class SimpleConsole : IConsoleService
 
             if (escaped is not null)
             {
-                Console.Write(escaped);
+                Console.Out.Write(escaped);
             }
         }
         catch
