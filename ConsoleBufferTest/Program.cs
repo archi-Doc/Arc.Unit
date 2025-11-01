@@ -34,7 +34,6 @@ public class SimpleConsole : IConsoleService
     private readonly Lock lockObject = new();
     private readonly char[] whitespace = new char[BufferSize];
     private readonly char[] charArray = new char[BufferSize];
-    private int promptLength;
     private int textLength;
 
     private ObjectPool<Buffer> bufferPool = new(() => new Buffer());
@@ -46,7 +45,7 @@ public class SimpleConsole : IConsoleService
         Array.Fill(this.whitespace, ' ');
     }
 
-    public void Flush(string? prompt = default)
+    /*public void Flush(string? prompt = default)
     {
         string? text = default;
         using (this.lockObject.EnterScope())
@@ -64,20 +63,18 @@ public class SimpleConsole : IConsoleService
             }
         }
 
-        /*if (text is not null)
-        {
-            Console.WriteLine(text);
-        }*/
-
         if (prompt?.Length > 0)
         {
             Console.Write(prompt);
         }
-    }
+    }*/
 
     public string? ReadLine(string? prompt = default)
     {
-        this.Flush(prompt);
+        if (prompt?.Length > 0)
+        {
+            Console.Write(prompt);
+        }
 
         try
         {
@@ -94,7 +91,6 @@ public class SimpleConsole : IConsoleService
                 else if (key == ConsoleKey.Backspace)
                 {
                     Buffer? rent = default;
-                    var cursorTop = Console.CursorTop;
                     var cursorLeft = Console.CursorLeft;
                     using (this.lockObject.EnterScope())
                     {
