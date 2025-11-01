@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.CompilerServices;
 using Arc.Unit;
 
 namespace ConsoleBufferTest;
@@ -9,12 +10,16 @@ public class SimpleConsole : IConsoleService
     private const int BufferSize = 1_024;
 
     private readonly Lock lockObject = new();
+    private readonly char[] whitespaceBuffer = new char[BufferSize];
     private readonly char[] buffer = new char[BufferSize];
     private int promptLength;
     private int textLength;
 
+    private int BufferLength => this.promptLength + this.textLength;
+
     public SimpleConsole()
     {
+        Array.Fill(this.whitespaceBuffer, ' ');
     }
 
     public void Flush(string? prompt = default)
@@ -52,26 +57,84 @@ public class SimpleConsole : IConsoleService
 
         try
         {
-            ConsoleKeyInfo key;
-            while ((key = Console.ReadKey(intercept: true)).Key != ConsoleKey.Enter)
+            while (true)
             {
-                if (key.Key == ConsoleKey.Backspace)
+                var keyInfo = Console.ReadKey(intercept: true);
+                var key = keyInfo.Key;
+                var keyChar = keyInfo.KeyChar;
+
+                if (key == ConsoleKey.Enter)
                 {
-                    if (this.textLength > 0)
+                    break;
+                }
+                else if (key == ConsoleKey.Backspace)
+                {
+                    string? st = default;
+                    var cursorTop = Console.CursorTop;
+                    var cursorLeft = Console.CursorLeft;
+                    using (this.lockObject.EnterScope())
+                    {
+                        var textPosition = cursorLeft - this.promptLength;
+                        if (textPosition > 0)
+                        {
+                            Array.Copy(
+                                this.buffer,
+                                this.promptLength + textPosition,
+                                this.buffer,
+                                this.promptLength + textPosition - 1,
+                                this.textLength - textPosition);
+                            this.textLength--;
+
+                            st = new string(this.buffer, this.promptLength + textPosition - 1, this.textLength - (textPosition - 1)) + " ";
+                            cursorLeft = this.promptLength + textPosition - 1;
+                        }
+                    }
+
+                    if (st is not null)
+                    {
+                        Console.CursorLeft = cursorLeft;
+                        Console.Write(st);
+                        Console.CursorLeft = cursorLeft;
+                    }
+
+                    continue;
+
+                    /*if (this.textLength > 0)
                     {
                         this.textLength--;
                         Console.Write("\b \b");
+                    }*/
+                }
+                else if (key == ConsoleKey.LeftArrow)
+                {
+                    if (Console.CursorLeft > this.promptLength)
+                    {
+                        Console.CursorLeft--;
+                    }
+                }
+                else if (key == ConsoleKey.RightArrow)
+                {
+                    if (Console.CursorLeft < this.BufferLength)
+                    {
+                        Console.CursorLeft++;
                     }
                 }
                 else
                 {
-                    this.buffer[this.textLength++] = key.KeyChar;
-                    Console.Write(key.KeyChar);
+                    var cursorLeft = Console.CursorLeft;
+                    this.buffer[cursorLeft] = keyChar;
+                    this.textLength++;
+                    Console.Write(keyChar);
                 }
             }
 
-            var result = new string(this.buffer, 0, this.textLength);
-            this.textLength = 0;
+            string result;
+            using (this.lockObject.EnterScope())
+            {
+                result = new string(this.buffer, this.promptLength, this.textLength);
+                this.ClearBufferInternal();
+            }
+
             Console.WriteLine();
             return result;
         }
@@ -94,9 +157,23 @@ public class SimpleConsole : IConsoleService
 
     public void WriteLine(string? message = null)
     {
+        var escaped = this.EscapeBuffer();
+
         try
         {
+            if (escaped is not null)
+            {
+                Console.CursorLeft = 0;
+                Console.Write(this.whitespaceBuffer.AsSpan(0, escaped.Length));
+                Console.CursorLeft = 0;
+            }
+
             Console.WriteLine(message);
+
+            if (escaped is not null)
+            {
+                Console.Write(escaped);
+            }
         }
         catch
         {
@@ -105,14 +182,7 @@ public class SimpleConsole : IConsoleService
 
     public string? ReadLine()
     {
-        try
-        {
-            return Console.ReadLine();
-        }
-        catch
-        {
-            return null;
-        }
+        return this.ReadLine(default);
     }
 
     public ConsoleKeyInfo ReadKey(bool intercept)
@@ -141,22 +211,47 @@ public class SimpleConsole : IConsoleService
             }
         }
     }
+
+    public string? EscapeBuffer()
+    {
+        using (this.lockObject.EnterScope())
+        {
+            if (this.BufferLength > 0)
+            {
+                var escaped = new string(this.buffer, 0, this.BufferLength);
+                this.ClearBufferInternal();
+                return escaped;
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ClearBufferInternal()
+    {
+        this.promptLength = 0;
+        this.textLength = 0;
+    }
 }
 
 internal class Program
 {
     public static void Main(string[] args)
     {
-        var consoleBuffer = new SimpleConsole();
+        var simpleConsole = new SimpleConsole();
+        // Console.In = simpleConsole;
 
-        consoleBuffer.Write("A");
-        consoleBuffer.Write("B");
-        consoleBuffer.WriteLine("C");
-        consoleBuffer.WriteLine("Hello, World!");
+        simpleConsole.Write("A");
+        simpleConsole.Write("B");
+        simpleConsole.WriteLine("C");
+        simpleConsole.WriteLine("Hello, World!");
 
         while (true)
         {
-            var input = consoleBuffer.ReadLine("> ");
+            var input = simpleConsole.ReadLine($"{Console.CursorTop}> ");
 
             if (input == "exit")
             {// exit
@@ -166,9 +261,17 @@ internal class Program
             {
                 continue;
             }
+            else if (string.Equals(input, "a", StringComparison.InvariantCultureIgnoreCase))
+            {
+                Task.Run(() =>
+                {
+                    Thread.Sleep(1000);
+                    simpleConsole.WriteLine("AAAAA");
+                });
+            }
             else
             {
-                consoleBuffer.WriteLine($"Command: {input}");
+                simpleConsole.WriteLine($"Command: {input}");
             }
         }
     }
