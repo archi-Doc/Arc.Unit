@@ -47,6 +47,7 @@ public class SimpleConsole : IConsoleService
 
     public SimpleConsole()
     {
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
         Array.Fill(this.whitespace, ' ');
     }
 
@@ -64,6 +65,7 @@ public class SimpleConsole : IConsoleService
 
         try
         {
+            Span<char> surrogatePair = stackalloc char[2];
             while (true)
             {
                 var keyInfo = Console.ReadKey(intercept: true);
@@ -153,6 +155,11 @@ public class SimpleConsole : IConsoleService
 
     public void Write(string? message = null)
     {
+        if (Environment.NewLine == "\r\n" && message is not null)
+        {
+            message = Arc.BaseHelper.ConvertLfToCrLf(message);
+        }
+
         try
         {
             Console.Out.Write(message);
@@ -164,6 +171,11 @@ public class SimpleConsole : IConsoleService
 
     public void WriteLine(string? message = null)
     {
+        if (Environment.NewLine == "\r\n" && message is not null)
+        {
+            message = Arc.BaseHelper.ConvertLfToCrLf(message);
+        }
+
         var stored = this.StoreBuffer();
 
         try

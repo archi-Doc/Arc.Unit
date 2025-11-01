@@ -9,18 +9,18 @@ namespace Arc.Unit;
 
 internal static class SimpleConsoleHelper
 {
-    public static int GetWidth(ReadOnlySpan<char> text, int startColumn = 0, int tabSize = 4)
+    public static int GetWidth(ReadOnlySpan<char> text, int tabSize = 4)
     {
-        var col = startColumn;
-        var i = 0;
-        while (i < text.Length)
+        var width = 0;
+        var position = 0;
+        while (position < text.Length)
         {
-            if (Rune.DecodeFromUtf16(text.Slice(i), out var r, out int consumed) != OperationStatus.Done)
+            if (Rune.DecodeFromUtf16(text.Slice(position), out var r, out int consumed) != OperationStatus.Done)
             {
                 break;
             }
 
-            i += consumed;
+            position += consumed;
             var category = CharUnicodeInfo.GetUnicodeCategory((char)r.Value);
             if (IsControlOrFormat(category) || IsCombining(category))
             {// Zero width
@@ -30,24 +30,24 @@ internal static class SimpleConsoleHelper
             {// Tab
                 if (tabSize <= 0)
                 {
-                    col += 1;
+                    width += 1;
                     continue;
                 }
 
-                var toNext = tabSize - (col % tabSize);
-                col += toNext;
+                var toNext = tabSize - (width % tabSize);
+                width += toNext;
                 continue;
             }
             else if (IsWideEastAsian(r) || IsEmojiLikeWide(r))
             {
-                col += 2;
+                width += 2;
                 continue;
             }
 
-            col += 1;
+            width += 1;
         }
 
-        return col - startColumn;
+        return width;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
