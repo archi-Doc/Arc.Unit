@@ -12,19 +12,23 @@ public class SimpleConsole : IConsoleService
 
     internal class Buffer
     {
+        public string? Prompt { get; set; }
+
         public char[] CharArray { get; } = new char[BufferSize];
 
-        public int PromptLength { get; set; }
+        // public int PromptLength { get; set; }
 
         public int TextLength { get; set; }
 
-        public int TotalLength => this.PromptLength + this.TextLength;
+        // public int TotalLength => this.PromptLength + this.TextLength;
 
-        public ReadOnlySpan<char> TotalSpan => this.CharArray.AsSpan(0, this.TotalLength);
+        // public ReadOnlySpan<char> TotalSpan => this.CharArray.AsSpan(0, this.TotalLength);
 
-        public ReadOnlySpan<char> PromptSpan => this.CharArray.AsSpan(0, this.PromptLength);
+        // public ReadOnlySpan<char> PromptSpan => this.CharArray.AsSpan(0, this.PromptLength);
 
-        public ReadOnlySpan<char> TextSpan => this.CharArray.AsSpan(this.PromptLength, this.TextLength);
+        // public ReadOnlySpan<char> TextSpan => this.CharArray.AsSpan(this.PromptLength, this.TextLength);
+
+        public ReadOnlySpan<char> TextSpan => this.CharArray.AsSpan(0, this.TextLength);
     }
 
     private readonly Lock lockObject = new();
@@ -114,7 +118,7 @@ public class SimpleConsole : IConsoleService
                     if (rent is not null)
                     {
                         Console.CursorLeft = cursorLeft;
-                        Console.Out.Write(rent.TotalSpan);
+                        Console.Out.Write(rent.TextSpan);
                         Console.CursorLeft = cursorLeft;
 
                         this.bufferPool.Return(rent);
@@ -277,12 +281,12 @@ internal class Program
         {
             var input = simpleConsole.ReadLine($"{Console.CursorTop}> ");
 
-            if (input == "exit")
+            if (string.Equals(input, "exit", StringComparison.InvariantCultureIgnoreCase))
             {// exit
                 break;
             }
             else if (string.IsNullOrEmpty(input))
-            {
+            {// continue
                 continue;
             }
             else if (string.Equals(input, "a", StringComparison.InvariantCultureIgnoreCase))
