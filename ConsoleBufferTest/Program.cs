@@ -20,6 +20,10 @@ public class SimpleConsole : IConsoleService
 
         public int TextLength { get; set; }
 
+        public int PromptLength => this.Prompt?.Length ?? 0;
+
+        public int TotalLength => this.PromptLength + this.TextLength;
+
         // public int TotalLength => this.PromptLength + this.TextLength;
 
         // public ReadOnlySpan<char> TotalSpan => this.CharArray.AsSpan(0, this.TotalLength);
@@ -28,17 +32,20 @@ public class SimpleConsole : IConsoleService
 
         // public ReadOnlySpan<char> TextSpan => this.CharArray.AsSpan(this.PromptLength, this.TextLength);
 
-        public ReadOnlySpan<char> TextSpan => this.CharArray.AsSpan(0, this.TextLength);
+        public Span<char> TextSpan => this.CharArray.AsSpan(0, this.TextLength);
+
+        public void Clear()
+        {
+            this.Prompt = null;
+            this.TextLength = 0;
+        }
     }
 
-    private readonly Lock lockObject = new();
     private readonly char[] whitespace = new char[BufferSize];
-    private readonly char[] charArray = new char[BufferSize];
-    private int textLength;
+    private readonly Lock lockObject = new();
+    private Buffer current = new();
 
     private ObjectPool<Buffer> bufferPool = new(() => new Buffer());
-
-    private int BufferLength => this.promptLength + this.textLength;
 
     public SimpleConsole()
     {
@@ -73,6 +80,11 @@ public class SimpleConsole : IConsoleService
     {
         if (prompt?.Length > 0)
         {
+            using (this.lockObject.EnterScope())
+            {
+                this.current.Prompt = prompt;
+            }
+
             Console.Write(prompt);
         }
 
@@ -94,20 +106,21 @@ public class SimpleConsole : IConsoleService
                     var cursorLeft = Console.CursorLeft;
                     using (this.lockObject.EnterScope())
                     {
-                        var textPosition = cursorLeft - this.promptLength;
+                        var textPosition = cursorLeft - this.current.PromptLength;
                         if (textPosition > 0)
                         {
-                            var sourceSpan = this.charArray.AsSpan(this.promptLength + textPosition, this.textLength - textPosition);
+                            var sourceSpan = this.current.TextSpan.Slice(textPosition);
 
                             rent = this.bufferPool.Rent();
+                            rent.Clear();
                             sourceSpan.CopyTo(rent.CharArray.AsSpan());
                             rent.CharArray[sourceSpan.Length] = ' ';
                             rent.TextLength = sourceSpan.Length + 1;
 
-                            sourceSpan.CopyTo(this.charArray.AsSpan(this.promptLength + textPosition - 1));
-                            this.textLength--;
+                            sourceSpan.CopyTo(this.current.TextSpan.Slice(textPosition - 1));
+                            this.current.TextLength--;
 
-                            cursorLeft = this.promptLength + textPosition - 1;
+                            cursorLeft = this.current.PromptLength + textPosition - 1;
                         }
                     }
 
@@ -124,14 +137,14 @@ public class SimpleConsole : IConsoleService
                 }
                 else if (key == ConsoleKey.LeftArrow)
                 {
-                    if (Console.CursorLeft > this.promptLength)
+                    if (Console.CursorLeft > this.current.PromptLength)
                     {
                         Console.CursorLeft--;
                     }
                 }
                 else if (key == ConsoleKey.RightArrow)
                 {
-                    if (Console.CursorLeft < this.BufferLength)
+                    if (Console.CursorLeft < this.current.PromptLength)
                     {
                         Console.CursorLeft++;
                     }
@@ -139,8 +152,8 @@ public class SimpleConsole : IConsoleService
                 else
                 {
                     var cursorLeft = Console.CursorLeft;
-                    this.charArray[cursorLeft] = keyChar;
-                    this.textLength++;
+                    this.current.TextSpan[cursorLeft] = keyChar;
+                    this.current.TextLength++;
                     Console.Write(keyChar);
                 }
             }
@@ -148,8 +161,7 @@ public class SimpleConsole : IConsoleService
             string result;
             using (this.lockObject.EnterScope())
             {
-                result = new string(this.charArray, this.promptLength, this.textLength);
-                this.ClearBufferInternal();
+                result = this.current.TextSpan.ToString();
             }
 
             Console.WriteLine();
@@ -178,13 +190,6 @@ public class SimpleConsole : IConsoleService
 
         try
         {
-            if (stored is not null)
-            {
-                Console.CursorLeft = 0;
-                Console.Out.Write(this.whitespace.AsSpan(0, stored.Length));
-                Console.CursorLeft = 0;
-            }
-
             Console.WriteLine(message);
 
             if (stored is not null)
@@ -224,40 +229,46 @@ public class SimpleConsole : IConsoleService
         }
     }
 
-    private string? StoreBuffer()
+    private Buffer? StoreBuffer()
     {
+        Buffer previous;
         using (this.lockObject.EnterScope())
         {
-            if (this.BufferLength > 0)
+            if (this.current.TextLength > 0 || this.current.Prompt is not null)
             {
-                var escaped = new string(this.charArray, 0, this.BufferLength);
-                this.ClearBufferInternal();
-                return escaped;
+                previous = this.current;
+                this.current = this.bufferPool.Rent();
+                this.current.Clear();
             }
             else
             {
                 return null;
             }
         }
+
+        Console.CursorLeft = 0;
+        Console.Out.Write(this.whitespace.AsSpan(0, previous.TextLength));
+        Console.CursorLeft = 0;
+
+        return previous;
     }
 
-    private void RestoreBuffer(string stored)
+    private void RestoreBuffer(Buffer stored)
     {
         using (this.lockObject.EnterScope())
         {
-            var length = Math.Min(stored.Length, BufferSize);
-            stored.AsSpan(0, length).CopyTo(this.charArray);
-            this.promptLength = length;
-            this.textLength = 0;
-            Console.Write(stored);
-        }
-    }
+            if (stored.Prompt is not null)
+            {
+                Console.Out.Write(stored.Prompt);
+            }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void ClearBufferInternal()
-    {
-        this.promptLength = 0;
-        this.textLength = 0;
+            if (stored.TextLength > 0)
+            {
+                Console.Out.Write(stored.TextSpan);
+            }
+
+            this.bufferPool.Return(stored);
+        }
     }
 }
 
