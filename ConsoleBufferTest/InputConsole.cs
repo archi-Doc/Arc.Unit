@@ -162,7 +162,32 @@ public partial class InputConsole : IConsoleService
                 return null;
             }
 
-            return buffer.Process(this, cursorLeft, cursorTop, keyBuffer);
+            if (buffer.ProcessInternal(this, cursorLeft, cursorTop, keyBuffer))
+            {
+                var length = 0;
+                for (int i = 0; i < this.buffers.Count; i++)
+                {
+                    length += this.buffers[i].GetWidth();
+                }
+
+                var result = string.Create(length, this.buffers, static (span, buffers) =>
+                {
+                    var position = 0;
+                    for (int i = 0; i < buffers.Count; i++)
+                    {
+                        var buffer = buffers[i];
+                        buffer.TextSpan.CopyTo(span.Slice(position, buffer.Length));
+                        position += buffer.Length;
+                    }
+                });
+
+                this.ReturnAllBuffersInternal();
+                return result;
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 

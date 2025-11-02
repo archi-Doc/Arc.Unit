@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Linq;
+using static System.Net.Mime.MediaTypeNames;
+
 namespace Arc.Unit;
 
 internal class InputBuffer
@@ -10,28 +13,53 @@ internal class InputBuffer
 
     public int PromtWidth { get; private set; }
 
-    public char[] Array { get; } = new char[BufferSize];
+    public int Length { get; set; }
 
-    public int TextLength { get; set; }
+    public Span<char> TextSpan => this.charArray.AsSpan(0, this.Length);
 
-    public int TextWidth { get; set; }
+    private char[] charArray = new char[BufferSize];
 
-    public Span<char> TextSpan => this.Array.AsSpan(0, this.TextLength);
-
-    public int MinCursorLeft => this.PromtWidth;
-
-    public int TotalWidth => this.PromtWidth + this.TextWidth;
-
-    // public int MaxCursorLeft => this.PromtWidth + this.TextLength;
+    private sbyte[] widthArray = new sbyte[BufferSize];
 
     public InputBuffer()
     {
     }
 
-    public string? Process(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
+    public void Clear()
+    {
+        this.Prompt = default;
+        this.PromtWidth = 0;
+        this.Length = 0;
+    }
+
+    public bool ProcessInternal(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
     {
         // Cursor position -> Array position
+        var pos = cursorLeft;
+        if (cursorTop != 0)
+        {
+            pos += cursorTop * Console.WindowWidth;
+        }
 
+        pos -= this.PromtWidth;
+        if (pos < 0)
+        {
+            pos = 0;
+        }
+
+        var arrayPosition = 0;
+        for (var i = 0; i < this.Length; i++)
+        {
+            if (pos <= 0)
+            {
+                arrayPosition = i;
+                break;
+            }
+
+            pos -= this.widthArray[i];
+        }
+
+        var dif = 0;
         var span = keyBuffer;
         for (var i = 0; i < span.Length; i += 2)
         {
@@ -40,6 +68,7 @@ internal class InputBuffer
 
             if (key == ConsoleKey.Enter)
             {
+                return true;
             }
             else if (key == ConsoleKey.Backspace)
             {
@@ -61,10 +90,42 @@ internal class InputBuffer
             }
             else
             {
+                if (char.IsHighSurrogate(keyChar) && (i + 3) < span.Length && char.IsLowSurrogate(span[i + 3]))
+                {// Surrogate pair
+                    var lowSurrogate = span[i + 3];
+                    this.charArray[arrayPosition] = keyChar;
+                    this.widthArray[arrayPosition] = 0;
+                    arrayPosition++;
+
+                    var codePoint = char.ConvertToUtf32(keyChar, lowSurrogate);
+                    this.charArray[arrayPosition] = lowSurrogate;
+                    this.widthArray[arrayPosition] = (sbyte)InputConsoleHelper.GetCharWidth(codePoint);.
+                    dif += this.widthArray[arrayPosition];
+                    arrayPosition++;
+                }
+                else if (!char.IsLowSurrogate(keyChar))
+                {
+                    this.charArray[arrayPosition] = keyChar;
+                    this.widthArray[arrayPosition] = (sbyte)InputConsoleHelper.GetCharWidth(keyChar);
+                    dif += this.widthArray[arrayPosition];
+                    arrayPosition++;
+                }
+
+                if (arrayPosition > this.Length)
+                {
+                    this.Length = arrayPosition;
+
+                    if (this.Length >= (this.charArray.Length - 1))
+                    {// Expand buffer (leave a margin for surrogate pairs)
+                        this.Length *= 2;
+                        Array.Resize(ref this.charArray, this.Length);
+                        Array.Resize(ref this.widthArray, this.Length);
+                    }
+                }
             }
         }
 
-        return null;
+        return false;
     }
 
     public int GetHeight()
@@ -72,7 +133,7 @@ internal class InputBuffer
         try
         {
             var w = Console.WindowWidth;
-            return (this.TotalWidth + w - 1) / w;
+            return (this.GetWidth() + w - 1) / w;
         }
         catch
         {
@@ -80,16 +141,21 @@ internal class InputBuffer
         }
     }
 
+    public int GetWidth()
+    {
+        var width = 0;
+        var span = this.widthArray.AsSpan(0, this.Length);
+        foreach (var x in span)
+        {
+            width += x;
+        }
+
+        return width;
+    }
+
     public void SetPrompt(string? prompt)
     {
         this.Prompt = prompt;
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
-    }
-
-    public void Clear()
-    {
-        this.Prompt = default;
-        this.PromtWidth = 0;
-        this.TextLength = 0;
     }
 }
