@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Arc.Unit;
 
-internal static class SimpleConsoleHelper
+internal static class InputConsoleHelper
 {
     public static int GetWidth(ReadOnlySpan<char> text, int tabSize = 4)
     {
