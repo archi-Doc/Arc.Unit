@@ -8,17 +8,18 @@ internal class Program
 {
     public static void Main(string[] args)
     {
-        var simpleConsole = new SimpleConsole();
+        var inputConsole = new InputConsole();
+        // var simpleConsole = new SimpleConsole();
         // Console.In = simpleConsole;
 
-        simpleConsole.Write("A");
-        simpleConsole.Write("B");
-        simpleConsole.WriteLine("C");
-        simpleConsole.WriteLine("Hello, World!");
+        inputConsole.Write("A");
+        inputConsole.Write("B");
+        inputConsole.WriteLine("C");
+        inputConsole.WriteLine("Hello, World!");
 
         while (true)
         {
-            var input = simpleConsole.ReadLine($"{Console.CursorTop}> ");
+            var input = inputConsole.ReadLine($"{Console.CursorTop}> ");
 
             if (string.Equals(input, "exit", StringComparison.InvariantCultureIgnoreCase))
             {// exit
@@ -33,12 +34,12 @@ internal class Program
                 Task.Run(() =>
                 {
                     Thread.Sleep(1000);
-                    simpleConsole.WriteLine("AAAAA");
+                    inputConsole.WriteLine("AAAAA");
                 });
             }
             else
             {
-                simpleConsole.WriteLine($"Command: {input}");
+                inputConsole.WriteLine($"Command: {input}");
             }
         }
     }

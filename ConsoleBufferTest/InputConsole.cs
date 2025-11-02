@@ -6,16 +6,19 @@ namespace Arc.Unit;
 
 public partial class InputConsole : IConsoleService
 {
-    public ConsoleColor DefaultInputColor { get; set; } = (ConsoleColor)(-1);
+    public ConsoleColor DefaultInputColor { get; set; }
 
     private readonly ObjectPool<InputBuffer> bufferPool = new(() => new InputBuffer());
 
     private readonly Lock lockObject = new();
+    private int startingCursorTop;
     private InputBuffer current = new();
 
-    public InputConsole()
+    public InputConsole(ConsoleColor inputColor = (ConsoleColor)(-1))
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
+
+        this.DefaultInputColor = inputColor;
         // Array.Fill(this.whitespace, ' ');
     }
 
@@ -144,16 +147,10 @@ public partial class InputConsole : IConsoleService
             message = Arc.BaseHelper.ConvertLfToCrLf(message);
         }
 
-        var stored = this.StoreBuffer();
 
         try
         {
             Console.WriteLine(message);
-
-            if (stored is not null)
-            {
-                this.RestoreBuffer(stored);
-            }
         }
         catch
         {
@@ -187,7 +184,7 @@ public partial class InputConsole : IConsoleService
         }
     }
 
-    private InputBuffer? StoreBuffer()
+    /*private InputBuffer? StoreBuffer()
     {
         InputBuffer previous;
         using (this.lockObject.EnterScope())
@@ -231,5 +228,5 @@ public partial class InputConsole : IConsoleService
         }
 
         this.bufferPool.Return(stored);
-    }
+    }*/
 }
