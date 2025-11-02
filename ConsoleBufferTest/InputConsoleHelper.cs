@@ -9,7 +9,7 @@ namespace Arc.Unit;
 
 internal static class InputConsoleHelper
 {
-    public static int GetWidth(ReadOnlySpan<char> text, int tabSize = 4)
+    public static int GetWidth(ReadOnlySpan<char> text, int tabSize = 8)
     {
         var width = 0;
         var position = 0;
