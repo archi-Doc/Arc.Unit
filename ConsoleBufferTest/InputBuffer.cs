@@ -28,6 +28,45 @@ internal class InputBuffer
     {
     }
 
+    public string? Process(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
+    {
+        // Cursor position -> Array position
+
+        var span = keyBuffer;
+        for (var i = 0; i < span.Length; i += 2)
+        {
+            var key = (ConsoleKey)span[i];
+            var keyChar = span[i + 1];
+
+            if (key == ConsoleKey.Enter)
+            {
+            }
+            else if (key == ConsoleKey.Backspace)
+            {
+            }
+            else if (key == ConsoleKey.Delete)
+            {
+            }
+            else if (key == ConsoleKey.LeftArrow)
+            {
+            }
+            else if (key == ConsoleKey.RightArrow)
+            {
+            }
+            else if (key == ConsoleKey.UpArrow)
+            {
+            }
+            else if (key == ConsoleKey.DownArrow)
+            {
+            }
+            else
+            {
+            }
+        }
+
+        return null;
+    }
+
     public int GetHeight()
     {
         try

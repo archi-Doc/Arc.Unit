@@ -43,8 +43,6 @@ public partial class InputConsole : IConsoleService
             Console.Out.Write(prompt);
         }
 
-        buffer = default;
-        (int Left, int Top) cursorPos = default;
         while (true)
         {
             ConsoleKey key;
@@ -61,23 +59,12 @@ public partial class InputConsole : IConsoleService
                 keyChar = '\0';
             }
 
-            if (buffer is null)
-            {
-                cursorPos = Console.GetCursorPosition();
-                this.FindBuffer(cursorPos.Top);
-
-                if (buffer is null)
-                {
-                    return null;
-                }
-            }
+            keyBuffer[position++] = (char)key;
+            keyBuffer[position++] = keyChar;
 
             var flush = false;
             if (Console.KeyAvailable)
             {
-                keyBuffer[position++] = (char)key;
-                keyBuffer[position++] = keyChar;
-
                 if (position >= (KeyBufferSize - 2))
                 {
                     if (position >= KeyBufferSize ||
@@ -94,7 +81,12 @@ public partial class InputConsole : IConsoleService
 
             if (flush)
             {// Flush
-                var result = this.Flush(buffer, cursorPos, keyBuffer, position);
+                var result = this.Flush(keyBuffer.Slice(0, position));
+                position = 0;
+                if (result is not null)
+                {
+                    return result;
+                }
             }
         }
     }
@@ -158,12 +150,23 @@ public partial class InputConsole : IConsoleService
         }
     }
 
-    private string? Flush(InputBuffer buffer, (int Left, int Top) cursorPos, Span<char> keyBuffer, int length)
+    private string? Flush(Span<char> keyBuffer)
     {
-        return null;
+        (var cursorLeft, var cursorTop) = Console.GetCursorPosition();
+
+        using (this.lockObject.EnterScope())
+        {
+            var buffer = this.FindBuffer(ref cursorLeft, ref cursorTop);
+            if (buffer is null)
+            {
+                return null;
+            }
+
+            return buffer.Process(this, cursorLeft, cursorTop, keyBuffer);
+        }
     }
 
-    private InputBuffer? FindBuffer(int cursorTop)
+    private InputBuffer? FindBuffer(ref int cursorLeft, ref int cursorTop)
     {
         using (this.lockObject.EnterScope())
         {
@@ -172,17 +175,20 @@ public partial class InputConsole : IConsoleService
                 return null;
             }
 
-            if (cursorTop <= this.startingCursorTop)
+            /*if (cursorTop <= this.startingCursorTop)
             {
+                cursorTop = 0;
                 return this.buffers[0];
-            }
+            }*/
 
             var y = this.startingCursorTop;
             for (int i = 0; i < this.buffers.Count; i++)
             {
-                y += this.buffers[0].GetHeight();
+                var prevY = y;
+                y += this.buffers[i].GetHeight();
                 if (cursorTop < y)
                 {
+                    cursorTop -= prevY;
                     return this.buffers[i];
                 }
             }
