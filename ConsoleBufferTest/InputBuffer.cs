@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Linq;
 
 namespace Arc.Unit;
@@ -15,6 +16,8 @@ internal class InputBuffer
     public int Length { get; set; }
 
     public int Width { get; set; }
+
+    public int TotalWidth => this.PromtWidth + this.Width;
 
     public Span<char> TextSpan => this.charArray.AsSpan(0, this.Length);
 
@@ -68,13 +71,14 @@ internal class InputBuffer
         }
 
         var span = keyBuffer;
+        var updatePosition = int.MinValue;
         for (var i = 0; i < span.Length; i += 2)
         {
             var key = (ConsoleKey)span[i];
             var keyChar = span[i + 1];
 
             if (key == ConsoleKey.Enter)
-            {
+            {// Exit or Multiline """
                 return true;
             }
             else if (key == ConsoleKey.Backspace)
@@ -82,31 +86,55 @@ internal class InputBuffer
                 if (arrayPosition > 0)
                 {
                     RemoveAt(arrayPosition - 1);
+                    this.MoveLeft();
+                    UpdateConsole(arrayPosition - 1);
                 }
+
+                return false;
             }
             else if (key == ConsoleKey.Delete)
             {
                 if (arrayPosition < this.Length)
                 {
                     RemoveAt(arrayPosition);
+                    updatePosition = arrayPosition;
+                    UpdateConsole(arrayPosition);
                 }
+
+                return false;
             }
             else if (key == ConsoleKey.LeftArrow)
             {
+                this.MoveLeft();
+                return false;
             }
             else if (key == ConsoleKey.RightArrow)
             {
+                this.MoveRight();
+                return false;
             }
-            else if (key == ConsoleKey.UpArrow)
-            {
+            else if (key == ConsoleKey.UpArrow ||
+                key == ConsoleKey.DownArrow)
+            {// History or move line
+                return false;
             }
-            else if (key == ConsoleKey.DownArrow)
-            {
+            else if (key == ConsoleKey.Insert)
+            {// Toggle insert mode
+                inputConsole.IsInsertMode = !inputConsole.IsInsertMode;
             }
             else
             {// Other characters
+                if (inputConsole.IsInsertMode)
+                {
+                }
+
                 if (char.IsHighSurrogate(keyChar) && (i + 3) < span.Length && char.IsLowSurrogate(span[i + 3]))
                 {// Surrogate pair
+                    if (updatePosition == 0)
+                    {
+                        updatePosition = arrayPosition;
+                    }
+
                     var lowSurrogate = span[i + 3];
                     this.charArray[arrayPosition] = keyChar;
                     this.widthArray[arrayPosition] = 0;
@@ -121,6 +149,11 @@ internal class InputBuffer
                 }
                 else if (!char.IsLowSurrogate(keyChar))
                 {
+                    if (updatePosition == 0)
+                    {
+                        updatePosition = arrayPosition;
+                    }
+
                     var width = InputConsoleHelper.GetCharWidth(keyChar);
                     this.charArray[arrayPosition] = keyChar;
                     this.widthArray[arrayPosition] = width;
@@ -142,12 +175,46 @@ internal class InputBuffer
             }
         }
 
+        if (updatePosition != int.MinValue)
+        {
+        }
+
         return false;
+
+        void UpdateConsole(int x)
+        {
+        }
 
         void RemoveAt(int index)
         {
+            // updatePosition = Math.Max(updatePosition, index);
         }
-    }
+
+        void SetUpdatePosition(int p)
+        {
+            if (updatePosition > 0)
+            {
+                if (p >= 0)
+                {
+                    updatePosition = Math.Min(updatePosition, p);
+                }
+                else if (-p < updatePosition)
+                {
+                    updatePosition = -p;
+                }
+            }
+            else if (updatePosition == 0)
+            {
+                updatePosition = p;
+            }
+            else
+            {
+                if (p < 0)
+                {
+                }
+                updatePosition = p;
+            }
+        }
 
     public int GetHeight()
     {
@@ -178,5 +245,35 @@ internal class InputBuffer
     {
         this.Prompt = prompt;
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
+    }
+
+    private void MoveLeft()
+    {
+        try
+        {
+            var left = Console.CursorLeft;
+            if (left > this.PromtWidth)
+            {
+                Console.CursorLeft = left - 1;
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private void MoveRight()
+    {
+        try
+        {
+            var left = Console.CursorLeft;
+            if (left < this.TotalWidth)
+            {
+                Console.CursorLeft = left + 1;
+            }
+        }
+        catch
+        {
+        }
     }
 }

@@ -10,6 +10,8 @@ public partial class InputConsole : IConsoleService
 
     public ConsoleColor DefaultInputColor { get; set; }
 
+    public bool IsInsertMode { get; set; } = false;
+
     private readonly ObjectPool<InputBuffer> bufferPool = new(() => new InputBuffer(), 32);
 
     private readonly Lock lockObject = new();
