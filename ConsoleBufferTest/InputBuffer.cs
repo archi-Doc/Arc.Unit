@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Linq;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Arc.Unit;
 
@@ -14,6 +13,8 @@ internal class InputBuffer
     public int PromtWidth { get; private set; }
 
     public int Length { get; set; }
+
+    public int Width { get; set; }
 
     public Span<char> TextSpan => this.charArray.AsSpan(0, this.Length);
 
@@ -30,6 +31,7 @@ internal class InputBuffer
         this.Prompt = default;
         this.PromtWidth = 0;
         this.Length = 0;
+        this.Width = 0;
     }
 
     public bool ProcessInternal(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
@@ -98,15 +100,19 @@ internal class InputBuffer
                     arrayPosition++;
 
                     var codePoint = char.ConvertToUtf32(keyChar, lowSurrogate);
+                    var width = (sbyte)InputConsoleHelper.GetCharWidth(codePoint);
                     this.charArray[arrayPosition] = lowSurrogate;
-                    this.widthArray[arrayPosition] = (sbyte)InputConsoleHelper.GetCharWidth(codePoint);.
+                    this.widthArray[arrayPosition] = width;
+                    this.Width += width;
                     dif += this.widthArray[arrayPosition];
                     arrayPosition++;
                 }
                 else if (!char.IsLowSurrogate(keyChar))
                 {
+                    var width = (sbyte)InputConsoleHelper.GetCharWidth(keyChar);
                     this.charArray[arrayPosition] = keyChar;
-                    this.widthArray[arrayPosition] = (sbyte)InputConsoleHelper.GetCharWidth(keyChar);
+                    this.widthArray[arrayPosition] = width;
+                    this.Width += width;
                     dif += this.widthArray[arrayPosition];
                     arrayPosition++;
                 }
@@ -157,5 +163,11 @@ internal class InputBuffer
     {
         this.Prompt = prompt;
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
+    }
+
+    private void SetChar(int position, char keyChar, sbyte width)
+    {
+        this.charArray[position] = keyChar;
+        this.widthArray[position] = width;
     }
 }
