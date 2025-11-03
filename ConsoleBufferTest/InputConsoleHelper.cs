@@ -9,7 +9,7 @@ namespace Arc.Unit;
 
 internal static class InputConsoleHelper
 {
-    public static int GetCharWidth(int codePoint)
+    public static byte GetCharWidth(int codePoint)
     {
         // Control characters
         if (codePoint < 0x20 || (codePoint >= 0x7F && codePoint < 0xA0))

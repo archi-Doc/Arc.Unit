@@ -20,7 +20,7 @@ internal class InputBuffer
 
     private char[] charArray = new char[BufferSize];
 
-    private sbyte[] widthArray = new sbyte[BufferSize];
+    private byte[] widthArray = new byte[BufferSize];
 
     public InputBuffer()
     {
@@ -40,7 +40,13 @@ internal class InputBuffer
         var pos = cursorLeft;
         if (cursorTop != 0)
         {
-            pos += cursorTop * Console.WindowWidth;
+            try
+            {
+                pos += cursorTop * Console.WindowWidth;
+            }
+            catch
+            {
+            }
         }
 
         pos -= this.PromtWidth;
@@ -61,7 +67,6 @@ internal class InputBuffer
             pos -= this.widthArray[i];
         }
 
-        var dif = 0;
         var span = keyBuffer;
         for (var i = 0; i < span.Length; i += 2)
         {
@@ -74,9 +79,17 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.Backspace)
             {
+                if (arrayPosition > 0)
+                {
+                    RemoveAt(arrayPosition - 1);
+                }
             }
             else if (key == ConsoleKey.Delete)
             {
+                if (arrayPosition < this.Length)
+                {
+                    RemoveAt(arrayPosition);
+                }
             }
             else if (key == ConsoleKey.LeftArrow)
             {
@@ -91,7 +104,7 @@ internal class InputBuffer
             {
             }
             else
-            {
+            {// Other characters
                 if (char.IsHighSurrogate(keyChar) && (i + 3) < span.Length && char.IsLowSurrogate(span[i + 3]))
                 {// Surrogate pair
                     var lowSurrogate = span[i + 3];
@@ -100,20 +113,18 @@ internal class InputBuffer
                     arrayPosition++;
 
                     var codePoint = char.ConvertToUtf32(keyChar, lowSurrogate);
-                    var width = (sbyte)InputConsoleHelper.GetCharWidth(codePoint);
+                    var width = InputConsoleHelper.GetCharWidth(codePoint);
                     this.charArray[arrayPosition] = lowSurrogate;
                     this.widthArray[arrayPosition] = width;
                     this.Width += width;
-                    dif += this.widthArray[arrayPosition];
                     arrayPosition++;
                 }
                 else if (!char.IsLowSurrogate(keyChar))
                 {
-                    var width = (sbyte)InputConsoleHelper.GetCharWidth(keyChar);
+                    var width = InputConsoleHelper.GetCharWidth(keyChar);
                     this.charArray[arrayPosition] = keyChar;
                     this.widthArray[arrayPosition] = width;
                     this.Width += width;
-                    dif += this.widthArray[arrayPosition];
                     arrayPosition++;
                 }
 
@@ -132,6 +143,10 @@ internal class InputBuffer
         }
 
         return false;
+
+        void RemoveAt(int index)
+        {
+        }
     }
 
     public int GetHeight()
@@ -163,11 +178,5 @@ internal class InputBuffer
     {
         this.Prompt = prompt;
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
-    }
-
-    private void SetChar(int position, char keyChar, sbyte width)
-    {
-        this.charArray[position] = keyChar;
-        this.widthArray[position] = width;
     }
 }
