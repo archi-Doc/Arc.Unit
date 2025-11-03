@@ -215,6 +215,7 @@ internal class InputBuffer
                 updatePosition = p;
             }
         }
+    }
 
     public int GetHeight()
     {
