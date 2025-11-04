@@ -40,35 +40,7 @@ internal class InputBuffer
     public bool ProcessInternal(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
     {
         // Cursor position -> Array position
-        var pos = cursorLeft;
-        if (cursorTop != 0)
-        {
-            try
-            {
-                pos += cursorTop * Console.WindowWidth;
-            }
-            catch
-            {
-            }
-        }
-
-        pos -= this.PromtWidth;
-        if (pos < 0)
-        {
-            pos = 0;
-        }
-
-        var arrayPosition = 0;
-        for (var i = 0; i < this.Length; i++)
-        {
-            if (pos <= 0)
-            {
-                arrayPosition = i;
-                break;
-            }
-
-            pos -= this.widthArray[i];
-        }
+        var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
 
         var span = keyBuffer;
         var updatePosition = int.MinValue;
@@ -187,7 +159,10 @@ internal class InputBuffer
 
         void RemoveAt(int index)
         {
-            // updatePosition = Math.Max(updatePosition, index);
+            this.Length--;
+            this.Width -= this.widthArray[index];
+            this.charArray.AsSpan(index + 1, this.Length - index).CopyTo(this.charArray.AsSpan(index));
+            this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
         }
 
         void SetUpdatePosition(int p)
@@ -246,6 +221,41 @@ internal class InputBuffer
     {
         this.Prompt = prompt;
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
+    }
+
+    private int CursorPositionToArrayPosition(int cursorLeft, int cursorTop)
+    {
+        var pos = cursorLeft;
+        if (cursorTop != 0)
+        {
+            try
+            {
+                pos += cursorTop * Console.WindowWidth;
+            }
+            catch
+            {
+            }
+        }
+
+        pos -= this.PromtWidth;
+        if (pos < 0)
+        {
+            pos = 0;
+        }
+
+        var arrayPosition = 0;
+        for (var i = 0; i < this.Length; i++)
+        {
+            if (pos <= 0)
+            {
+                arrayPosition = i;
+                break;
+            }
+
+            pos -= this.widthArray[i];
+        }
+
+        return arrayPosition;
     }
 
     private void MoveLeft()
