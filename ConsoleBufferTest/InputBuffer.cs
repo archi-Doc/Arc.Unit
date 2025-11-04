@@ -106,11 +106,6 @@ internal class InputBuffer
 
                 if (char.IsHighSurrogate(keyChar) && (i + 3) < span.Length && char.IsLowSurrogate(span[i + 3]))
                 {// Surrogate pair
-                    if (updatePosition == 0)
-                    {
-                        updatePosition = arrayPosition;
-                    }
-
                     var lowSurrogate = span[i + 3];
                     this.charArray[arrayPosition] = keyChar;
                     this.widthArray[arrayPosition] = 0;
@@ -124,12 +119,7 @@ internal class InputBuffer
                     arrayPosition++;
                 }
                 else if (!char.IsLowSurrogate(keyChar))
-                {
-                    if (updatePosition == 0)
-                    {
-                        updatePosition = arrayPosition;
-                    }
-
+                {// 
                     var width = InputConsoleHelper.GetCharWidth(keyChar);
                     this.charArray[arrayPosition] = keyChar;
                     this.widthArray[arrayPosition] = width;
@@ -165,30 +155,8 @@ internal class InputBuffer
             this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
         }
 
-        void SetUpdatePosition(int p)
+        void AddChar(char key, char lowSurrogate)
         {
-            if (updatePosition > 0)
-            {
-                if (p >= 0)
-                {
-                    updatePosition = Math.Min(updatePosition, p);
-                }
-                else if (-p < updatePosition)
-                {
-                    updatePosition = -p;
-                }
-            }
-            else if (updatePosition == 0)
-            {
-                updatePosition = p;
-            }
-            else
-            {
-                if (p < 0)
-                {
-                }
-                updatePosition = p;
-            }
         }
     }
 
