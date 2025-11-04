@@ -43,7 +43,8 @@ internal class InputBuffer
         var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
 
         var span = keyBuffer;
-        var updatePosition = int.MinValue;
+        var startIndex = -1;
+        var endIndex = -1;
         for (var i = 0; i < span.Length; i += 2)
         {
             var key = (ConsoleKey)span[i];
@@ -59,7 +60,9 @@ internal class InputBuffer
                 {
                     RemoveAt(arrayPosition - 1);
                     this.MoveLeft();
-                    UpdateConsole(arrayPosition - 1);
+                    startIndex = arrayPosition - 1;
+                    endIndex = this.Length;
+                    UpdateConsole();
                 }
 
                 return false;
@@ -69,8 +72,9 @@ internal class InputBuffer
                 if (arrayPosition < this.Length)
                 {
                     RemoveAt(arrayPosition);
-                    updatePosition = arrayPosition;
-                    UpdateConsole(arrayPosition);
+                    startIndex = arrayPosition;
+                    endIndex = this.Length;
+                    UpdateConsole();
                 }
 
                 return false;
@@ -147,13 +151,9 @@ internal class InputBuffer
             }
         }
 
-        if (updatePosition != int.MinValue)
-        {
-        }
-
         return false;
 
-        void UpdateConsole(int x)
+        void UpdateConsole()
         {
         }
 
