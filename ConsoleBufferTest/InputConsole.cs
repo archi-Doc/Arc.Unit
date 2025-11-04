@@ -11,7 +11,7 @@ public partial class InputConsole : IConsoleService
 
     public ConsoleColor DefaultInputColor { get; set; }
 
-    public bool IsInsertMode { get; set; } = false;
+    public bool IsInsertMode { get; set; } = true;
 
     private readonly ObjectPool<InputBuffer> bufferPool = new(() => new InputBuffer(), 32);
 
@@ -29,7 +29,7 @@ public partial class InputConsole : IConsoleService
     public string? ReadLine(string? prompt = default)
     {
         InputBuffer? buffer;
-        Span<char> keyBuffer = stackalloc char[KeyBufferSize];
+        Span<char> charBuffer = stackalloc char[KeyBufferSize];
         var position = 0;
 
         using (this.lockObject.EnterScope())
@@ -74,7 +74,7 @@ public partial class InputConsole : IConsoleService
             }
             else
             {// Not control
-                keyBuffer[position++] = keyInfo.KeyChar;
+                charBuffer[position++] = keyInfo.KeyChar;
                 try
                 {
                     if (Console.KeyAvailable)
@@ -99,7 +99,7 @@ public partial class InputConsole : IConsoleService
 
             if (flush)
             {// Flush
-                var result = this.Flush(keyInfo, keyBuffer.Slice(0, position));
+                var result = this.Flush(keyInfo, charBuffer.Slice(0, position));
                 position = 0;
                 if (result is not null)
                 {
@@ -187,7 +187,7 @@ public partial class InputConsole : IConsoleService
         return false;
     }
 
-    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> keyBuffer)
+    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> charBuffer)
     {
         (var cursorLeft, var cursorTop) = Console.GetCursorPosition();
 
@@ -199,7 +199,7 @@ public partial class InputConsole : IConsoleService
                 return string.Empty;
             }
 
-            if (buffer.ProcessInternal(this, cursorLeft, cursorTop, keyInfo, keyBuffer))
+            if (buffer.ProcessInternal(this, cursorLeft, cursorTop, keyInfo, charBuffer))
             {// Exit input mode and return the concatenated string.
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
