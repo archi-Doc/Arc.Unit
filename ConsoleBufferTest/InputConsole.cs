@@ -103,6 +103,7 @@ public partial class InputConsole : IConsoleService
                 position = 0;
                 if (result is not null)
                 {
+                    Console.Out.WriteLine();
                     return result;
                 }
             }
@@ -179,7 +180,8 @@ public partial class InputConsole : IConsoleService
         {
             return true;
         }
-        else if (keyInfo.Key == ConsoleKey.Enter)
+        else if (keyInfo.Key == ConsoleKey.Enter ||
+            keyInfo.Key == ConsoleKey.Backspace)
         {
             return true;
         }
@@ -237,13 +239,14 @@ public partial class InputConsole : IConsoleService
                 return null;
             }
 
-            /*if (cursorTop <= this.startingCursorTop)
+            cursorTop -= this.startingCursorTop;
+            if (cursorTop <= 0)
             {
                 cursorTop = 0;
                 return this.buffers[0];
-            }*/
+            }
 
-            var y = this.startingCursorTop;
+            var y = 0;
             for (int i = 0; i < this.buffers.Count; i++)
             {
                 var prevY = y;
