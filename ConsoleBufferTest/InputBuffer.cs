@@ -165,7 +165,7 @@ internal class InputBuffer
         try
         {
             var w = Console.WindowWidth;
-            return (this.GetWidth() + w - 1) / w;
+            return (this.Width + w - 1) / w;
         }
         catch
         {
@@ -175,14 +175,16 @@ internal class InputBuffer
 
     public int GetWidth()
     {
-        var width = 0;
+        return (int)BaseHelper.Sum(this.widthArray.AsSpan(0, this.Length));
+
+        /*var width = 0;
         var span = this.widthArray.AsSpan(0, this.Length);
         foreach (var x in span)
         {
             width += x;
         }
 
-        return width;
+        return width;*/
     }
 
     public void SetPrompt(string? prompt)

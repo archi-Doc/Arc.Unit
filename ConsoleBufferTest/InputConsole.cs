@@ -189,7 +189,7 @@ public partial class InputConsole : IConsoleService
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
                 {
-                    length += this.buffers[i].GetWidth();
+                    length += this.buffers[i].Width;
                 }
 
                 var result = string.Create(length, this.buffers, static (span, buffers) =>
