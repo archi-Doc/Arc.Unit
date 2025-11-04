@@ -39,9 +39,9 @@ internal class InputBuffer
 
     public bool ProcessInternal(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
     {
-        if (keyBuffer.Length == 2)
-        {
-        }
+        // Cursor position -> Array position
+        var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
+
         var span = keyBuffer;
         var startIndex = -1;
         var endIndex = -1;
@@ -56,7 +56,6 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.Backspace)
             {
-                var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
                 if (arrayPosition > 0)
                 {
                     RemoveAt(arrayPosition - 1);
@@ -70,7 +69,6 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.Delete)
             {
-                var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
                 if (arrayPosition < this.Length)
                 {
                     RemoveAt(arrayPosition);

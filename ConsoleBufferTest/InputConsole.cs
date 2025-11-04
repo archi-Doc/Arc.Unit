@@ -47,43 +47,48 @@ public partial class InputConsole : IConsoleService
 
         while (true)
         {
-            ConsoleKey key;
-            char keyChar;
+            ConsoleKeyInfo keyInfo;
             try
             {
-                var keyInfo = Console.ReadKey(intercept: true);
-                key = keyInfo.Key;
-                keyChar = keyInfo.KeyChar;
+                keyInfo = Console.ReadKey(intercept: true);
             }
             catch
             {
-                key = ConsoleKey.Enter;
-                keyChar = '\0';
+                keyInfo = new(default, ConsoleKey.Enter, false, false, false);
             }
 
-            keyBuffer[position++] = (char)key;
-            keyBuffer[position++] = keyChar;
-
-            var flush = false;
-            if (Console.KeyAvailable)
-            {
-                if (position >= (KeyBufferSize - 2))
-                {
-                    if (position >= KeyBufferSize ||
-                        char.IsLowSurrogate(keyChar))
-                    {
-                        flush = true;
-                    }
-                }
+            bool flush = true;
+            if (IsControl(keyInfo))
+            {// Control
             }
             else
-            {
-                flush = true;
+            {// Displayable character
+                keyBuffer[position++] = keyInfo.KeyChar;
+                try
+                {
+                    if (Console.KeyAvailable)
+                    {
+                        flush = false;
+                        if (position >= (KeyBufferSize - 2))
+                        {
+                            if (position >= KeyBufferSize ||
+                                char.IsLowSurrogate(keyInfo.KeyChar))
+                            {
+                                flush = true;
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                }
+
+                keyInfo = default;
             }
 
             if (flush)
             {// Flush
-                var result = this.Flush(keyBuffer.Slice(0, position));
+                var result = this.Flush(keyInfo, keyBuffer.Slice(0, position));
                 position = 0;
                 if (result is not null)
                 {
@@ -150,6 +155,21 @@ public partial class InputConsole : IConsoleService
                 return false;
             }
         }
+    }
+
+    private static bool IsControl(ConsoleKeyInfo keyInfo)
+    {
+        if (keyInfo.KeyChar == 0)
+        {
+            return true;
+        }
+        else if (keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control) ||
+            keyInfo.Modifiers.HasFlag(ConsoleModifiers.Alt))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private string? Flush(Span<char> keyBuffer)
