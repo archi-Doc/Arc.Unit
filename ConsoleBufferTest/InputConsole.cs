@@ -7,6 +7,7 @@ namespace Arc.Unit;
 public partial class InputConsole : IConsoleService
 {
     private const int KeyBufferSize = 16;
+    private static readonly ConsoleKeyInfo EnterKeyInfo = new(default, ConsoleKey.Enter, false, false, false);
 
     public ConsoleColor DefaultInputColor { get; set; }
 
@@ -54,7 +55,17 @@ public partial class InputConsole : IConsoleService
             }
             catch
             {
-                keyInfo = new(default, ConsoleKey.Enter, false, false, false);
+                keyInfo = EnterKeyInfo;
+            }
+
+            if (keyInfo.KeyChar == '\n' ||
+                keyInfo.Key == ConsoleKey.Enter)
+            {
+                keyInfo = EnterKeyInfo;
+            }
+            else if (keyInfo.KeyChar == '\r')
+            {// CrLf -> Lf
+                continue;
             }
 
             bool flush = true;
@@ -62,7 +73,7 @@ public partial class InputConsole : IConsoleService
             {// Control
             }
             else
-            {// Displayable character
+            {// Not control
                 keyBuffer[position++] = keyInfo.KeyChar;
                 try
                 {
@@ -168,11 +179,15 @@ public partial class InputConsole : IConsoleService
         {
             return true;
         }
+        else if (keyInfo.Key == ConsoleKey.Enter)
+        {
+            return true;
+        }
 
         return false;
     }
 
-    private string? Flush(Span<char> keyBuffer)
+    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> keyBuffer)
     {
         (var cursorLeft, var cursorTop) = Console.GetCursorPosition();
 
@@ -181,11 +196,11 @@ public partial class InputConsole : IConsoleService
             var buffer = this.FindBuffer(ref cursorLeft, ref cursorTop);
             if (buffer is null)
             {
-                return null;
+                return string.Empty;
             }
 
-            if (buffer.ProcessInternal(this, cursorLeft, cursorTop, keyBuffer))
-            {
+            if (buffer.ProcessInternal(this, cursorLeft, cursorTop, keyInfo, keyBuffer))
+            {// Exit input mode and return the concatenated string.
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
                 {

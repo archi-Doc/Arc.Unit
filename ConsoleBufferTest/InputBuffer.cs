@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace Arc.Unit;
@@ -37,44 +38,34 @@ internal class InputBuffer
         this.Width = 0;
     }
 
-    public bool ProcessInternal(InputConsole inputConsole, int cursorLeft, int cursorTop, Span<char> keyBuffer)
+    public bool ProcessInternal(InputConsole inputConsole, int cursorLeft, int cursorTop, ConsoleKeyInfo keyInfo, Span<char> keyBuffer)
     {
-        // Cursor position -> Array position
-        var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
-
-        var span = keyBuffer;
-        var startIndex = -1;
-        var endIndex = -1;
-        for (var i = 0; i < span.Length; i += 2)
-        {
-            var key = (ConsoleKey)span[i];
-            var keyChar = span[i + 1];
-
+        var key = keyInfo.Key;
+        if (keyInfo.Key != ConsoleKey.None)
+        {// Control
             if (key == ConsoleKey.Enter)
             {// Exit or Multiline """
                 return true;
             }
             else if (key == ConsoleKey.Backspace)
             {
+                var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
                 if (arrayPosition > 0)
                 {
-                    RemoveAt(arrayPosition - 1);
+                    this.RemoveAt(arrayPosition - 1);
                     this.MoveLeft();
-                    startIndex = arrayPosition - 1;
-                    endIndex = this.Length;
-                    UpdateConsole();
+                    this.UpdateConsole(arrayPosition - 1, this.Length);
                 }
 
                 return false;
             }
             else if (key == ConsoleKey.Delete)
             {
+                var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
                 if (arrayPosition < this.Length)
                 {
-                    RemoveAt(arrayPosition);
-                    startIndex = arrayPosition;
-                    endIndex = this.Length;
-                    UpdateConsole();
+                    this.RemoveAt(arrayPosition);
+                    this.UpdateConsole(arrayPosition, this.Length);
                 }
 
                 return false;
@@ -98,8 +89,18 @@ internal class InputBuffer
             {// Toggle insert mode
                 inputConsole.IsInsertMode = !inputConsole.IsInsertMode;
             }
-            else
-            {// Other characters
+        }
+        else
+        {// Not control
+            var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
+            var span = keyBuffer;
+            var startIndex = -1;
+            var endIndex = -1;
+            for (var i = 0; i < span.Length; i += 2)
+            {
+                var key = (ConsoleKey)span[i];
+                var keyChar = span[i + 1];
+
                 if (inputConsole.IsInsertMode)
                 {
                 }
@@ -142,22 +143,6 @@ internal class InputBuffer
         }
 
         return false;
-
-        void UpdateConsole()
-        {
-        }
-
-        void RemoveAt(int index)
-        {
-            this.Length--;
-            this.Width -= this.widthArray[index];
-            this.charArray.AsSpan(index + 1, this.Length - index).CopyTo(this.charArray.AsSpan(index));
-            this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
-        }
-
-        void AddChar(char key, char lowSurrogate)
-        {
-        }
     }
 
     public int GetHeight()
@@ -226,6 +211,19 @@ internal class InputBuffer
         }
 
         return arrayPosition;
+    }
+
+    private void UpdateConsole(int startIndex, int endIndex)
+    {
+        Debug.Assert(startIndex >= 0 && endIndex <= this.Length && startIndex <= endIndex);
+    }
+
+    private void RemoveAt(int index)
+    {
+        this.Length--;
+        this.Width -= this.widthArray[index];
+        this.charArray.AsSpan(index + 1, this.Length - index).CopyTo(this.charArray.AsSpan(index));
+        this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
     }
 
     private void MoveLeft()
