@@ -149,19 +149,10 @@ internal class InputBuffer
         }
     }
 
-    public int GetWidth()
+    /*public int GetWidth()
     {
         return (int)BaseHelper.Sum(this.widthArray.AsSpan(0, this.Length));
-
-        /*var width = 0;
-        var span = this.widthArray.AsSpan(0, this.Length);
-        foreach (var x in span)
-        {
-            width += x;
-        }
-
-        return width;*/
-    }
+    }*/
 
     public void SetPrompt(string? prompt)
     {
