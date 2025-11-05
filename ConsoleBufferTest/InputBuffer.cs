@@ -246,21 +246,17 @@ internal class InputBuffer
 
     private int GetArrayPosition()
     {
-        var pos = this.CursorLeft - this.PromtWidth + (this.CursorTop * this.InputConsole.WindowWidth);
-        if (pos < 0)
-        {
-            pos = 0;
-        }
+        var index = this.GetCursorIndex();
 
         int arrayPosition;
         for (arrayPosition = 0; arrayPosition < this.Length; arrayPosition++)
         {
-            if (pos <= 0)
+            if (index <= 0)
             {
                 break;
             }
 
-            pos -= this.widthArray[arrayPosition];
+            index -= this.widthArray[arrayPosition];
         }
 
         return arrayPosition;
@@ -388,6 +384,20 @@ internal class InputBuffer
         }
     }
 
+    private int GetCursorIndex()
+    {
+        var index = this.CursorLeft - this.PromtWidth + (this.CursorTop * this.InputConsole.WindowWidth);
+        return index;
+    }
+
+    private (int Left, int Top) ToCursor(int cursorIndex)
+    {
+        cursorIndex += this.PromtWidth;
+        var top = cursorIndex / this.InputConsole.WindowWidth;
+        var left = cursorIndex - (top * this.InputConsole.WindowWidth);
+        return (left, top);
+    }
+
     private void MoveLeft(int arrayPosition)
     {
         if (arrayPosition == 0)
@@ -396,16 +406,15 @@ internal class InputBuffer
         }
 
         var width = this.GetLeftWidth(arrayPosition);
-        try
+        var cursorIndex = this.GetCursorIndex() - width;
+        if (cursorIndex >= 0)
         {
-            var left = this.Left + this.CursorLeft;
-            if (left > this.PromtWidth)
+            var newCursor = this.ToCursor(cursorIndex);
+            if (this.CursorLeft != newCursor.Left ||
+                this.CursorTop != newCursor.Top)
             {
-                Console.CursorLeft = left - width;
+                this.SetCursorPosition(newCursor.Left, newCursor.Top);
             }
-        }
-        catch
-        {
         }
     }
 
@@ -417,13 +426,25 @@ internal class InputBuffer
         }
 
         var width = this.GetRightWidth(arrayPosition);
+        var cursorIndex = this.GetCursorIndex() + width;
+        if (cursorIndex >= 0)
+        {
+            var newCursor = this.ToCursor(cursorIndex);
+            if (this.CursorLeft != newCursor.Left ||
+                this.CursorTop != newCursor.Top)
+            {
+                this.SetCursorPosition(newCursor.Left, newCursor.Top);
+            }
+        }
+    }
+
+    private void SetCursorPosition(int cursorLeft, int cursorTop)
+    {
         try
         {
-            var left = this.Left + this.CursorLeft;
-            if (left < this.TotalWidth)
-            {
-                Console.CursorLeft = this.Left + left + width;
-            }
+            Console.SetCursorPosition(this.Left + cursorLeft, this.Top + cursorTop);
+            this.CursorLeft = cursorLeft;
+            this.CursorTop = cursorTop;
         }
         catch
         {
