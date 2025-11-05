@@ -316,14 +316,13 @@ internal class InputBuffer
         this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
     }
 
-    private int GetLeftWidth(int index)
+    private int GetWidthAt(int index)
     {
-        if (index <= 0 || index > this.Length)
+        if (index < 0 || index >= this.Length)
         {
             return 0;
         }
 
-        index--;
         if (char.IsLowSurrogate(this.charArray[index]) &&
             index > 0 &&
             char.IsHighSurrogate(this.charArray[index - 1]))
@@ -344,7 +343,7 @@ internal class InputBuffer
             return;
         }
 
-        var width = this.GetLeftWidth(arrayPosition);
+        var width = this.GetWidthAt(arrayPosition - 1);
         try
         {
             var left = Console.CursorLeft;
@@ -361,12 +360,18 @@ internal class InputBuffer
     private void MoveRight(int cursorLeft, int cursorTop)
     {
         var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
+        if (arrayPosition >= this.Length)
+        {
+            return;
+        }
+
+        var width = this.GetWidthAt(arrayPosition);
         try
         {
             var left = Console.CursorLeft;
             if (left < this.TotalWidth)
             {
-                Console.CursorLeft = left + 1;
+                Console.CursorLeft = left + width;
             }
         }
         catch
