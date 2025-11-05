@@ -13,6 +13,14 @@ public partial class InputConsole : IConsoleService
 
     public bool IsInsertMode { get; set; } = true;
 
+    public int WindowWidth { get; private set; }
+
+    public int WindowHeight { get; private set; }
+
+    public int CursorLeft { get; private set; }
+
+    public int CursorTop { get; private set; }
+
     private readonly ObjectPool<InputBuffer> bufferPool = new(() => new InputBuffer(), 32);
 
     private readonly Lock lockObject = new();
@@ -189,19 +197,64 @@ public partial class InputConsole : IConsoleService
         return false;
     }
 
+    private void Prepare()
+    {
+        this.CursorLeft = 0;
+        this.CursorTop = 0;
+        this.WindowWidth = 120;
+        this.WindowHeight = 30;
+
+        try
+        {
+            (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
+            this.WindowWidth = Console.WindowWidth;
+            this.WindowHeight = Console.WindowHeight;
+        }
+        catch
+        {
+        }
+
+        if (this.WindowWidth <= 0)
+        {
+            this.WindowWidth = 1;
+        }
+
+        if (this.WindowHeight <= 0)
+        {
+            this.WindowHeight = 1;
+        }
+
+        if (this.CursorLeft < 0)
+        {
+            this.CursorLeft = 0;
+        }
+        else if (this.CursorLeft >= this.WindowWidth)
+        {
+            this.CursorLeft = this.WindowWidth - 1;
+        }
+
+        if (this.CursorTop < 0)
+        {
+            this.CursorTop = 0;
+        }
+        else if (this.CursorTop >= this.WindowHeight)
+        {
+            this.CursorTop = this.WindowHeight - 1;
+        }
+    }
+
     private string? Flush(ConsoleKeyInfo keyInfo, Span<char> charBuffer)
     {
-        (var cursorLeft, var cursorTop) = Console.GetCursorPosition();
-
+        this.Prepare();
         using (this.lockObject.EnterScope())
         {
-            var buffer = this.FindBuffer(ref cursorLeft, ref cursorTop);
+            var buffer = this.PrepareAndFindBuffer();
             if (buffer is null)
             {
                 return string.Empty;
             }
 
-            if (buffer.ProcessInternal(this, cursorLeft, cursorTop, keyInfo, charBuffer))
+            if (buffer.ProcessInternal(this, keyInfo, charBuffer))
             {// Exit input mode and return the concatenated string.
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
@@ -230,35 +283,41 @@ public partial class InputConsole : IConsoleService
         }
     }
 
-    private InputBuffer? FindBuffer(ref int cursorLeft, ref int cursorTop)
+    private InputBuffer? PrepareAndFindBuffer()
     {
         using (this.lockObject.EnterScope())
         {
+
             if (this.buffers.Count == 0)
             {
                 return null;
             }
 
-            cursorTop -= this.startingCursorTop;
-            if (cursorTop <= 0)
+            /*this.CursorTop -= this.startingCursorTop;
+            if (this.CursorTop <= 0)
             {
-                cursorTop = 0;
+                this.CursorTop = 0;
                 return this.buffers[0];
-            }
+            }*/
 
-            var y = 0;
-            for (int i = 0; i < this.buffers.Count; i++)
+            // Calculate buffer heights.
+            var y = this.CursorTop;
+            InputBuffer? buffer = null;
+            foreach (var x in this.buffers)
             {
-                var prevY = y;
-                y += this.buffers[i].GetHeight();
-                if (cursorTop < y)
+                x.Top = y;
+                x.Height = (x.Width + this.WindowWidth) / this.WindowWidth;
+                y += x.Height;
+                if (buffer is null &&
+                    this.CursorTop >= x.Top &&
+                    this.CursorTop < y)
                 {
-                    cursorTop -= prevY;
-                    return this.buffers[i];
+                    buffer = x;
                 }
             }
 
-            return this.buffers[0];
+            buffer ??= this.buffers[0];
+            return buffer;
         }
     }
 
