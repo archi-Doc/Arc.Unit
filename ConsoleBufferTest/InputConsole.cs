@@ -17,11 +17,11 @@ public partial class InputConsole : IConsoleService
 
     public int WindowHeight { get; private set; }
 
-    public int CursorLeft { get; private set; }
+    public int RelativeLeft { get; private set; }
 
-    public int CursorTop { get; private set; }
+    public int RelativeTop { get; private set; }
 
-    private readonly ObjectPool<InputBuffer> bufferPool = new(() => new InputBuffer(), 32);
+    private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
     private int startingCursorTop;
@@ -31,6 +31,7 @@ public partial class InputConsole : IConsoleService
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+        this.bufferPool = new(() => new InputBuffer(this), 32);
         this.DefaultInputColor = inputColor;
     }
 
@@ -199,14 +200,14 @@ public partial class InputConsole : IConsoleService
 
     private void Prepare()
     {
-        this.CursorLeft = 0;
-        this.CursorTop = 0;
+        this.RelativeLeft = 0;
+        this.RelativeTop = 0;
         this.WindowWidth = 120;
         this.WindowHeight = 30;
 
         try
         {
-            (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
+            (this.RelativeLeft, this.RelativeTop) = Console.GetCursorPosition();
             this.WindowWidth = Console.WindowWidth;
             this.WindowHeight = Console.WindowHeight;
         }
@@ -224,22 +225,22 @@ public partial class InputConsole : IConsoleService
             this.WindowHeight = 1;
         }
 
-        if (this.CursorLeft < 0)
+        if (this.RelativeLeft < 0)
         {
-            this.CursorLeft = 0;
+            this.RelativeLeft = 0;
         }
-        else if (this.CursorLeft >= this.WindowWidth)
+        else if (this.RelativeLeft >= this.WindowWidth)
         {
-            this.CursorLeft = this.WindowWidth - 1;
+            this.RelativeLeft = this.WindowWidth - 1;
         }
 
-        if (this.CursorTop < 0)
+        if (this.RelativeTop < 0)
         {
-            this.CursorTop = 0;
+            this.RelativeTop = 0;
         }
-        else if (this.CursorTop >= this.WindowHeight)
+        else if (this.RelativeTop >= this.WindowHeight)
         {
-            this.CursorTop = this.WindowHeight - 1;
+            this.RelativeTop = this.WindowHeight - 1;
         }
     }
 
@@ -254,7 +255,7 @@ public partial class InputConsole : IConsoleService
                 return string.Empty;
             }
 
-            if (buffer.ProcessInternal(this, keyInfo, charBuffer))
+            if (buffer.ProcessInternal(keyInfo, charBuffer))
             {// Exit input mode and return the concatenated string.
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
@@ -287,36 +288,35 @@ public partial class InputConsole : IConsoleService
     {
         using (this.lockObject.EnterScope())
         {
-
             if (this.buffers.Count == 0)
             {
                 return null;
             }
 
-            /*this.CursorTop -= this.startingCursorTop;
-            if (this.CursorTop <= 0)
-            {
-                this.CursorTop = 0;
-                return this.buffers[0];
-            }*/
-
             // Calculate buffer heights.
-            var y = this.CursorTop;
+            var y = this.RelativeTop;
             InputBuffer? buffer = null;
             foreach (var x in this.buffers)
             {
+                x.Left = 0;
                 x.Top = y;
                 x.Height = (x.Width + this.WindowWidth) / this.WindowWidth;
                 y += x.Height;
                 if (buffer is null &&
-                    this.CursorTop >= x.Top &&
-                    this.CursorTop < y)
+                    this.RelativeTop >= x.Top &&
+                    this.RelativeTop < y)
                 {
                     buffer = x;
+                    this.RelativeTop -= x.Top;
                 }
             }
 
-            buffer ??= this.buffers[0];
+            if (buffer is null)
+            {
+                buffer = this.buffers[0];
+                this.RelativeTop = 0;
+            }
+
             return buffer;
         }
     }
@@ -337,50 +337,4 @@ public partial class InputConsole : IConsoleService
 
         this.buffers.Clear();
     }
-
-    /*private InputBuffer? StoreBuffer()
-    {
-        InputBuffer previous;
-        using (this.lockObject.EnterScope())
-        {
-            if (this.current.TextLength > 0 || this.current.Prompt is not null)
-            {
-                previous = this.current;
-                this.current = this.bufferPool.Rent();
-                this.current.Clear();
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        Console.CursorLeft = 0;
-        // Console.Out.Write(this.whitespace.AsSpan(0, previous.TextLength));
-        Console.CursorLeft = 0;
-
-        return previous;
-    }
-
-    private void RestoreBuffer(InputBuffer stored)
-    {
-        using (this.lockObject.EnterScope())
-        {
-            this.current.Prompt = stored.Prompt;
-            this.current.TextLength = stored.TextLength;
-            stored.TextSpan.CopyTo(this.current.TextSpan);
-        }
-
-        if (stored.Prompt is not null)
-        {
-            Console.Out.Write(stored.Prompt);
-        }
-
-        if (stored.TextLength > 0)
-        {
-            Console.Out.Write(stored.TextSpan);
-        }
-
-        this.bufferPool.Return(stored);
-    }*/
 }
