@@ -65,9 +65,20 @@ internal class InputBuffer
                 var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
                 if (arrayPosition > 0)
                 {
-                    this.RemoveAt(arrayPosition - 1);
-                    this.MoveLeft();
-                    this.UpdateConsole(arrayPosition - 1, this.Length, 0, true);
+                    this.MoveLeft(arrayPosition);
+                    if (char.IsLowSurrogate(this.charArray[arrayPosition - 1]) &&
+                        (arrayPosition > 1) &&
+                        char.IsHighSurrogate(this.charArray[arrayPosition - 2]))
+                    {
+                        this.Remove2At(arrayPosition - 2);
+                        this.UpdateConsole(arrayPosition - 2, this.Length, 0, true);
+
+                    }
+                    else
+                    {
+                        this.RemoveAt(arrayPosition - 1);
+                        this.UpdateConsole(arrayPosition - 1, this.Length, 0, true);
+                    }
                 }
 
                 return false;
@@ -77,7 +88,18 @@ internal class InputBuffer
                 var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
                 if (arrayPosition < this.Length)
                 {
-                    this.RemoveAt(arrayPosition);
+                    if (char.IsHighSurrogate(this.charArray[arrayPosition]) &&
+                        (arrayPosition + 1) < this.Length &&
+                        char.IsLowSurrogate(this.charArray[arrayPosition + 1]))
+                    {
+                        this.Remove2At(arrayPosition);
+
+                    }
+                    else
+                    {
+                        this.RemoveAt(arrayPosition);
+                    }
+
                     this.UpdateConsole(arrayPosition, this.Length, 0, true);
                 }
 
@@ -85,12 +107,14 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.LeftArrow)
             {
-                this.MoveLeft(cursorLeft, cursorTop);
+                var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
+                this.MoveLeft(arrayPosition);
                 return false;
             }
             else if (key == ConsoleKey.RightArrow)
             {
-                this.MoveRight(cursorLeft, cursorTop);
+                var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
+                this.MoveRight(arrayPosition);
                 return false;
             }
             else if (key == ConsoleKey.UpArrow ||
@@ -316,18 +340,46 @@ internal class InputBuffer
         this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
     }
 
-    private int GetWidthAt(int index)
+    private void Remove2At(int index)
     {
-        if (index < 0 || index >= this.Length)
+        this.Length -= 2;
+        var w = this.widthArray[index] + this.widthArray[index + 1];
+        this.Width -= w;
+        this.charArray.AsSpan(index + 2, this.Length - index).CopyTo(this.charArray.AsSpan(index));
+        this.widthArray.AsSpan(index + 2, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
+    }
+
+    private int GetLeftWidth(int index)
+    {
+        if (index < 1)
         {
             return 0;
         }
 
-        if (char.IsLowSurrogate(this.charArray[index]) &&
-            index > 0 &&
-            char.IsHighSurrogate(this.charArray[index - 1]))
+        if (char.IsLowSurrogate(this.charArray[index - 1]) &&
+            index > 1 &&
+            char.IsHighSurrogate(this.charArray[index - 2]))
         {
-            return this.widthArray[index - 1] + this.widthArray[index];
+            return this.widthArray[index - 1] + this.widthArray[index - 2];
+        }
+        else
+        {
+            return this.widthArray[index - 1];
+        }
+    }
+
+    private int GetRightWidth(int index)
+    {
+        if (index >= this.Length)
+        {
+            return 0;
+        }
+
+        if (char.IsHighSurrogate(this.charArray[index]) &&
+            (index + 1) < this.Length &&
+            char.IsLowSurrogate(this.charArray[index + 1]))
+        {
+            return this.widthArray[index] + this.widthArray[index + 1];
         }
         else
         {
@@ -335,15 +387,14 @@ internal class InputBuffer
         }
     }
 
-    private void MoveLeft(int cursorLeft, int cursorTop)
+    private void MoveLeft(int arrayPosition)
     {
-        var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
         if (arrayPosition == 0)
         {
             return;
         }
 
-        var width = this.GetWidthAt(arrayPosition - 1);
+        var width = this.GetLeftWidth(arrayPosition);
         try
         {
             var left = Console.CursorLeft;
@@ -357,15 +408,14 @@ internal class InputBuffer
         }
     }
 
-    private void MoveRight(int cursorLeft, int cursorTop)
+    private void MoveRight(int arrayPosition)
     {
-        var arrayPosition = this.CursorPositionToArrayPosition(cursorLeft, cursorTop);
         if (arrayPosition >= this.Length)
         {
             return;
         }
 
-        var width = this.GetWidthAt(arrayPosition);
+        var width = this.GetRightWidth(arrayPosition);
         try
         {
             var left = Console.CursorLeft;
@@ -379,7 +429,7 @@ internal class InputBuffer
         }
     }
 
-    private void MoveLeft()
+    /*private void MoveLeft()
     {
         try
         {
@@ -407,5 +457,5 @@ internal class InputBuffer
         catch
         {
         }
-    }
+    }*/
 }
