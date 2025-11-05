@@ -324,7 +324,32 @@ internal class InputBuffer
             Console.Out.Write("\x1b[?25h");
             if (cursorDif != int.MinValue)
             {
-                Console.CursorLeft = cursorLeft;
+                var windowWidth = Console.WindowWidth;
+                if (cursorLeft >= 0 && cursorLeft < windowWidth)
+                {
+                    Console.CursorLeft = cursorLeft;
+                }
+                else
+                {
+                    var cursorTop = Console.CursorTop;
+                    int y;
+                    if (cursorLeft >= 0)
+                    {
+                        y = cursorLeft / windowWidth;
+                    }
+                    else
+                    {
+                        y = (cursorLeft / windowWidth) - 1;
+                    }
+
+                    cursorTop += y;
+                    cursorLeft -= windowWidth * y;
+
+                    if (cursorTop >= 0 && cursorTop < Console.WindowHeight)
+                    {
+                        Console.SetCursorPosition(cursorLeft, cursorTop);
+                    }
+                }
             }
         }
         catch
