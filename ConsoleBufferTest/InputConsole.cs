@@ -6,7 +6,7 @@ namespace Arc.Unit;
 
 public partial class InputConsole : IConsoleService
 {
-    private const int KeyBufferSize = 16;
+    private const int CharBufferSize = 1024;
     private static readonly ConsoleKeyInfo EnterKeyInfo = new(default, ConsoleKey.Enter, false, false, false);
 
     public ConsoleColor DefaultInputColor { get; set; }
@@ -17,9 +17,9 @@ public partial class InputConsole : IConsoleService
 
     public int WindowHeight { get; private set; }
 
-    public int RelativeLeft { get; private set; }
+    public int CursorLeft { get; private set; }
 
-    public int RelativeTop { get; private set; }
+    public int CursorTop { get; private set; }
 
     private readonly ObjectPool<InputBuffer> bufferPool;
 
@@ -38,7 +38,7 @@ public partial class InputConsole : IConsoleService
     public string? ReadLine(string? prompt = default)
     {
         InputBuffer? buffer;
-        Span<char> charBuffer = stackalloc char[KeyBufferSize];
+        Span<char> charBuffer = stackalloc char[CharBufferSize];
         var position = 0;
 
         using (this.lockObject.EnterScope())
@@ -89,9 +89,9 @@ public partial class InputConsole : IConsoleService
                     if (Console.KeyAvailable)
                     {
                         flush = false;
-                        if (position >= (KeyBufferSize - 2))
+                        if (position >= (CharBufferSize - 2))
                         {
-                            if (position >= KeyBufferSize ||
+                            if (position >= CharBufferSize ||
                                 char.IsLowSurrogate(keyInfo.KeyChar))
                             {
                                 flush = true;
@@ -200,14 +200,14 @@ public partial class InputConsole : IConsoleService
 
     private void Prepare()
     {
-        this.RelativeLeft = 0;
-        this.RelativeTop = 0;
+        this.CursorLeft = 0;
+        this.CursorTop = 0;
         this.WindowWidth = 120;
         this.WindowHeight = 30;
 
         try
         {
-            (this.RelativeLeft, this.RelativeTop) = Console.GetCursorPosition();
+            (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
             this.WindowWidth = Console.WindowWidth;
             this.WindowHeight = Console.WindowHeight;
         }
@@ -225,22 +225,22 @@ public partial class InputConsole : IConsoleService
             this.WindowHeight = 1;
         }
 
-        if (this.RelativeLeft < 0)
+        if (this.CursorLeft < 0)
         {
-            this.RelativeLeft = 0;
+            this.CursorLeft = 0;
         }
-        else if (this.RelativeLeft >= this.WindowWidth)
+        else if (this.CursorLeft >= this.WindowWidth)
         {
-            this.RelativeLeft = this.WindowWidth - 1;
+            this.CursorLeft = this.WindowWidth - 1;
         }
 
-        if (this.RelativeTop < 0)
+        if (this.CursorTop < 0)
         {
-            this.RelativeTop = 0;
+            this.CursorTop = 0;
         }
-        else if (this.RelativeTop >= this.WindowHeight)
+        else if (this.CursorTop >= this.WindowHeight)
         {
-            this.RelativeTop = this.WindowHeight - 1;
+            this.CursorTop = this.WindowHeight - 1;
         }
     }
 
@@ -294,29 +294,29 @@ public partial class InputConsole : IConsoleService
             }
 
             // Calculate buffer heights.
-            var y = this.RelativeTop;
+            var y = this.startingCursorTop;
             InputBuffer? buffer = null;
             foreach (var x in this.buffers)
             {
                 x.Left = 0;
                 x.Top = y;
-                x.Height = (x.Width + this.WindowWidth) / this.WindowWidth;
+                x.Height = (x.TotalWidth + this.WindowWidth) / this.WindowWidth;
                 y += x.Height;
                 if (buffer is null &&
-                    this.RelativeTop >= x.Top &&
-                    this.RelativeTop < y)
+                    this.CursorTop >= x.Top &&
+                    this.CursorTop < y)
                 {
+                    x.CursorLeft = this.CursorLeft - x.Left;
+                    x.CursorTop = this.CursorTop - x.Top;
                     buffer = x;
-                    this.RelativeTop -= x.Top;
+                }
+                else
+                {
+                    x.CursorTop = 0;
                 }
             }
 
-            if (buffer is null)
-            {
-                buffer = this.buffers[0];
-                this.RelativeTop = 0;
-            }
-
+            buffer ??= this.buffers[0];
             return buffer;
         }
     }

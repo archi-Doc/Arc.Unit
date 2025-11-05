@@ -25,6 +25,14 @@ internal class InputBuffer
 
     public InputConsole InputConsole { get; }
 
+    public int Left { get; set; }
+
+    public int Top { get; set; }
+
+    public int CursorLeft { get; set; }
+
+    public int CursorTop { get; set; }
+
     public string? Prompt { get; private set; }
 
     public int PromtWidth { get; private set; }
@@ -34,10 +42,6 @@ internal class InputBuffer
     public int Width { get; set; }
 
     public int Height { get; set; }
-
-    public int Left { get; set; }
-
-    public int Top { get; set; }
 
     public int TotalWidth => this.PromtWidth + this.Width;
 
@@ -242,7 +246,7 @@ internal class InputBuffer
 
     private int GetArrayPosition()
     {
-        var pos = this.InputConsole.RelativeLeft - this.PromtWidth + (this.InputConsole.RelativeTop * this.InputConsole.WindowWidth);
+        var pos = this.CursorLeft - this.PromtWidth + (this.CursorTop * this.InputConsole.WindowWidth);
         if (pos < 0)
         {
             pos = 0;
@@ -286,7 +290,7 @@ internal class InputBuffer
             var cursorLeft = 0;
             if (cursorDif != int.MinValue)
             {
-                cursorLeft = Console.CursorLeft + cursorDif;
+                cursorLeft = this.InputConsole.CursorLeft + cursorDif;
             }
 
             // var st = $"{SaveCursorString}{span.ToString()}{RestoreCursorString}";
@@ -394,7 +398,7 @@ internal class InputBuffer
         var width = this.GetLeftWidth(arrayPosition);
         try
         {
-            var left = this.Left + this.InputConsole.RelativeLeft;
+            var left = this.Left + this.CursorLeft;
             if (left > this.PromtWidth)
             {
                 Console.CursorLeft = left - width;
@@ -415,7 +419,7 @@ internal class InputBuffer
         var width = this.GetRightWidth(arrayPosition);
         try
         {
-            var left = this.InputConsole.RelativeLeft;
+            var left = this.Left + this.CursorLeft;
             if (left < this.TotalWidth)
             {
                 Console.CursorLeft = this.Left + left + width;
