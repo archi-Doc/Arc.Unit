@@ -291,9 +291,11 @@ internal class InputBuffer
 
             // var st = $"{SaveCursorString}{span.ToString()}{RestoreCursorString}";
             //Console.Out.Write(st);
+            Console.Out.Write(ConsoleColorHelper.GetForegroundColorEscapeCode(this.InputConsole.InputColor));
             Console.Out.Write("\x1b[?25l");
             Console.Out.Write(span);
             Console.Out.Write("\x1b[?25h");
+            Console.Out.Write(ResetString);
             if (cursorDif != int.MinValue)
             {
                 var windowWidth = this.InputConsole.WindowWidth;

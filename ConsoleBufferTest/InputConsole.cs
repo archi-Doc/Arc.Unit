@@ -9,17 +9,17 @@ public partial class InputConsole : IConsoleService
     private const int CharBufferSize = 1024;
     private static readonly ConsoleKeyInfo EnterKeyInfo = new(default, ConsoleKey.Enter, false, false, false);
 
-    public ConsoleColor DefaultInputColor { get; set; }
+    public ConsoleColor InputColor { get; set; } = ConsoleColor.Yellow;
 
     public bool IsInsertMode { get; set; } = true;
 
-    public int WindowWidth { get; private set; }
+    internal int WindowWidth { get; private set; }
 
-    public int WindowHeight { get; private set; }
+    internal int WindowHeight { get; private set; }
 
-    public int CursorLeft { get; private set; }
+    internal int CursorLeft { get; private set; }
 
-    public int CursorTop { get; private set; }
+    internal int CursorTop { get; private set; }
 
     private readonly ObjectPool<InputBuffer> bufferPool;
 
@@ -32,7 +32,10 @@ public partial class InputConsole : IConsoleService
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
         this.bufferPool = new(() => new InputBuffer(this), 32);
-        this.DefaultInputColor = inputColor;
+        if (inputColor >= 0)
+        {
+            this.InputColor = inputColor;
+        }
     }
 
     public string? ReadLine(string? prompt = default)
