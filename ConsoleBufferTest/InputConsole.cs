@@ -9,6 +9,7 @@ public partial class InputConsole : IConsoleService
     private const int CharBufferSize = 1024;
     private const int WindowBufferMargin = 256;
     private static readonly ConsoleKeyInfo EnterKeyInfo = new(default, ConsoleKey.Enter, false, false, false);
+    private static readonly ConsoleKeyInfo SpaceKeyInfo = new(' ', ConsoleKey.Spacebar, false, false, false);
 
     public ConsoleColor InputColor { get; set; } = ConsoleColor.Yellow;
 
@@ -78,6 +79,11 @@ public partial class InputConsole : IConsoleService
                 keyInfo.Key == ConsoleKey.Enter)
             {
                 keyInfo = EnterKeyInfo;
+            }
+            if (keyInfo.KeyChar == '\t' ||
+                keyInfo.Key == ConsoleKey.Tab)
+            {
+                keyInfo = SpaceKeyInfo;
             }
             else if (keyInfo.KeyChar == '\r')
             {// CrLf -> Lf
@@ -341,6 +347,10 @@ public partial class InputConsole : IConsoleService
         {
             return true;
         }
+        else if (keyInfo.Key == ConsoleKey.Tab)
+        {
+            return true;
+        }
 
         return false;
     }
@@ -412,7 +422,7 @@ public partial class InputConsole : IConsoleService
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
                 {
-                    length += this.buffers[i].Width;
+                    length += this.buffers[i].Length;
                 }
 
                 var result = string.Create(length, this.buffers, static (span, buffers) =>
