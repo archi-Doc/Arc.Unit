@@ -55,9 +55,15 @@ internal class InputBuffer
 
     public bool ProcessInternal(ConsoleKeyInfo keyInfo, Span<char> charBuffer)
     {
-        var key = keyInfo.Key;
+        if (charBuffer.Length > 0)
+        {
+            var arrayPosition = this.GetArrayPosition();
+            this.ProcessCharacterInternal(arrayPosition, charBuffer);
+        }
+
         if (keyInfo.Key != ConsoleKey.None)
         {// Control
+            var key = keyInfo.Key;
             if (key == ConsoleKey.Enter)
             {// Exit or Multiline """
                 return true;
@@ -127,11 +133,6 @@ internal class InputBuffer
                 // Overtype mode is not implemented yet.
                 // this.InputConsole.IsInsertMode = !this.InputConsole.IsInsertMode;
             }
-        }
-        else
-        {// Not control
-            var arrayPosition = this.GetArrayPosition();
-            this.ProcessCharacterInternal(arrayPosition, charBuffer);
         }
 
         return false;
