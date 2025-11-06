@@ -111,6 +111,22 @@ internal class InputBuffer
 
                 return false;
             }
+            else if (key == ConsoleKey.Escape)
+            {//
+                this.Length = 0;
+                this.Width = 0;
+                this.SetCursorPosition(this.PromtWidth, 0, false);
+                this.UpdateConsole(0, this.Length, 0, true);
+            }
+            else if (key == ConsoleKey.Home)
+            {
+                this.SetCursorPosition(this.PromtWidth, 0, false);
+            }
+            else if (key == ConsoleKey.End)
+            {
+                var newCursor = this.ToCursor(this.Width);
+                this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
+            }
             else if (key == ConsoleKey.LeftArrow)
             {
                 var arrayPosition = this.GetArrayPosition();

@@ -168,6 +168,9 @@ public partial class InputConsole : IConsoleService
             }
         }
 
+        // Terminated
+        // this.SetCursorPosition(this.WindowWidth - 1, this.CursorTop, true);
+        Console.Out.WriteLine();
         return null;
     }
 
@@ -406,7 +409,8 @@ public partial class InputConsole : IConsoleService
             return true;
         }
         else if (keyInfo.Key == ConsoleKey.Enter ||
-            keyInfo.Key == ConsoleKey.Backspace)
+            keyInfo.Key == ConsoleKey.Backspace ||
+            keyInfo.Key == ConsoleKey.Escape)
         {
             return true;
         }
