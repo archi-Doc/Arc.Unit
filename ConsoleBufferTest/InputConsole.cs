@@ -258,9 +258,29 @@ public partial class InputConsole : IConsoleService
         {
         }
 
+        var scrolled = this.CursorTop + 1 + ((this.CursorLeft + widthSum - 1) / this.WindowWidth) - this.WindowHeight;
+        if (scrolled > 0)
+        {
+            this.startingCursorTop -= scrolled;
+            this.CursorTop -= scrolled;
+            foreach (var x in this.buffers)
+            {
+                x.Top -= scrolled;
+                x.CursorTop += scrolled;
+            }
+        }
+
         cursorIndex += cursorDif;
-        var newCursorLeft = cursorIndex % this.WindowWidth;
-        var newCursorTop = cursorIndex / this.WindowWidth;
+        // var newCursorLeft = cursorIndex % this.WindowWidth;
+        // var newCursorTop = cursorIndex / this.WindowWidth;
+        var newCursorLeft = cursorIndex;
+        int newCursorTop = 0;
+        while (newCursorLeft > this.WindowWidth)
+        {
+            newCursorLeft -= this.WindowWidth;
+            newCursorTop++;
+            this.CursorTop++;
+        }
 
         ReadOnlySpan<char> span;
         var buffer = this.windowBuffer.AsSpan();
