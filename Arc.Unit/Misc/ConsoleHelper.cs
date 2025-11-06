@@ -22,6 +22,8 @@ public static class ConsoleHelper
 
     public static ReadOnlySpan<char> ShowCursorSpan => "\x1b[?25h";
 
+    public static ReadOnlySpan<char> SetCursorSpan => "\x1b["; // "\e[n;mH
+
     public static string GetForegroundColorEscapeCode(ConsoleColor color)
     {
         return color switch

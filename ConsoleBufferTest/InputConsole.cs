@@ -185,6 +185,57 @@ public partial class InputConsole : IConsoleService
         }
     }
 
+    internal void SetCursorPosition(int cursorLeft, int cursorTop, bool showCursor)
+    {// Move and show cursor.
+        /*if (this.CursorLeft == cursorLeft &&
+            this.CursorTop == cursorTop)
+        {
+            return;
+        }*/
+
+        var buffer = this.windowBuffer.AsSpan();
+        var written = 0;
+
+        var span = ConsoleHelper.SetCursorSpan;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;
+
+        var x = cursorTop + 1;
+        var y = cursorLeft + 1;
+        x.TryFormat(buffer, out var w);
+        buffer = buffer.Slice(w);
+        written += w;
+        buffer[0] = ';';
+        buffer = buffer.Slice(1);
+        written += 1;
+        y.TryFormat(buffer, out w);
+        buffer = buffer.Slice(w);
+        written += w;
+        buffer[0] = 'H';
+        buffer = buffer.Slice(1);
+        written += 1;
+
+        if (showCursor)
+        {
+            span = ConsoleHelper.ShowCursorSpan;
+            span.CopyTo(buffer);
+            buffer = buffer.Slice(span.Length);
+            written += span.Length;
+        }
+
+        try
+        {
+            Console.Out.Write(this.windowBuffer.AsSpan(0, written));
+        }
+        catch
+        {
+        }
+
+        this.CursorLeft = cursorLeft;
+        this.CursorTop = cursorTop;
+    }
+
     internal void Update(ReadOnlySpan<char> charSpan, ReadOnlySpan<byte> widthSpan, int cursorDif, bool eraseLine)
     {
         /*if (eraseLine)
@@ -200,6 +251,10 @@ public partial class InputConsole : IConsoleService
         if (widthSum > windowRemaining)
         {
         }
+
+        cursorIndex += cursorDif;
+        var newCursorLeft = cursorIndex % this.WindowWidth;
+        var newCursorTop = cursorIndex / this.WindowWidth;
 
         ReadOnlySpan<char> span;
         var buffer = this.windowBuffer.AsSpan();
@@ -237,6 +292,14 @@ public partial class InputConsole : IConsoleService
         written += span.Length;
         buffer = buffer.Slice(span.Length);
 
+        if (eraseLine)
+        {// Erase line
+            span = ConsoleHelper.EraseLineSpan;
+            span.CopyTo(buffer);
+            written += span.Length;
+            buffer = buffer.Slice(span.Length);
+        }
+
         /*if (cursorDif == 0)
         {// Restore cursor
             span = ConsoleHelper.RestoreCursorSpan;
@@ -254,49 +317,11 @@ public partial class InputConsole : IConsoleService
         try
         {
             Console.Out.Write(this.windowBuffer.AsSpan(0, written));
-
-            var cursorLeft = 0;
-            if (cursorDif != int.MinValue)
-            {
-                cursorLeft = this.CursorLeft + cursorDif;
-            }
-
-            if (cursorDif != int.MinValue)
-            {
-                var windowWidth = this.WindowWidth;
-                if (cursorLeft >= 0 && cursorLeft < windowWidth)
-                {
-                    Console.CursorLeft = cursorLeft;
-                }
-                else
-                {
-                    var cursorTop = Console.CursorTop;
-                    int y;
-                    if (cursorLeft >= 0)
-                    {
-                        y = cursorLeft / windowWidth;
-                    }
-                    else
-                    {
-                        y = (cursorLeft / windowWidth) - 1;
-                    }
-
-                    cursorTop += y;
-                    cursorLeft -= windowWidth * y;
-
-                    if (cursorTop >= 0 && cursorTop < Console.WindowHeight)
-                    {
-                        Console.SetCursorPosition(cursorLeft, cursorTop);
-                    }
-                }
-            }
+            this.SetCursorPosition(newCursorLeft, newCursorTop, true);
+            // Console.SetCursorPosition(newCursorLeft, newCursorTop);
         }
         catch
         {
-        }
-        finally
-        {
-            Console.CursorVisible = true;
         }
     }
 

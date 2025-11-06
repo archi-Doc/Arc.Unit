@@ -202,7 +202,7 @@ internal class InputBuffer
         }
         else
         {// Overtype (Not implemented yet)
-            this.EnsureCapacity(arrayPosition + charBuffer.Length);
+            /*this.EnsureCapacity(arrayPosition + charBuffer.Length);
 
             charBuffer.CopyTo(this.charArray.AsSpan(arrayPosition));
             for (var i = 0; i < charBuffer.Length; i++)
@@ -230,7 +230,7 @@ internal class InputBuffer
                 this.Width += dif;
             }
 
-            this.UpdateConsole(arrayPosition, arrayPosition + charBuffer.Length, int.MinValue);
+            this.UpdateConsole(arrayPosition, arrayPosition + charBuffer.Length, 0);*/
         }
     }
 
@@ -346,7 +346,7 @@ internal class InputBuffer
             if (this.CursorLeft != newCursor.Left ||
                 this.CursorTop != newCursor.Top)
             {
-                this.SetCursorPosition(newCursor.Left, newCursor.Top);
+                this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
             }
         }
     }
@@ -366,16 +366,16 @@ internal class InputBuffer
             if (this.CursorLeft != newCursor.Left ||
                 this.CursorTop != newCursor.Top)
             {
-                this.SetCursorPosition(newCursor.Left, newCursor.Top);
+                this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
             }
         }
     }
 
-    private void SetCursorPosition(int cursorLeft, int cursorTop)
+    private void SetCursorPosition(int cursorLeft, int cursorTop, bool showCursor)
     {
         try
         {
-            Console.SetCursorPosition(this.Left + cursorLeft, this.Top + cursorTop);
+            this.InputConsole.SetCursorPosition(this.Left + cursorLeft, this.Top + cursorTop, showCursor);
             this.CursorLeft = cursorLeft;
             this.CursorTop = cursorTop;
         }
