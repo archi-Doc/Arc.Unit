@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Collections;
+using Arc.Threading;
 
 namespace Arc.Unit;
 
@@ -10,6 +11,8 @@ public partial class InputConsole : IConsoleService
     private const int WindowBufferMargin = 256;
     private static readonly ConsoleKeyInfo EnterKeyInfo = new(default, ConsoleKey.Enter, false, false, false);
     private static readonly ConsoleKeyInfo SpaceKeyInfo = new(' ', ConsoleKey.Spacebar, false, false, false);
+
+    public ILogger? Logger { get; set; }
 
     public ConsoleColor InputColor { get; set; } = ConsoleColor.Yellow;
 
@@ -63,7 +66,8 @@ public partial class InputConsole : IConsoleService
             Console.Out.Write(prompt);
         }
 
-        while (true)
+        // Console.TreatControlCAsInput = true;
+        while (!ThreadCore.Root.IsTerminated)
         {
             ConsoleKeyInfo keyInfo;
             try
@@ -80,14 +84,20 @@ public partial class InputConsole : IConsoleService
             {
                 keyInfo = EnterKeyInfo;
             }
-            if (keyInfo.KeyChar == '\t' ||
+            else if (keyInfo.KeyChar == '\t' ||
                 keyInfo.Key == ConsoleKey.Tab)
-            {
+            {// Tab -> Space
                 keyInfo = SpaceKeyInfo;
             }
             else if (keyInfo.KeyChar == '\r')
             {// CrLf -> Lf
                 continue;
+            }
+            else if (keyInfo.Key == ConsoleKey.C &&
+                keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control))
+            { // Ctrl+C
+                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                return null;
             }
 
             bool flush = true;
@@ -130,6 +140,8 @@ public partial class InputConsole : IConsoleService
                 }
             }
         }
+
+        return null;
     }
 
     public void Write(string? message = null)
@@ -342,9 +354,13 @@ public partial class InputConsole : IConsoleService
 
         try
         {
+            // this.Logger?.TryGet()?.Log("Update ->");
+
             Console.Out.Write(this.windowBuffer.AsSpan(0, written));
             this.SetCursorPosition(newCursorLeft, newCursorTop, true);
             // Console.SetCursorPosition(newCursorLeft, newCursorTop);
+
+            // this.Logger?.TryGet()?.Log("-> Update");
         }
         catch
         {
