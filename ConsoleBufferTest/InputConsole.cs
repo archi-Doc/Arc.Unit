@@ -258,7 +258,7 @@ public partial class InputConsole : IConsoleService
         {
         }
 
-        var scrolled = this.CursorTop + 1 + ((this.CursorLeft + widthSum - 1) / this.WindowWidth) - this.WindowHeight;
+        var scrolled = this.CursorTop + 1 + ((this.CursorLeft + widthSum) / this.WindowWidth) - this.WindowHeight;
         if (scrolled > 0)
         {
             this.startingCursorTop -= scrolled;
@@ -271,16 +271,9 @@ public partial class InputConsole : IConsoleService
         }
 
         cursorIndex += cursorDif;
-        // var newCursorLeft = cursorIndex % this.WindowWidth;
-        // var newCursorTop = cursorIndex / this.WindowWidth;
-        var newCursorLeft = cursorIndex;
-        int newCursorTop = 0;
-        while (newCursorLeft > this.WindowWidth)
-        {
-            newCursorLeft -= this.WindowWidth;
-            newCursorTop++;
-            this.CursorTop++;
-        }
+        var newCursorLeft = cursorIndex % this.WindowWidth;
+        var newCursorTop = cursorIndex / this.WindowWidth;
+        var appendLineFeed = cursorIndex == (this.WindowWidth * this.WindowHeight);
 
         ReadOnlySpan<char> span;
         var buffer = this.windowBuffer.AsSpan();
@@ -311,6 +304,13 @@ public partial class InputConsole : IConsoleService
         span.CopyTo(buffer);
         written += span.Length;
         buffer = buffer.Slice(span.Length);
+
+        if (appendLineFeed)
+        {
+            buffer[0] = '\n';
+            written += 1;
+            buffer = buffer.Slice(1);
+        }
 
         // Reset
         span = ConsoleHelper.ResetSpan;
