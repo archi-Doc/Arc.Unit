@@ -134,7 +134,8 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.Insert)
             {// Toggle insert mode
-                this.InputConsole.IsInsertMode = !this.InputConsole.IsInsertMode;
+                // Overtype mode is not implemented yet.
+                // this.InputConsole.IsInsertMode = !this.InputConsole.IsInsertMode;
             }
         }
         else
@@ -210,7 +211,7 @@ internal class InputBuffer
             this.UpdateConsole(arrayPosition, this.Length, width);
         }
         else
-        {// Overtype
+        {// Overtype (Not implemented yet)
             this.EnsureCapacity(arrayPosition + charBuffer.Length);
 
             charBuffer.CopyTo(this.charArray.AsSpan(arrayPosition));
@@ -239,7 +240,6 @@ internal class InputBuffer
                 this.Width += dif;
             }
 
-            this.Length += charBuffer.Length;
             this.UpdateConsole(arrayPosition, arrayPosition + charBuffer.Length, int.MinValue);
         }
     }
