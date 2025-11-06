@@ -28,6 +28,7 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
+    private readonly ConsoleKeyReader reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
@@ -69,15 +70,39 @@ public partial class InputConsole : IConsoleService
         // Console.TreatControlCAsInput = true;
         while (!ThreadCore.Root.IsTerminated)
         {
-            ConsoleKeyInfo keyInfo;
+            // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
+            if (!this.reader.TryRead(out var keyInfo))
+            {
+                Thread.Sleep(10);
+                continue;
+            }
+
+            /*ConsoleKeyInfo keyInfo = EnterKeyInfo;
             try
             {
-                keyInfo = Console.ReadKey(intercept: true);
+                if (!this.reader.TryRead(out keyInfo))
+                {
+                    Thread.Sleep(10);
+                    continue;
+                }
+
+                // keyInfo = this.reader.ReadAsync(ThreadCore.Root.CancellationToken).Result;
+                // Task.Run(() =>
+                // {
+                //    keyInfo = Console.ReadKey(intercept: true);
+                // }).Wait(ThreadCore.Root.CancellationToken);
+                // this.Logger?.TryGet()?.Log($"ReadKey");
+
+                // keyInfo = Console.ReadKey(intercept: true);
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
             }
             catch
             {
                 keyInfo = EnterKeyInfo;
-            }
+            }*/
 
             if (keyInfo.KeyChar == '\n' ||
                 keyInfo.Key == ConsoleKey.Enter)
@@ -93,12 +118,13 @@ public partial class InputConsole : IConsoleService
             {// CrLf -> Lf
                 continue;
             }
-            else if (keyInfo.Key == ConsoleKey.C &&
+
+            /*else if (keyInfo.Key == ConsoleKey.C &&
                 keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control))
             { // Ctrl+C
                 ThreadCore.Root.Terminate(); // Send a termination signal to the root.
                 return null;
-            }
+            }*/
 
             bool flush = true;
             if (IsControl(keyInfo))
@@ -109,7 +135,8 @@ public partial class InputConsole : IConsoleService
                 charBuffer[position++] = keyInfo.KeyChar;
                 try
                 {
-                    if (Console.KeyAvailable)
+                    // if (Console.KeyAvailable)
+                    if (this.reader.IsKeyAvailable)
                     {
                         flush = false;
                         if (position >= (CharBufferSize - 2))
@@ -354,13 +381,13 @@ public partial class InputConsole : IConsoleService
 
         try
         {
-            // this.Logger?.TryGet()?.Log("Update ->");
+            this.Logger?.TryGet()?.Log("Update ->");
 
             Console.Out.Write(this.windowBuffer.AsSpan(0, written));
             this.SetCursorPosition(newCursorLeft, newCursorTop, true);
             // Console.SetCursorPosition(newCursorLeft, newCursorTop);
 
-            // this.Logger?.TryGet()?.Log("-> Update");
+            this.Logger?.TryGet()?.Log("-> Update");
         }
         catch
         {

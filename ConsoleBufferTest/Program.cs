@@ -43,7 +43,7 @@ internal class Program
 
         var product = builder.Build();
         var logger = product.Context.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>();
-        logger.TryGet()?.Log("ConsoleBufferTest");
+        logger.TryGet()?.Log("Start");
 
         var inputConsole = new InputConsole();
         inputConsole.Logger = product.Context.ServiceProvider.GetRequiredService<ILogger<InputConsole>>();
@@ -90,6 +90,7 @@ internal class Program
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (product.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {
+            logger.TryGet()?.Log("End");
             await unitLogger.FlushAndTerminate();
         }
 
