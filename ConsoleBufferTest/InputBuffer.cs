@@ -13,16 +13,6 @@ internal class InputBuffer
     private const int BufferSize = 1_024;
     private const int BufferMargin = 32;
 
-    private static ReadOnlySpan<char> EraseLineString => "\u001b[K";
-
-    private static ReadOnlySpan<char> EraseLine2String => "\u001b[2K";
-
-    private static ReadOnlySpan<char> ResetString => "\u001b[0m";
-
-    private static ReadOnlySpan<char> SaveCursorString => "\x1b[s";
-
-    private static ReadOnlySpan<char> RestoreCursorString => "\x1b[u";
-
     public InputConsole InputConsole { get; }
 
     public int Left { get; set; }
@@ -267,68 +257,9 @@ internal class InputBuffer
         Debug.Assert(startIndex >= 0 && endIndex <= this.Length && startIndex <= endIndex);
 
         var length = endIndex - startIndex;
-        Span<char> span;
-        if (eraseLine)
-        {
-            span = this.charArray.AsSpan(startIndex, length + EraseLineString.Length);
-            EraseLineString.CopyTo(span.Slice(length));
-            length += EraseLineString.Length;
-        }
-        else
-        {
-            span = this.charArray.AsSpan(startIndex, length);
-        }
-
-        // var width = BaseHelper.Sum(this.widthArray.AsSpan(startIndex, length));
-
-        try
-        {
-            var cursorLeft = 0;
-            if (cursorDif != int.MinValue)
-            {
-                cursorLeft = this.InputConsole.CursorLeft + cursorDif;
-            }
-
-            // var st = $"{SaveCursorString}{span.ToString()}{RestoreCursorString}";
-            //Console.Out.Write(st);
-            Console.Out.Write(ConsoleColorHelper.GetForegroundColorEscapeCode(this.InputConsole.InputColor));
-            Console.Out.Write("\x1b[?25l");
-            Console.Out.Write(span);
-            Console.Out.Write("\x1b[?25h");
-            Console.Out.Write(ResetString);
-            if (cursorDif != int.MinValue)
-            {
-                var windowWidth = this.InputConsole.WindowWidth;
-                if (cursorLeft >= 0 && cursorLeft < windowWidth)
-                {
-                    Console.CursorLeft = cursorLeft;
-                }
-                else
-                {
-                    var cursorTop = Console.CursorTop;
-                    int y;
-                    if (cursorLeft >= 0)
-                    {
-                        y = cursorLeft / windowWidth;
-                    }
-                    else
-                    {
-                        y = (cursorLeft / windowWidth) - 1;
-                    }
-
-                    cursorTop += y;
-                    cursorLeft -= windowWidth * y;
-
-                    if (cursorTop >= 0 && cursorTop < Console.WindowHeight)
-                    {
-                        Console.SetCursorPosition(cursorLeft, cursorTop);
-                    }
-                }
-            }
-        }
-        catch
-        {
-        }
+        var charSpan = this.charArray.AsSpan(startIndex, length);
+        var widthSpan = this.widthArray.AsSpan(startIndex, length);
+        this.InputConsole.Update(charSpan, widthSpan, cursorDif, eraseLine);
     }
 
     private void RemoveAt(int index)

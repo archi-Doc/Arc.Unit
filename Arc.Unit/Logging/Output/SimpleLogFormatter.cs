@@ -44,7 +44,7 @@ public partial class SimpleLogFormatter
             sb.Append(' ');
         }
 
-        this.WriteColoredMessage(sb, "[", ConsoleColorHelper.DefaultColor, ConsoleColor.DarkGray); // sb.Append('[');
+        this.WriteColoredMessage(sb, "[", ConsoleHelper.DefaultColor, ConsoleColor.DarkGray); // sb.Append('[');
 
         // Level
         this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
@@ -64,11 +64,11 @@ public partial class SimpleLogFormatter
             sb.Append($" {source}({param.EventId.ToString(this.options.EventIdFormat)})");
         }
 
-        this.WriteColoredMessage(sb, "] ", ConsoleColorHelper.DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
+        this.WriteColoredMessage(sb, "] ", ConsoleHelper.DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
 
         // Message
         var messageColor = param.LogLevel > LogLevel.Debug ? ConsoleColor.White : ConsoleColor.Gray;
-        this.WriteColoredMessage(sb, param.Message, ConsoleColorHelper.DefaultColor, messageColor);
+        this.WriteColoredMessage(sb, param.Message, ConsoleHelper.DefaultColor, messageColor);
     }
 
     public byte[] FormatUtf8(LogEvent param)
@@ -135,26 +135,26 @@ public partial class SimpleLogFormatter
             return;
         }
 
-        if (background != ConsoleColorHelper.DefaultColor)
+        if (background != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleColorHelper.GetBackgroundColorEscapeCode(background));
+            sb.Append(ConsoleHelper.GetBackgroundColorEscapeCode(background));
         }
 
-        if (foreground != ConsoleColorHelper.DefaultColor)
+        if (foreground != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleColorHelper.GetForegroundColorEscapeCode(foreground));
+            sb.Append(ConsoleHelper.GetForegroundColorEscapeCode(foreground));
         }
 
         sb.Append(message);
 
-        if (foreground != ConsoleColorHelper.DefaultColor)
+        if (foreground != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleColorHelper.DefaultForegroundColor); // reset to default foreground color
+            sb.Append(ConsoleHelper.DefaultForegroundColor); // reset to default foreground color
         }
 
-        if (background != ConsoleColorHelper.DefaultColor)
+        if (background != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleColorHelper.DefaultBackgroundColor); // reset to the background color
+            sb.Append(ConsoleHelper.DefaultBackgroundColor); // reset to the background color
         }
     }
 
@@ -193,7 +193,7 @@ public partial class SimpleLogFormatter
             LogLevel.Warning => new ConsoleColorPair(ConsoleColor.Yellow, ConsoleColor.Black),
             LogLevel.Error => new ConsoleColorPair(ConsoleColor.White, ConsoleColor.DarkRed),
             LogLevel.Fatal => new ConsoleColorPair(ConsoleColor.White, ConsoleColor.DarkRed),
-            _ => new ConsoleColorPair(ConsoleColorHelper.DefaultColor, ConsoleColorHelper.DefaultColor),
+            _ => new ConsoleColorPair(ConsoleHelper.DefaultColor, ConsoleHelper.DefaultColor),
         };
     }
 
