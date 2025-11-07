@@ -77,7 +77,7 @@ public partial class InputConsole : IConsoleService
                 continue;
             }*/
 
-            try
+            /*try
             {
                 if (!Console.KeyAvailable)
                 {
@@ -89,7 +89,7 @@ public partial class InputConsole : IConsoleService
             {
                 Thread.Sleep(10);
                 continue;
-            }
+            }*/
 
             ConsoleKeyInfo keyInfo = EnterKeyInfo;
             try
@@ -143,8 +143,7 @@ public partial class InputConsole : IConsoleService
                 charBuffer[position++] = keyInfo.KeyChar;
                 try
                 {
-                    if (Console.KeyAvailable)
-                    // if (this.reader.IsKeyAvailable)
+                    /*if (Console.KeyAvailable)
                     {
                         flush = false;
                         if (position >= (CharBufferSize - 2))
@@ -155,7 +154,7 @@ public partial class InputConsole : IConsoleService
                                 flush = true;
                             }
                         }
-                    }
+                    }*/
                 }
                 catch
                 {
