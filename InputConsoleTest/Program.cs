@@ -88,8 +88,6 @@ internal class Program
             }
         }
 
-        inputConsole.Abort();
-
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         if (product.Context.ServiceProvider.GetService<UnitLogger>() is { } unitLogger)
         {

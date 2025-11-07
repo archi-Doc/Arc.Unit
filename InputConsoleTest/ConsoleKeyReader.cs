@@ -7,14 +7,14 @@ namespace Arc.Unit;
 
 internal sealed class ConsoleKeyReader
 {
-    // private readonly Task task;
-    private readonly Thread thread;
+    private readonly Task task;
+    // private readonly Thread thread;
     private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
         new();
 
     public ConsoleKeyReader(CancellationToken cancellationToken = default)
     {
-        /*this.task = new Task(
+        this.task = new Task(
             () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -33,15 +33,10 @@ internal sealed class ConsoleKeyReader
             cancellationToken,
             TaskCreationOptions.LongRunning);
 
-        this.task.Start();*/
+        this.task.Start();
 
-        this.thread = new Thread(new ParameterizedThreadStart(Process));
-        this.thread.Start(this);
-    }
-
-    public void Abort()
-    {
-        this.thread.Abort();
+        /*this.thread = new Thread(new ParameterizedThreadStart(Process));
+        this.thread.Start(this);*/
     }
 
     public bool TryRead(out ConsoleKeyInfo keyInfo)

@@ -28,7 +28,7 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
-    private readonly ConsoleKeyReader reader = new();
+    // private readonly ConsoleKeyReader reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
@@ -45,11 +45,6 @@ public partial class InputConsole : IConsoleService
         {
             this.InputColor = inputColor;
         }
-    }
-
-    public void Abort()
-    {
-        this.reader.Abort();
     }
 
     public string? ReadLine(string? prompt = default)
@@ -76,21 +71,15 @@ public partial class InputConsole : IConsoleService
         while (!ThreadCore.Root.IsTerminated)
         {
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
-            if (!this.reader.TryRead(out var keyInfo))
+            /*if (!this.reader.TryRead(out var keyInfo))
             {
                 Thread.Sleep(10);
                 continue;
-            }
+            }*/
 
-            /*ConsoleKeyInfo keyInfo = EnterKeyInfo;
+            ConsoleKeyInfo keyInfo = EnterKeyInfo;
             try
             {
-                if (!this.reader.TryRead(out keyInfo))
-                {
-                    Thread.Sleep(10);
-                    continue;
-                }
-
                 // keyInfo = this.reader.ReadAsync(ThreadCore.Root.CancellationToken).Result;
                 // Task.Run(() =>
                 // {
@@ -98,7 +87,7 @@ public partial class InputConsole : IConsoleService
                 // }).Wait(ThreadCore.Root.CancellationToken);
                 // this.Logger?.TryGet()?.Log($"ReadKey");
 
-                // keyInfo = Console.ReadKey(intercept: true);
+                keyInfo = Console.ReadKey(intercept: true);
             }
             catch (OperationCanceledException)
             {
@@ -107,7 +96,7 @@ public partial class InputConsole : IConsoleService
             catch
             {
                 keyInfo = EnterKeyInfo;
-            }*/
+            }
 
             if (keyInfo.KeyChar == '\n' ||
                 keyInfo.Key == ConsoleKey.Enter)
@@ -140,8 +129,8 @@ public partial class InputConsole : IConsoleService
                 charBuffer[position++] = keyInfo.KeyChar;
                 try
                 {
-                    // if (Console.KeyAvailable)
-                    if (this.reader.IsKeyAvailable)
+                    if (Console.KeyAvailable)
+                    // if (this.reader.IsKeyAvailable)
                     {
                         flush = false;
                         if (position >= (CharBufferSize - 2))
