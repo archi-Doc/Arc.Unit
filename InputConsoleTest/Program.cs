@@ -67,6 +67,7 @@ internal class Program
 
             if (string.Equals(input, "exit", StringComparison.InvariantCultureIgnoreCase))
             {// exit
+                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
                 break;
             }
             else if (string.IsNullOrEmpty(input))
