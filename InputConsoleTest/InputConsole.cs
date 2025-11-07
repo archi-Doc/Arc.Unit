@@ -95,13 +95,14 @@ public partial class InputConsole : IConsoleService
             try
             {
                 // keyInfo = this.reader.ReadAsync(ThreadCore.Root.CancellationToken).Result;
-                Task.Run(() =>
-                {
-                    keyInfo = Console.ReadKey(intercept: true);
-                }).Wait(ThreadCore.Root.CancellationToken);
+                // Task.Run(() =>
+                // {
+                //    keyInfo = Console.ReadKey(intercept: true);
+                // }).Wait(ThreadCore.Root.CancellationToken);
                 // this.Logger?.TryGet()?.Log($"ReadKey");
 
-                // keyInfo = Console.ReadKey(intercept: true);
+                var tt = Console.In.ReadLine();
+                keyInfo = Console.ReadKey(intercept: true);
             }
             catch (OperationCanceledException)
             {
