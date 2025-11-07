@@ -1,74 +1,32 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Runtime.InteropServices;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using Terminal.Gui;
 
 namespace ConsoleBufferTest;
+
+
+internal static partial class Interop
+{
+    internal static partial class Sys
+    {
+        [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
+        internal static unsafe partial int ReadStdin(byte* buffer, int bufferSize);
+
+        [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_InitializeConsoleBeforeRead")]
+        internal static partial void InitializeConsoleBeforeRead(byte minChars = 1, byte decisecondsTimeout = 0);
+
+        [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_UninitializeConsoleAfterRead")]
+        internal static partial void UninitializeConsoleAfterRead();
+    }
+}
 
 internal class Program
 {
     public static async Task Main(string[] args)
     {
-        // Terminal.Guiアプリの初期化
-        Application.Init();
-
-        // メインウィンドウを作成
-        var top = Application.Top;
-        var win = new Window("Text Input Sample")
-        {
-            X = 0,
-            Y = 1, // メニューバー分のオフセット
-            Width = Dim.Fill(),
-            Height = Dim.Fill()
-        };
-        top.Add(win);
-
-        // ラベル
-        var label = new Label("Input:")
-        {
-            X = 1,
-            Y = 1
-        };
-        win.Add(label);
-
-        // テキスト入力フィールド
-        var textField = new TextField("")
-        {
-            X = Pos.Right(label) + 1,
-            Y = Pos.Top(label),
-            Width = 40
-        };
-        win.Add(textField);
-
-        // OKボタン
-        var okButton = new Button("OK")
-        {
-            X = Pos.Left(textField),
-            Y = Pos.Bottom(textField) + 1
-        };
-        win.Add(okButton);
-
-        // 結果を表示するラベル
-        var resultLabel = new Label("")
-        {
-            X = Pos.Left(okButton),
-            Y = Pos.Bottom(okButton) + 1,
-            Width = 60
-        };
-        win.Add(resultLabel);
-
-        // ボタンが押されたときのイベント
-        okButton.Clicked += () =>
-        {
-            resultLabel.Text = $"You entered: {textField.Text}";
-        };
-
-        // アプリケーション開始
-        Application.Run();
-        Application.Shutdown();
-
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
         {// Console window closing or process terminated.
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
@@ -80,6 +38,8 @@ internal class Program
             e.Cancel = true;
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
+
+        Interop.Sys.InitializeConsoleBeforeRead(1, 0);
 
         var builder = new UnitBuilder()
             .Configure(context =>
@@ -111,14 +71,7 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
 
-        Console.WriteLine("2");
-
-        /*var buffer = new char[1024];
-        while (true)
-        {
-            var n = await Console.In.ReadAsync(buffer, ThreadCore.Root.CancellationToken);
-            Console.WriteLine(n);
-        }*/
+        Console.WriteLine("3");
 
         while (!ThreadCore.Root.IsTerminated)
         {
