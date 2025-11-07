@@ -77,6 +77,20 @@ public partial class InputConsole : IConsoleService
                 continue;
             }*/
 
+            try
+            {
+                if (!Console.KeyAvailable)
+                {
+                    Thread.Sleep(10);
+                    continue;
+                }
+            }
+            catch
+            {
+                Thread.Sleep(10);
+                continue;
+            }
+
             ConsoleKeyInfo keyInfo = EnterKeyInfo;
             try
             {
