@@ -52,7 +52,7 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
 
-        Console.WriteLine("In");
+        Console.WriteLine("2");
 
         /*var buffer = new char[1024];
         while (true)
