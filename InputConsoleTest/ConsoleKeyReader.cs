@@ -36,7 +36,12 @@ internal sealed class ConsoleKeyReader
         this.task.Start();*/
 
         this.thread = new Thread(new ParameterizedThreadStart(Process));
-        this.thread.Start();
+        this.thread.Start(this);
+    }
+
+    public void Abort()
+    {
+        this.thread.Abort();
     }
 
     public bool TryRead(out ConsoleKeyInfo keyInfo)

@@ -47,6 +47,11 @@ public partial class InputConsole : IConsoleService
         }
     }
 
+    public void Abort()
+    {
+        this.reader.Abort();
+    }
+
     public string? ReadLine(string? prompt = default)
     {
         InputBuffer? buffer;
