@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Globalization;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,6 +26,7 @@ internal class Program
             {
                 int result = ReadStdin(buffer, 100);
                 Console.WriteLine(result);
+                Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
             }
         }
 
