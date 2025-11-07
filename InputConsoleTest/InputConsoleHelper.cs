@@ -95,7 +95,7 @@ internal static class InputConsoleHelper
         var position = 0;
         while (position < text.Length)
         {
-            if (Rune.DecodeFromUtf16(text.Slice(position), out var r, out int consumed) != OperationStatus.Done)
+            if (System.Text.Rune.DecodeFromUtf16(text.Slice(position), out var r, out int consumed) != OperationStatus.Done)
             {
                 break;
             }
@@ -143,7 +143,7 @@ internal static class InputConsoleHelper
         or UnicodeCategory.EnclosingMark
         or UnicodeCategory.SpacingCombiningMark;
 
-    private static bool IsWideEastAsian(Rune r)
+    private static bool IsWideEastAsian(System.Text.Rune r)
     {
         var u = r.Value;
         return
@@ -156,7 +156,7 @@ internal static class InputConsoleHelper
             (u is >= 0xFF01 and <= 0xFF60) || (u is >= 0xFFE0 and <= 0xFFE6);
     }
 
-    private static bool IsEmojiLikeWide(Rune r)
+    private static bool IsEmojiLikeWide(System.Text.Rune r)
     {
         var u = r.Value;
         return
