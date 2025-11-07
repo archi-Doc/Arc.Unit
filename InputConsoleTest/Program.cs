@@ -52,6 +52,15 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
 
+        Console.WriteLine("In");
+
+        /*var buffer = new char[1024];
+        while (true)
+        {
+            var n = await Console.In.ReadAsync(buffer, ThreadCore.Root.CancellationToken);
+            Console.WriteLine(n);
+        }*/
+
         while (!ThreadCore.Root.IsTerminated)
         {
             /*if (!Console.KeyAvailable)

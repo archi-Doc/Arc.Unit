@@ -101,7 +101,6 @@ public partial class InputConsole : IConsoleService
                 // }).Wait(ThreadCore.Root.CancellationToken);
                 // this.Logger?.TryGet()?.Log($"ReadKey");
 
-                var tt = Console.In.ReadLine();
                 keyInfo = Console.ReadKey(intercept: true);
             }
             catch (OperationCanceledException)
