@@ -25,6 +25,29 @@ internal static partial class Interop
 
 internal class Program
 {
+    internal static unsafe int ReadStdin(byte* buffer, int bufferSize)
+    {
+        int result = Interop.Sys.ReadStdin(buffer, bufferSize);
+        return result;
+    }
+
+    public static unsafe void Test()
+    {
+        Interop.Sys.InitializeConsoleBeforeRead();
+
+        Span<byte> bufPtr = stackalloc byte[100];
+        while (true)
+        {
+            fixed (byte* buffer = bufPtr)
+            {
+                int result = ReadStdin(buffer, 100);
+                Console.WriteLine(result);
+            }
+        }
+
+        Interop.Sys.UninitializeConsoleAfterRead();
+    }
+
     public static async Task Main(string[] args)
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
@@ -38,8 +61,6 @@ internal class Program
             e.Cancel = true;
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
-
-        Interop.Sys.InitializeConsoleBeforeRead(1, 0);
 
         var builder = new UnitBuilder()
             .Configure(context =>
@@ -72,6 +93,7 @@ internal class Program
         inputConsole.WriteLine("Hello, World!");
 
         Console.WriteLine("3");
+        Test();
 
         while (!ThreadCore.Root.IsTerminated)
         {
