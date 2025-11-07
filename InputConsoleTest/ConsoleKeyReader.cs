@@ -1,18 +1,20 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace Arc.Unit;
 
 internal sealed class ConsoleKeyReader
 {
-    private readonly Task task;
+    // private readonly Task task;
+    private readonly Thread thread;
     private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
         new();
 
     public ConsoleKeyReader(CancellationToken cancellationToken = default)
     {
-        this.task = new Task(
+        /*this.task = new Task(
             () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
@@ -31,12 +33,32 @@ internal sealed class ConsoleKeyReader
             cancellationToken,
             TaskCreationOptions.LongRunning);
 
-        this.task.Start();
+        this.task.Start();*/
+
+        this.thread = new Thread(new ParameterizedThreadStart(Process));
+        this.thread.Start();
     }
 
     public bool TryRead(out ConsoleKeyInfo keyInfo)
     {
         return this.queue.TryDequeue(out keyInfo);
+    }
+
+    private static void Process(object? obj)
+    {
+        var reader = (ConsoleKeyReader)obj!;
+        while (true)
+        {
+            try
+            {
+                var keyInfo = Console.ReadKey(intercept: true);
+                reader.queue.Enqueue(keyInfo);
+            }
+            catch
+            {
+                Thread.Sleep(10);
+            }
+        }
     }
 
     public bool IsKeyAvailable => !this.queue.IsEmpty;
