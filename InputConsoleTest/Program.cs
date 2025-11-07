@@ -4,6 +4,7 @@ using System.Globalization;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ConsoleBufferTest;
 
@@ -27,6 +28,7 @@ internal class Program
                 int result = ReadStdin(buffer, 100);
                 Console.WriteLine(result);
                 Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
             }
         }
 
