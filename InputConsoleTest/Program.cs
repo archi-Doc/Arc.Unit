@@ -1,27 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Runtime.InteropServices;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ConsoleBufferTest;
-
-
-internal static partial class Interop
-{
-    internal static partial class Sys
-    {
-        [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
-        internal static unsafe partial int ReadStdin(byte* buffer, int bufferSize);
-
-        [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_InitializeConsoleBeforeRead")]
-        internal static partial void InitializeConsoleBeforeRead(byte minChars = 1, byte decisecondsTimeout = 0);
-
-        [LibraryImport("libSystem.Native", EntryPoint = "SystemNative_UninitializeConsoleAfterRead")]
-        internal static partial void UninitializeConsoleAfterRead();
-    }
-}
 
 internal class Program
 {
@@ -61,6 +44,15 @@ internal class Program
             e.Cancel = true;
             ThreadCore.Root.Terminate(); // Send a termination signal to the root.
         };
+
+        /*var st = Console.OpenStandardInput();
+        var buffer = new byte[100];
+        while (true)
+        {
+            // var n = st.Read(buffer.AsSpan(0, 1));
+            var r = Interop.Sys.ReadConsoleInput(InputHandle, out var ir, 1, out int numEventsRead);
+            Console.WriteLine(r);
+        }*/
 
         var builder = new UnitBuilder()
             .Configure(context =>
