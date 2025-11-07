@@ -50,9 +50,6 @@ internal class Program
         // var simpleConsole = new SimpleConsole();
         // Console.In = simpleConsole;
 
-        inputConsole.Write("A");
-        inputConsole.Write("B");
-        inputConsole.WriteLine("C");
         inputConsole.WriteLine("Hello, World!");
 
         while (!ThreadCore.Root.IsTerminated)
