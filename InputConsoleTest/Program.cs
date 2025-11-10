@@ -4,7 +4,6 @@ using System.Globalization;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ConsoleBufferTest;
 
@@ -89,7 +88,7 @@ internal class Program
         inputConsole.WriteLine("Hello, World!");
 
         Console.WriteLine("3");
-        Test();
+        // Test();
 
         while (!ThreadCore.Root.IsTerminated)
         {

@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace ConsoleBufferTest;
 
+#pragma warning disable SA1300 // Element should begin with upper-case letter
+#pragma warning disable SA1307 // Accessible fields should begin with upper-case letter
+
 internal static partial class Interop
 {
     private static IntPtr InputHandle => Interop.Sys.GetStdHandle(-10);
@@ -21,11 +24,11 @@ internal static partial class Interop
         internal ushort wRepeatCount;
         internal ushort wVirtualKeyCode;
         internal ushort wVirtualScanCode;
-        private ushort _uChar; // Union between WCHAR and ASCII char
+        internal ushort _uChar; // Union between WCHAR and ASCII char
         internal uint dwControlKeyState;
 
         // _uChar is stored as short to avoid any ambiguity for interop marshaling
-        internal char uChar => (char)_uChar;
+        internal char uChar => (char)this._uChar;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
