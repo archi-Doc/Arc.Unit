@@ -3,7 +3,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 
-namespace Arc.Unit;
+namespace Arc.InputConsole;
 
 internal sealed class ConsoleKeyReader
 {

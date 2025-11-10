@@ -6,7 +6,7 @@ using System.Linq;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
 
-namespace Arc.Unit;
+namespace Arc.InputConsole;
 
 internal class InputBuffer
 {

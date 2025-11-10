@@ -2,8 +2,9 @@
 
 using Arc.Collections;
 using Arc.Threading;
+using Arc.Unit;
 
-namespace Arc.Unit;
+namespace Arc.InputConsole;
 
 public partial class InputConsole : IConsoleService
 {

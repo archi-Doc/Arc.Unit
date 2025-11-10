@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Globalization;
+using Arc.InputConsole;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -82,13 +83,9 @@ internal class Program
 
         var inputConsole = new InputConsole();
         inputConsole.Logger = product.Context.ServiceProvider.GetRequiredService<ILogger<InputConsole>>();
-        // var simpleConsole = new SimpleConsole();
-        // Console.In = simpleConsole;
 
         inputConsole.WriteLine("Hello, World!");
-
         Console.WriteLine(Environment.OSVersion.ToString());
-        // Test();
 
         while (!ThreadCore.Root.IsTerminated)
         {
@@ -98,7 +95,7 @@ internal class Program
                 continue;
             }*/
 
-            var input = inputConsole.ReadLine($"{Console.CursorTop}> ");
+            var input = inputConsole.ReadLine($"{Console.CursorTop}> "); // Success, Canceled, Terminated
 
             if (string.Equals(input, "exit", StringComparison.InvariantCultureIgnoreCase))
             {// exit
