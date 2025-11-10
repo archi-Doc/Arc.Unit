@@ -30,10 +30,15 @@ internal class ConsoleService : IConsoleService
         }
     }
 
-    public string? ReadLine()
+    public string? ReadLine(string? prompt)
     {
         try
         {
+            if (prompt is not null)
+            {
+                Console.Write(prompt);
+            }
+
             return Console.ReadLine();
         }
         catch
