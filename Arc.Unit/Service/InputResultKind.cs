@@ -2,6 +2,9 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Represents the result kind of an input operation, indicating whether the operation completed successfully, was canceled, or was terminated.
+/// </summary>
 public enum InputResultKind
 {
     /// <summary>
@@ -18,26 +21,4 @@ public enum InputResultKind
     /// The application received a termination request (e.g., Ctrl+C).
     /// </summary>
     Terminated = 2,
-}
-
-public readonly struct InputResult
-{
-    public readonly InputResultKind Kind;
-
-    public string Text => this.text ?? string.Empty;
-
-    private readonly string? text;
-
-    public InputResult(string text)
-    {
-        this.Kind = InputResultKind.Success;
-        this.text = text;
-    }
-
-    public InputResult(InputResultKind kind)
-    {
-        this.Kind = kind;
-    }
-
-    public bool IsSuccess => this.Kind == InputResultKind.Success;
 }
