@@ -48,7 +48,7 @@ public partial class InputConsole : IConsoleService
         }
     }
 
-    public string? ReadLine(string? prompt = default)
+    public InputResult ReadLine(string? prompt = default)
     {
         InputBuffer? buffer;
         Span<char> charBuffer = stackalloc char[CharBufferSize];
@@ -112,7 +112,7 @@ public partial class InputConsole : IConsoleService
             {
                 keyInfo = EnterKeyInfo;
                 Thread.Sleep(10);
-                return null;
+                return new(InputResultKind.Terminated);
             }
 
             if (keyInfo.KeyChar == '\n' ||
@@ -173,7 +173,7 @@ public partial class InputConsole : IConsoleService
                 if (result is not null)
                 {
                     Console.Out.WriteLine();
-                    return result;
+                    return new(result);
                 }
             }
         }
@@ -181,7 +181,7 @@ public partial class InputConsole : IConsoleService
         // Terminated
         // this.SetCursorPosition(this.WindowWidth - 1, this.CursorTop, true);
         Console.Out.WriteLine();
-        return null;
+        return new(InputResultKind.Terminated);
     }
 
     public void Write(string? message = null)

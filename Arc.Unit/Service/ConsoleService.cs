@@ -30,7 +30,7 @@ internal class ConsoleService : IConsoleService
         }
     }
 
-    public string? ReadLine(string? prompt)
+    public InputResult ReadLine(string? prompt)
     {
         try
         {
@@ -39,11 +39,12 @@ internal class ConsoleService : IConsoleService
                 Console.Write(prompt);
             }
 
-            return Console.ReadLine();
+            var text = Console.ReadLine();
+            return new(text ?? string.Empty);
         }
         catch
         {
-            return null;
+            return new(InputResultKind.Terminated);
         }
     }
 

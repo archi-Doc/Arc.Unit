@@ -95,18 +95,26 @@ internal class Program
                 continue;
             }*/
 
-            var input = inputConsole.ReadLine($"{Console.CursorTop}> "); // Success, Canceled, Terminated
+            var result = inputConsole.ReadLine($"{Console.CursorTop}> "); // Success, Canceled, Terminated
 
-            if (string.Equals(input, "exit", StringComparison.InvariantCultureIgnoreCase))
+            if (result.Kind == InputResultKind.Terminated)
+            {
+                break;
+            }
+            else if (result.Kind == InputResultKind.Canceled)
+            {
+                continue;
+            }
+            else if (string.Equals(result.Text, "exit", StringComparison.InvariantCultureIgnoreCase))
             {// exit
                 ThreadCore.Root.Terminate(); // Send a termination signal to the root.
                 break;
             }
-            else if (string.IsNullOrEmpty(input))
+            else if (string.IsNullOrEmpty(result.Text))
             {// continue
                 continue;
             }
-            else if (string.Equals(input, "a", StringComparison.InvariantCultureIgnoreCase))
+            else if (string.Equals(result.Text, "a", StringComparison.InvariantCultureIgnoreCase))
             {
                 _ = Task.Run(() =>
                 {
@@ -116,7 +124,7 @@ internal class Program
             }
             else
             {
-                inputConsole.WriteLine($"Command: {input}");
+                inputConsole.WriteLine($"Command: {result.Text}");
             }
         }
 
