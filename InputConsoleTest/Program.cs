@@ -87,7 +87,6 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
 
-        Console.WriteLine("3");
         Console.WriteLine(Environment.OSVersion.ToString());
         // Test();
 
