@@ -103,13 +103,15 @@ public partial class InputConsole : IConsoleService
 
                 keyInfo = Console.ReadKey(intercept: true);
             }
-            catch (OperationCanceledException)
+            /*catch (OperationCanceledException)
             {
                 return null;
-            }
+            }*/
             catch
             {
                 keyInfo = EnterKeyInfo;
+                Thread.Sleep(10);
+                return null;
             }
 
             if (keyInfo.KeyChar == '\n' ||
