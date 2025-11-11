@@ -4,6 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using ConsoleBufferTest;
+using static FastExpressionCompiler.ExpressionCompiler;
 
 namespace Arc.InputConsole;
 
@@ -52,13 +53,14 @@ internal sealed class ConsoleKeyReader
                         }
                         else*/
                         {
-                            if (!Console.KeyAvailable)
-                            {//
+                            /*if (!Console.KeyAvailable)
+                            {
                                 Thread.Sleep(10);
                                 continue;
-                            }
+                            }*/
 
                             var keyInfo = Console.ReadKey(intercept: true);
+                            Console.WriteLine("ReadKey");
                             this.queue.Enqueue(keyInfo);
                         }
                     }
