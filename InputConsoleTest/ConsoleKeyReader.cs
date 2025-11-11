@@ -29,13 +29,13 @@ internal sealed class ConsoleKeyReader
                 {
                     try
                     {
-                        if (this.enableStdin)
+                        /*if (this.enableStdin)
                         {
-                            /*Span<byte> buffer = stackalloc byte[100];
-                            Interop.Sys.InitializeConsoleBeforeRead();
-                            int result = Interop.Sys.ReadStdin(buffer, 100);
-                            Interop.Sys.UninitializeConsoleAfterRead();
-                            Console.WriteLine(result);*/
+                            //Span<byte> buffer = stackalloc byte[100];
+                            //Interop.Sys.InitializeConsoleBeforeRead();
+                            //int result = Interop.Sys.ReadStdin(buffer, 100);
+                            //Interop.Sys.UninitializeConsoleAfterRead();
+                            //Console.WriteLine(result);
 
                             Span<byte> bufPtr = stackalloc byte[100];
                             while (true)
@@ -50,7 +50,7 @@ internal sealed class ConsoleKeyReader
                                 }
                             }
                         }
-                        else
+                        else*/
                         {
                             var keyInfo = Console.ReadKey(intercept: true);
                             this.queue.Enqueue(keyInfo);
