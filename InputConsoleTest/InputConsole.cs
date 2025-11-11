@@ -74,6 +74,8 @@ public partial class InputConsole : IConsoleService
         // Console.TreatControlCAsInput = true;
         while (!ThreadCore.Root.IsTerminated)
         {
+            this.CheckResize();
+
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
             if (!this.reader.TryRead(out var keyInfo))
             {
@@ -182,6 +184,23 @@ public partial class InputConsole : IConsoleService
         // this.SetCursorPosition(this.WindowWidth - 1, this.CursorTop, true);
         Console.Out.WriteLine();
         return new(InputResultKind.Terminated);
+    }
+
+    private void CheckResize()
+    {//
+        var windowWidth = Console.WindowWidth;
+        var windowHeight = Console.WindowHeight;
+        if (windowWidth == this.WindowWidth &&
+            windowHeight == this.WindowHeight)
+        {
+            return;
+        }
+
+        this.Prepare();
+        using (this.lockObject.EnterScope())
+        {
+            this.PrepareAndFindBuffer();
+        }
     }
 
     public void Write(string? message = null)
