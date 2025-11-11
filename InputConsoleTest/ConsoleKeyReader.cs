@@ -18,7 +18,7 @@ internal sealed class ConsoleKeyReader
     private byte posixDisableValue;
     private byte veraseCharacter;
 
-    public ConsoleKeyReader(CancellationToken cancellationToken = default)
+    public unsafe ConsoleKeyReader(CancellationToken cancellationToken = default)
     {
         this.Initialize();
 
@@ -31,11 +31,24 @@ internal sealed class ConsoleKeyReader
                     {
                         if (this.enableStdin)
                         {
-                            Span<byte> buffer = stackalloc byte[100];
+                            /*Span<byte> buffer = stackalloc byte[100];
                             Interop.Sys.InitializeConsoleBeforeRead();
                             int result = Interop.Sys.ReadStdin(buffer, 100);
                             Interop.Sys.UninitializeConsoleAfterRead();
-                            Console.WriteLine(result);
+                            Console.WriteLine(result);*/
+
+                            Span<byte> bufPtr = stackalloc byte[100];
+                            while (true)
+                            {
+                                fixed (byte* buffer = bufPtr)
+                                {
+                                    int result = Interop.Sys.ReadStdin(buffer, 100);
+                                    Console.WriteLine(result);
+                                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                                    Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                                }
+                            }
+
                             this.queue.Enqueue(new('a', ConsoleKey.A, false, false, false));
                         }
                         else
