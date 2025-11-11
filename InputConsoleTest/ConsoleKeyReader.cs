@@ -60,7 +60,7 @@ internal sealed class ConsoleKeyReader
                             }*/
 
                             var keyInfo = Console.ReadKey(intercept: true);
-                            Console.WriteLine("ReadKey");
+                            Console.WriteLine($"ReadKey: {keyInfo.KeyChar}");
                             this.queue.Enqueue(keyInfo);
                         }
                     }
