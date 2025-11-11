@@ -77,12 +77,16 @@ public partial class InputConsole : IConsoleService
             // this.CheckResize();
 
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
+
+            Console.WriteLine("a");
             if (!this.reader.TryRead(out var keyInfo))
             {
-                Console.WriteLine("a");
+                Console.WriteLine("b");
                 Thread.Sleep(10);
                 continue;
             }
+
+            Console.WriteLine("c");
 
             /*try
             {
