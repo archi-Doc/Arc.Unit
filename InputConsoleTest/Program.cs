@@ -82,15 +82,14 @@ internal class Program
         inputConsole.WriteLine("Hello, World!");
         Console.WriteLine(Environment.OSVersion.ToString());
 
-        while (true)
+        // Test();
+        /*while (true)
         {
-            /*Span<byte> buffer = stackalloc byte[100];
+            Span<byte> buffer = stackalloc byte[100];
             Interop.Sys.InitializeConsoleBeforeRead();
             int result = Interop.Sys.ReadStdin(buffer, 100);
-            Interop.Sys.UninitializeConsoleAfterRead();*/
-
-            Test();
-        }
+            Interop.Sys.UninitializeConsoleAfterRead();
+        }*/
 
         while (!ThreadCore.Root.IsTerminated)
         {
