@@ -59,6 +59,7 @@ internal sealed class ConsoleKeyReader
                                 continue;
                             }*/
 
+                            Console.WriteLine($"->");
                             var keyInfo = Console.ReadKey(intercept: true);
                             Console.WriteLine($"ReadKey: {keyInfo.KeyChar}");
                             this.queue.Enqueue(keyInfo);
@@ -73,7 +74,7 @@ internal sealed class ConsoleKeyReader
             cancellationToken,
             TaskCreationOptions.LongRunning);
 
-        //this.task.Start();
+        this.task.Start();
 
         /*this.thread = new Thread(new ParameterizedThreadStart(Process));
         this.thread.Start(this);*/
