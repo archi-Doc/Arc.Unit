@@ -153,8 +153,8 @@ public partial class InputConsole : IConsoleService
                 try
                 {
                     // if (Console.KeyAvailable)
-                    if (this.reader.IsKeyAvailable)
-                    // if (false)
+                    // if (this.reader.IsKeyAvailable)
+                    if (false)
                     {
                         flush = false;
                         if (position >= (CharBufferSize - 2))
