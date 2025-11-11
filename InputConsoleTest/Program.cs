@@ -11,6 +11,25 @@ namespace ConsoleBufferTest;
 
 internal class Program
 {
+    public static unsafe void Test()
+    {
+        Interop.Sys.InitializeConsoleBeforeRead();
+
+        Span<byte> bufPtr = stackalloc byte[100];
+        while (true)
+        {
+            fixed (byte* buffer = bufPtr)
+            {
+                int result = Interop.Sys.ReadStdin(buffer, 100);
+                Console.WriteLine(result);
+                Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+            }
+        }
+
+        Interop.Sys.UninitializeConsoleAfterRead();
+    }
+
     public static async Task Main(string[] args)
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
@@ -65,9 +84,12 @@ internal class Program
 
         while (true)
         {
-            Span<byte> buffer = stackalloc byte[100];
+            /*Span<byte> buffer = stackalloc byte[100];
+            Interop.Sys.InitializeConsoleBeforeRead();
             int result = Interop.Sys.ReadStdin(buffer, 100);
-            Console.WriteLine(result);
+            Interop.Sys.UninitializeConsoleAfterRead();*/
+
+            Test();
         }
 
         while (!ThreadCore.Root.IsTerminated)

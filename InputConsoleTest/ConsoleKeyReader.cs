@@ -32,7 +32,9 @@ internal sealed class ConsoleKeyReader
                         if (this.enableStdin)
                         {
                             Span<byte> buffer = stackalloc byte[100];
+                            Interop.Sys.InitializeConsoleBeforeRead();
                             int result = Interop.Sys.ReadStdin(buffer, 100);
+                            Interop.Sys.UninitializeConsoleAfterRead();
                             Console.WriteLine(result);
                             this.queue.Enqueue(new('a', ConsoleKey.A, false, false, false));
                         }

@@ -64,6 +64,10 @@ internal static partial class Interop
         private const string SystemNative = "libSystem.Native";
 
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
+        internal static unsafe partial int ReadStdin(byte* buffer, int bufferSize);
+
+
+        [LibraryImport(SystemNative, EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
         internal static unsafe partial int ReadStdin(Span<byte> buffer, int bufferSize);
 
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_InitializeConsoleBeforeRead")]
