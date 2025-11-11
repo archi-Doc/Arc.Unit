@@ -2,6 +2,7 @@
 
 using System.Collections.Concurrent;
 using System.Threading;
+using ConsoleBufferTest;
 
 namespace Arc.InputConsole;
 
@@ -14,6 +15,8 @@ internal sealed class ConsoleKeyReader
 
     public ConsoleKeyReader(CancellationToken cancellationToken = default)
     {
+        this.Initialize();
+
         this.task = new Task(
             () =>
             {
@@ -37,6 +40,33 @@ internal sealed class ConsoleKeyReader
 
         /*this.thread = new Thread(new ParameterizedThreadStart(Process));
         this.thread.Start(this);*/
+    }
+
+    private void Initialize()
+    {
+        try
+        {
+            const int NumControlCharacterNames = 4;
+            Span<Interop.ControlCharacterNames> controlCharacterNames = stackalloc Interop.ControlCharacterNames[NumControlCharacterNames]
+            {
+                Interop.ControlCharacterNames.VERASE,
+                Interop.ControlCharacterNames.VEOL,
+                Interop.ControlCharacterNames.VEOL2,
+                Interop.ControlCharacterNames.VEOF,
+            };
+
+            Span<byte> controlCharacterValues = stackalloc byte[NumControlCharacterNames];
+            Interop.Sys.GetControlCharacters(controlCharacterNames, controlCharacterValues, NumControlCharacterNames, out var s_posixDisableValue);
+            var s_veraseCharacter = controlCharacterValues[0];
+
+            Console.WriteLine(s_posixDisableValue);
+            Console.WriteLine(s_veraseCharacter);
+            // s_veolCharacter = controlCharacterValues[1];
+            // s_veol2Character = controlCharacterValues[2];
+            //s_veofCharacter = controlCharacterValues[3];
+        }
+        catch
+        { }
     }
 
     public bool TryRead(out ConsoleKeyInfo keyInfo)
