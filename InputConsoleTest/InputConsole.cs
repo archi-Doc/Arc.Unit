@@ -9,7 +9,7 @@ namespace Arc.InputConsole;
 public partial class InputConsole : IConsoleService
 {
     private const int CharBufferSize = 1024;
-    private const int WindowBufferMargin = 256;
+    private const int WindowBufferMargin = 512;
     private static readonly ConsoleKeyInfo EnterKeyInfo = new(default, ConsoleKey.Enter, false, false, false);
     private static readonly ConsoleKeyInfo SpaceKeyInfo = new(' ', ConsoleKey.Spacebar, false, false, false);
 
@@ -27,13 +27,16 @@ public partial class InputConsole : IConsoleService
 
     internal int CursorTop { get; private set; }
 
+    internal int StartingCursorTop { get; set; }
+
+    internal char[] WindowBuffer => this.windowBuffer;
+
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
     private readonly ConsoleKeyReader reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
-    private int startingCursorTop;
     private List<InputBuffer> buffers = new();
     private char[] windowBuffer = [];
 
@@ -60,7 +63,7 @@ public partial class InputConsole : IConsoleService
             buffer = this.RentBuffer();
             buffer.SetPrompt(prompt);
             this.buffers.Add(buffer);
-            this.startingCursorTop = Console.CursorTop;
+            this.StartingCursorTop = Console.CursorTop;
         }
 
         if (!string.IsNullOrEmpty(prompt))
@@ -291,6 +294,20 @@ public partial class InputConsole : IConsoleService
         this.CursorTop = cursorTop;
     }
 
+    internal void Scroll(int scroll)
+    {
+        if (scroll > 0)
+        {
+            this.StartingCursorTop -= scroll;
+            this.CursorTop -= scroll;
+            foreach (var x in this.buffers)
+            {
+                x.Top -= scroll;
+                x.CursorTop += scroll;
+            }
+        }
+    }
+
     internal void Update(ReadOnlySpan<char> charSpan, ReadOnlySpan<byte> widthSpan, int cursorDif, bool eraseLine)
     {
         /*if (eraseLine)
@@ -310,7 +327,7 @@ public partial class InputConsole : IConsoleService
         var scrolled = this.CursorTop + 1 + ((this.CursorLeft + widthSum) / this.WindowWidth) - this.WindowHeight;
         if (scrolled > 0)
         {
-            this.startingCursorTop -= scrolled;
+            this.StartingCursorTop -= scrolled;
             this.CursorTop -= scrolled;
             foreach (var x in this.buffers)
             {
@@ -553,7 +570,7 @@ public partial class InputConsole : IConsoleService
             }
 
             // Calculate buffer heights.
-            var y = this.startingCursorTop;
+            var y = this.StartingCursorTop;
             InputBuffer? buffer = null;
             foreach (var x in this.buffers)
             {
