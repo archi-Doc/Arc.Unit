@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using ConsoleBufferTest;
@@ -13,6 +14,7 @@ internal sealed class ConsoleKeyReader
     private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
         new();
 
+    private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
@@ -27,8 +29,18 @@ internal sealed class ConsoleKeyReader
                 {
                     try
                     {
-                        var keyInfo = Console.ReadKey(intercept: true);
-                        this.queue.Enqueue(keyInfo);
+                        if (this.enableStdin)
+                        {
+                            Span<byte> buffer = stackalloc byte[100];
+                            int result = Interop.Sys.ReadStdin(buffer, 100);
+                            Console.WriteLine(result);
+                            this.queue.Enqueue(new('a', ConsoleKey.A, false, false, false));
+                        }
+                        else
+                        {
+                            var keyInfo = Console.ReadKey(intercept: true);
+                            this.queue.Enqueue(keyInfo);
+                        }
                     }
                     catch
                     {
@@ -66,9 +78,11 @@ internal sealed class ConsoleKeyReader
             Console.WriteLine(this.posixDisableValue);
             Console.WriteLine(this.veraseCharacter);
 
-            // s_veolCharacter = controlCharacterValues[1];
-            // s_veol2Character = controlCharacterValues[2];
-            //s_veofCharacter = controlCharacterValues[3];
+            Interop.Sys.InitializeConsoleBeforeRead();
+            Interop.Sys.UninitializeConsoleAfterRead();
+
+            this.enableStdin = true;
+            Console.WriteLine("Unix");
         }
         catch
         { }
