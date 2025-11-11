@@ -52,6 +52,12 @@ internal sealed class ConsoleKeyReader
                         }
                         else*/
                         {
+                            if (!Console.KeyAvailable)
+                            {//
+                                Thread.Sleep(10);
+                                continue;
+                            }
+
                             var keyInfo = Console.ReadKey(intercept: true);
                             this.queue.Enqueue(keyInfo);
                         }
