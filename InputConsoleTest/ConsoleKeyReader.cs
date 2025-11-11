@@ -73,7 +73,7 @@ internal sealed class ConsoleKeyReader
             cancellationToken,
             TaskCreationOptions.LongRunning);
 
-        this.task.Start();
+        //this.task.Start();
 
         /*this.thread = new Thread(new ParameterizedThreadStart(Process));
         this.thread.Start(this);*/
