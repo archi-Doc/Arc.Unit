@@ -13,6 +13,9 @@ internal sealed class ConsoleKeyReader
     private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
         new();
 
+    private byte posixDisableValue;
+    private byte veraseCharacter;
+
     public ConsoleKeyReader(CancellationToken cancellationToken = default)
     {
         this.Initialize();
@@ -56,11 +59,13 @@ internal sealed class ConsoleKeyReader
             };
 
             Span<byte> controlCharacterValues = stackalloc byte[NumControlCharacterNames];
-            Interop.Sys.GetControlCharacters(controlCharacterNames, controlCharacterValues, NumControlCharacterNames, out var s_posixDisableValue);
-            var s_veraseCharacter = controlCharacterValues[0];
+            Interop.Sys.GetControlCharacters(controlCharacterNames, controlCharacterValues, NumControlCharacterNames, out var posixDisableValue);
+            this.posixDisableValue = posixDisableValue;
+            this.veraseCharacter = controlCharacterValues[0];
 
-            Console.WriteLine(s_posixDisableValue);
-            Console.WriteLine(s_veraseCharacter);
+            Console.WriteLine(this.posixDisableValue);
+            Console.WriteLine(this.veraseCharacter);
+
             // s_veolCharacter = controlCharacterValues[1];
             // s_veol2Character = controlCharacterValues[2];
             //s_veofCharacter = controlCharacterValues[3];
