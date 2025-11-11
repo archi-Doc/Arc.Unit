@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Globalization;
+using System.Threading;
 using Arc.InputConsole;
 using Arc.Threading;
 using Arc.Unit;
@@ -61,6 +62,13 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
         Console.WriteLine(Environment.OSVersion.ToString());
+
+        while (true)
+        {
+            Span<byte> buffer = stackalloc byte[100];
+            int result = Interop.Sys.ReadStdin(buffer, 100);
+            Console.WriteLine(result);
+        }
 
         while (!ThreadCore.Root.IsTerminated)
         {
