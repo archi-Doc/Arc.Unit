@@ -57,15 +57,22 @@ public partial class InputConsole : IConsoleService
         Span<char> charBuffer = stackalloc char[CharBufferSize];
         var position = 0;
 
+        Console.WriteLine("a0");
         using (this.lockObject.EnterScope())
         {
+            Console.WriteLine("a1");
             this.ReturnAllBuffersInternal();
+            Console.WriteLine("a2");
             buffer = this.RentBuffer();
+            Console.WriteLine("a3");
             buffer.SetPrompt(prompt);
+            Console.WriteLine("a4");
             this.buffers.Add(buffer);
+            Console.WriteLine("a5");
             this.StartingCursorTop = Console.CursorTop;
         }
 
+        Console.WriteLine("a6");
         if (!string.IsNullOrEmpty(prompt))
         {
             Console.Out.Write(prompt);
@@ -78,7 +85,6 @@ public partial class InputConsole : IConsoleService
 
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
 
-            Console.WriteLine("a");
             if (!this.reader.TryRead(out var keyInfo))
             {
                 Console.WriteLine("b");
@@ -153,8 +159,8 @@ public partial class InputConsole : IConsoleService
                 try
                 {
                     // if (Console.KeyAvailable)
-                    // if (this.reader.IsKeyAvailable)
-                    if (false)
+                    if (this.reader.IsKeyAvailable)
+                    // if (false)
                     {
                         flush = false;
                         if (position >= (CharBufferSize - 2))
