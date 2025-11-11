@@ -74,7 +74,7 @@ public partial class InputConsole : IConsoleService
         // Console.TreatControlCAsInput = true;
         while (!ThreadCore.Root.IsTerminated)
         {
-            this.CheckResize();
+            // this.CheckResize();
 
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
             if (!this.reader.TryRead(out var keyInfo))
@@ -148,8 +148,7 @@ public partial class InputConsole : IConsoleService
                 try
                 {
                     // if (Console.KeyAvailable)
-                    //if (this.reader.IsKeyAvailable)
-                    if (false)
+                    if (this.reader.IsKeyAvailable)
                     {
                         flush = false;
                         if (position >= (CharBufferSize - 2))
