@@ -33,7 +33,7 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
-    // private readonly ConsoleKeyReader reader = new();
+    private readonly ConsoleKeyReader reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
@@ -77,11 +77,11 @@ public partial class InputConsole : IConsoleService
             // this.CheckResize();
 
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
-            /*if (!this.reader.TryRead(out var keyInfo))
+            if (!this.reader.TryRead(out var keyInfo))
             {
                 Thread.Sleep(10);
                 continue;
-            }*/
+            }
 
             /*try
             {
@@ -97,7 +97,7 @@ public partial class InputConsole : IConsoleService
                 continue;
             }*/
 
-            ConsoleKeyInfo keyInfo = EnterKeyInfo;
+            /*ConsoleKeyInfo keyInfo = EnterKeyInfo;
             try
             {
                 // keyInfo = this.reader.ReadAsync(ThreadCore.Root.CancellationToken).Result;
@@ -114,7 +114,7 @@ public partial class InputConsole : IConsoleService
                 keyInfo = EnterKeyInfo;
                 Thread.Sleep(10);
                 return new(InputResultKind.Terminated);
-            }
+            }*/
 
             if (keyInfo.KeyChar == '\n' ||
                 keyInfo.Key == ConsoleKey.Enter)
@@ -148,7 +148,7 @@ public partial class InputConsole : IConsoleService
                 try
                 {
                     // if (Console.KeyAvailable)
-                    // if (this.reader.IsKeyAvailable)
+                    if (this.reader.IsKeyAvailable)
                     if (false)
                     {
                         flush = false;
