@@ -334,6 +334,29 @@ public partial class InputConsole : IConsoleService
         written += span.Length;
         buffer = buffer.Slice(span.Length);
 
+        if (true)
+        {// Move cursor
+            span = ConsoleHelper.SetCursorSpan;
+            span.CopyTo(buffer);
+            buffer = buffer.Slice(span.Length);
+            written += span.Length;
+
+            var x = this.CursorTop + 1;
+            var y = this.CursorLeft + 1;
+            x.TryFormat(buffer, out var w);
+            buffer = buffer.Slice(w);
+            written += w;
+            buffer[0] = ';';
+            buffer = buffer.Slice(1);
+            written += 1;
+            y.TryFormat(buffer, out w);
+            buffer = buffer.Slice(w);
+            written += w;
+            buffer[0] = 'H';
+            buffer = buffer.Slice(1);
+            written += 1;
+        }
+
         /*if (cursorDif == 0)
         {// Save cursor
             span = ConsoleHelper.SaveCursorSpan;
@@ -391,13 +414,13 @@ public partial class InputConsole : IConsoleService
 
         try
         {
-            this.Logger?.TryGet()?.Log("Update ->");
+            // this.Logger?.TryGet()?.Log("Update ->");
 
             Console.Out.Write(this.windowBuffer.AsSpan(0, written));
             this.SetCursorPosition(newCursorLeft, newCursorTop, true);
             // Console.SetCursorPosition(newCursorLeft, newCursorTop);
 
-            this.Logger?.TryGet()?.Log("-> Update");
+            // this.Logger?.TryGet()?.Log("-> Update");
         }
         catch
         {

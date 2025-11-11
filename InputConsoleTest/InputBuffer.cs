@@ -111,12 +111,9 @@ internal class InputBuffer
 
                 return false;
             }
-            else if (key == ConsoleKey.Escape)
-            {//
-                this.Length = 0;
-                this.Width = 0;
-                this.SetCursorPosition(this.PromtWidth, 0, false);
-                this.UpdateConsole(0, this.Length, 0, true);
+            else if (key == ConsoleKey.U && keyInfo.Modifiers == ConsoleModifiers.Control)
+            {// Ctrl+U: Clear line
+                this.ClearLine();
             }
             else if (key == ConsoleKey.Home)
             {
@@ -152,6 +149,19 @@ internal class InputBuffer
         }
 
         return false;
+    }
+
+    private void ClearLine()
+    {
+        Array.Fill<char>(this.charArray, ' ', 0, this.Width);
+        Array.Fill<byte>(this.widthArray, 1, 0, this.Width);
+        this.Length = this.Width;
+        this.UpdateConsole(0, this.Width, 0, false);
+
+        this.Length = 0;
+        this.Width = 0;
+        this.SetCursorPosition(this.PromtWidth, 0, false);
+        // this.UpdateConsole(0, this.Length, 0, true);
     }
 
     /*public int GetWidth()
