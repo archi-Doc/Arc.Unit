@@ -125,6 +125,8 @@ internal class Program
         var buffer = new byte[100];
         while (true)
         {
+            Console.WriteLine(Interop.Sys.StdinReady());
+
             Interop.Sys.InitializeConsoleBeforeRead();
             fixed (byte* p = buffer)
             {
