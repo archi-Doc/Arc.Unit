@@ -401,7 +401,7 @@ internal class InputBuffer
         }
 
         // Set cursor
-        span = ConsoleHelper.SetCursorSpan;
+        /*span = ConsoleHelper.SetCursorSpan;
         span.CopyTo(buffer);
         buffer = buffer.Slice(span.Length);
         written += span.Length;
@@ -419,7 +419,7 @@ internal class InputBuffer
         written += w;
         buffer[0] = 'H';
         buffer = buffer.Slice(1);
-        written += 1;
+        written += 1;*/
 
         // Show cursor
         span = ConsoleHelper.ShowCursorSpan;
