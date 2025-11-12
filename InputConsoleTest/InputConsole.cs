@@ -72,6 +72,7 @@ public partial class InputConsole : IConsoleService
         }
 
         // Console.TreatControlCAsInput = true;
+        ConsoleKeyInfo pendingKeyInfo = default;
         while (!ThreadCore.Root.IsTerminated)
         {
             // this.CheckResize();
@@ -148,7 +149,11 @@ ProcessKeyInfo:
                         }
                     }
 
-                    if (!flush)
+                    if (flush)
+                    {
+                        pendingKeyInfo = keyInfo;
+                    }
+                    else
                     {
                         goto ProcessKeyInfo;
                     }
@@ -165,8 +170,9 @@ ProcessKeyInfo:
                     return new(result);
                 }
 
-                if (keyInfo.Key != ConsoleKey.None)
+                if (pendingKeyInfo.Key != ConsoleKey.None)
                 {// Process pending key input.
+                    keyInfo = pendingKeyInfo;
                     goto ProcessKeyInfo;
                 }
             }

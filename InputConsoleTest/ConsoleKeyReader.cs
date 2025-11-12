@@ -25,33 +25,37 @@ internal sealed class ConsoleKeyReader
 
     public unsafe bool TryRead(out ConsoleKeyInfo keyInfo)
     {
-        if (this.enableStdin)
-        {
-            Interop.Sys.InitializeConsoleBeforeRead();
-
-            Span<byte> bufPtr = stackalloc byte[100];
-            fixed (byte* buffer = bufPtr)
-            {
-                int result = Interop.Sys.ReadStdin(buffer, 100);
-                Console.WriteLine(result);
-                Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
-            }
-
-            Interop.Sys.UninitializeConsoleAfterRead();
-        }
-
         try
         {
-            if (Console.KeyAvailable)
-            {
-                keyInfo = Console.ReadKey(intercept: true);
-                return true;
-            }
-            else
+            // Peek
+            if (!Console.KeyAvailable)
             {
                 keyInfo = default;
                 return false;
+            }
+
+            if (this.enableStdin)
+            {// StdIn
+                Interop.Sys.InitializeConsoleBeforeRead();
+
+                Span<byte> bufPtr = stackalloc byte[100];
+                fixed (byte* buffer = bufPtr)
+                {
+                    int result = Interop.Sys.ReadStdin(buffer, 100);
+                    Console.WriteLine(result);
+                    Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                    Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                }
+
+                Interop.Sys.UninitializeConsoleAfterRead();
+
+                keyInfo = new('a', ConsoleKey.A, false, false, false);
+                return true;
+            }
+            else
+            {// Console.ReadKey
+                keyInfo = Console.ReadKey(intercept: true);
+                return true;
             }
         }
         catch
