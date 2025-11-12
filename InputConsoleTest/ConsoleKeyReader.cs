@@ -14,7 +14,7 @@ internal sealed class ConsoleKeyReader
     {
         try
         {
-            // this.InitializeStdIn();
+            this.InitializeStdIn();
             Console.WriteLine("StdIn");
         }
         catch
@@ -27,13 +27,6 @@ internal sealed class ConsoleKeyReader
     {
         try
         {
-            // Peek
-            if (!Console.KeyAvailable)
-            {
-                keyInfo = default;
-                return false;
-            }
-
             if (this.enableStdin)
             {// StdIn
                 Interop.Sys.InitializeConsoleBeforeRead();
@@ -58,6 +51,13 @@ internal sealed class ConsoleKeyReader
             }
             else
             {// Console.ReadKey
+                // Peek
+                if (!Console.KeyAvailable)
+                {
+                    keyInfo = default;
+                    return false;
+                }
+
                 keyInfo = Console.ReadKey(intercept: true);
                 return true;
             }
