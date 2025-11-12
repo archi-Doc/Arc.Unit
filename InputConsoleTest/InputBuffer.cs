@@ -299,7 +299,7 @@ internal class InputBuffer
 
     internal void Write(int startIndex, int endIndex, int cursorDif, bool eraseLine = false)
     {
-        int w;
+        int x, y, w;
         var length = startIndex < 0 ? this.Length : endIndex - startIndex;
         var charSpan = this.charArray.AsSpan(startIndex, length);
         var widthSpan = this.widthArray.AsSpan(startIndex, length);
@@ -343,8 +343,8 @@ internal class InputBuffer
             buffer = buffer.Slice(span.Length);
             written += span.Length;
 
-            var x = newCursorTop + 1;
-            var y = newCursorLeft + 1;
+            x = newCursorTop + 1;
+            y = newCursorLeft + 1;
             x.TryFormat(buffer, out w);
             buffer = buffer.Slice(w);
             written += w;
@@ -406,13 +406,15 @@ internal class InputBuffer
         buffer = buffer.Slice(span.Length);
         written += span.Length;
 
-        (newCursorTop + 1).TryFormat(buffer, out w);
+        x = newCursorTop + 1;
+        y = newCursorLeft + 1;
+        x.TryFormat(buffer, out w);
         buffer = buffer.Slice(w);
         written += w;
         buffer[0] = ';';
         buffer = buffer.Slice(1);
         written += 1;
-        (newCursorLeft + 1).TryFormat(buffer, out w);
+        y.TryFormat(buffer, out w);
         buffer = buffer.Slice(w);
         written += w;
         buffer[0] = 'H';
@@ -427,12 +429,12 @@ internal class InputBuffer
 
         try
         {
-            this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(this.InputConsole.WindowBuffer.AsSpan(0, written).ToString()));
-            // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
+            // this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(this.InputConsole.WindowBuffer.AsSpan(0, written).ToString()));
+            Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
 
-            // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
-            this.CursorLeft = newCursorLeft - this.Left;
-            this.CursorTop = newCursorTop - this.Top;
+            this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
+            // this.CursorLeft = newCursorLeft - this.Left;
+            // this.CursorTop = newCursorTop - this.Top;
         }
         catch
         {
