@@ -287,8 +287,8 @@ ProcessKeyInfo:
         try
         {
             span = this.windowBuffer.AsSpan(0, written);
-            this.Reader.WriteRaw(Encoding.UTF8.GetBytes(span.ToString()));
-            // Console.Out.Write(span);
+            // this.Reader.WriteRaw(Encoding.UTF8.GetBytes(span.ToString()));
+            Console.Out.Write(span);
         }
         catch
         {
