@@ -41,6 +41,7 @@ internal sealed class ConsoleKeyReader
                             if (!Interop.Sys.StdinReady())
                             {
                                 await Task.Delay(10);
+                                continue;
                             }
 
                             this.StdIn();
