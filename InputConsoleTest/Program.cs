@@ -128,10 +128,10 @@ internal class Program
 
         var st = "ABC\n0123456";
         var handle = Interop.Sys.Dup(Interop.FileDescriptors.STDIN_FILENO);
-        var count = Encoding.UTF8.GetBytes(st, 0, st.Length, buffer, buffer.Length);
-        fixed (byte* p = buffer)
+        var st2 = Encoding.UTF8.GetBytes(st);
+        fixed (byte* p = st2)
         {
-            int bytesWritten = Interop.Sys.Write(handle, p, count);
+            int bytesWritten = Interop.Sys.Write(handle, p, st2.Length);
             Console.WriteLine(bytesWritten);
         }
 
