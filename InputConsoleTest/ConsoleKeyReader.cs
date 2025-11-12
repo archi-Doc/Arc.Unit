@@ -1,17 +1,14 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
-using System.Collections.Concurrent;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using ConsoleBufferTest;
 
 namespace Arc.InputConsole;
 
 internal sealed class ConsoleKeyReader
 {
-    private readonly Task task;
-    private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
-        new();
-
+    private SafeHandle? handle;
     private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
@@ -27,50 +24,76 @@ internal sealed class ConsoleKeyReader
         {
             Console.WriteLine("No StdIn");
         }
-
-        this.task = new Task(
-            async () =>
-            {
-                var bufPtr = new byte[100];
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    try
-                    {
-                        if (this.enableStdin)
-                        {// StdIn
-                            if (!Interop.Sys.StdinReady())
-                            {
-                                await Task.Delay(10);
-                                continue;
-                            }
-
-                            this.StdIn();
-                        }
-                        else
-                        {// Console.ReadKey
-                            var keyInfo = Console.ReadKey(intercept: true);
-                            this.queue.Enqueue(keyInfo);
-                        }
-                    }
-                    catch
-                    {
-                        await Task.Delay(10);
-                    }
-                }
-            },
-            cancellationToken,
-            TaskCreationOptions.LongRunning);
-
-        this.task.Start();
     }
 
-    public bool TryRead(out ConsoleKeyInfo keyInfo)
+    public unsafe bool TryRead(out ConsoleKeyInfo keyInfo)
     {
-        return this.queue.TryDequeue(out keyInfo);
+        try
+        {
+            if (this.enableStdin)
+            {// StdIn
+                // Peek
+                if (!Interop.Sys.StdinReady())
+                {
+                    keyInfo = default;
+                    return false;
+                }
+
+                Interop.Sys.InitializeConsoleBeforeRead();
+                try
+                {
+                    Span<byte> bufPtr = stackalloc byte[100];
+                    fixed (byte* buffer = bufPtr)
+                    {
+                        int result = Interop.Sys.ReadStdin(buffer, 100);
+                        // Console.Write(result);
+                        // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                        // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                    }
+                }
+                finally
+                {
+                    Interop.Sys.UninitializeConsoleAfterRead();
+                }
+
+                keyInfo = new('a', ConsoleKey.A, false, false, false);
+                return true;
+            }
+            else
+            {// Console.ReadKey
+                // Peek
+                if (!Console.KeyAvailable)
+                {
+                    keyInfo = default;
+                    return false;
+                }
+
+                keyInfo = Console.ReadKey(intercept: true);
+                return true;
+            }
+        }
+        catch
+        {
+            keyInfo = default;
+            return false;
+        }
+    }
+
+    public unsafe void WriteRaw(ReadOnlySpan<byte> data)
+    {
+        if (this.handle is not null)
+        {
+            fixed (byte* p = data)
+            {
+                _ = Interop.Sys.Write(this.handle, p, data.Length);
+            }
+        }
     }
 
     private void InitializeStdIn()
     {
+        this.handle = Interop.Sys.Dup(Interop.FileDescriptors.STDIN_FILENO);
+
         const int NumControlCharacterNames = 4;
         Span<Interop.ControlCharacterNames> controlCharacterNames = stackalloc Interop.ControlCharacterNames[NumControlCharacterNames]
         {
@@ -92,28 +115,5 @@ internal sealed class ConsoleKeyReader
         Interop.Sys.UninitializeConsoleAfterRead();
 
         this.enableStdin = true;
-    }
-
-    private unsafe void StdIn()
-    {
-        var buffer = new byte[100];
-        Interop.Sys.InitializeConsoleBeforeRead();
-        try
-        {
-            fixed (byte* ptr = buffer)
-            {
-                int result = Interop.Sys.ReadStdin(ptr, 100);
-                Console.Write(result);
-                // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
-            }
-        }
-        finally
-        {
-            Interop.Sys.UninitializeConsoleAfterRead();
-        }
-
-        var keyInfo = new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false);
-        this.queue.Enqueue(keyInfo);
     }
 }

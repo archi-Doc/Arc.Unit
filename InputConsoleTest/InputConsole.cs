@@ -20,6 +20,8 @@ public partial class InputConsole : IConsoleService
 
     public bool IsInsertMode { get; set; } = true;
 
+    internal ConsoleKeyReader Reader { get; private set; } = new();
+
     internal int WindowWidth { get; private set; }
 
     internal int WindowHeight { get; private set; }
@@ -34,7 +36,6 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
-    private readonly ConsoleKeyReaderOb reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
@@ -86,7 +87,7 @@ public partial class InputConsole : IConsoleService
                 continue;
             }*/
 
-            if (!this.reader.TryRead(out var keyInfo))
+            if (!this.Reader.TryRead(out var keyInfo))
             {
                 Thread.Sleep(10);
                 continue;
@@ -138,7 +139,7 @@ ProcessKeyInfo:
             else
             {// Not control
                 charBuffer[position++] = keyInfo.KeyChar;
-                if (this.reader.TryRead(out keyInfo))
+                if (this.Reader.TryRead(out keyInfo))
                 {
                     flush = false;
                     if (position >= (CharBufferSize - 2))

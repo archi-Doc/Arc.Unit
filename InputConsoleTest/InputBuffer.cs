@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using Arc.Unit;
 
 #pragma warning disable SA1202 // Elements should be ordered by access
@@ -400,8 +401,9 @@ internal class InputBuffer
 
         try
         {
-            // Console.Out.Write("X");
-            Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
+            Console.Out.Write("X");
+            this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes("Y"));
+            // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
             // Console.Out.Flush();
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
         }
