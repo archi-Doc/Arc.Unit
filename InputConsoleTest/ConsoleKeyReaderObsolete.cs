@@ -79,6 +79,11 @@ internal sealed class ConsoleKeyReaderObsolete
         this.thread.Start(this);*/
     }
 
+    public bool TryRead(out ConsoleKeyInfo keyInfo)
+    {
+        return this.queue.TryDequeue(out keyInfo);
+    }
+
     private void Initialize()
     {
         try
@@ -107,15 +112,11 @@ internal sealed class ConsoleKeyReaderObsolete
             Console.WriteLine("Unix");
         }
         catch
-        { }
+        {
+        }
     }
 
-    public bool TryRead(out ConsoleKeyInfo keyInfo)
-    {
-        return this.queue.TryDequeue(out keyInfo);
-    }
-
-    private static void Process(object? obj)
+    /*private static void Process(object? obj)
     {
         var reader = (ConsoleKeyReaderObsolete)obj!;
         while (true)
@@ -130,7 +131,7 @@ internal sealed class ConsoleKeyReaderObsolete
                 Thread.Sleep(10);
             }
         }
-    }
+    }*/
 
     public bool IsKeyAvailable => !this.queue.IsEmpty;
 }

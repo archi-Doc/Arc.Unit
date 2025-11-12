@@ -184,23 +184,6 @@ ProcessKeyInfo:
         return new(InputResultKind.Terminated);
     }
 
-    private void CheckResize()
-    {//
-        var windowWidth = Console.WindowWidth;
-        var windowHeight = Console.WindowHeight;
-        if (windowWidth == this.WindowWidth &&
-            windowHeight == this.WindowHeight)
-        {
-            return;
-        }
-
-        this.Prepare();
-        using (this.lockObject.EnterScope())
-        {
-            this.PrepareAndFindBuffer();
-        }
-    }
-
     public void Write(string? message = null)
     {
         if (Environment.NewLine == "\r\n" && message is not null)
@@ -484,6 +467,23 @@ ProcessKeyInfo:
         }
 
         return false;
+    }
+
+    private void CheckResize()
+    {//
+        var windowWidth = Console.WindowWidth;
+        var windowHeight = Console.WindowHeight;
+        if (windowWidth == this.WindowWidth &&
+            windowHeight == this.WindowHeight)
+        {
+            return;
+        }
+
+        this.Prepare();
+        using (this.lockObject.EnterScope())
+        {
+            this.PrepareAndFindBuffer();
+        }
     }
 
     private void Prepare()
