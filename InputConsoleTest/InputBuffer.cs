@@ -402,7 +402,7 @@ internal class InputBuffer
         try
         {
             Console.Out.Write("X");
-            this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes("Y"));
+            this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(this.InputConsole.WindowBuffer.AsSpan(0, written).ToString()));
             // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
             // Console.Out.Flush();
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
