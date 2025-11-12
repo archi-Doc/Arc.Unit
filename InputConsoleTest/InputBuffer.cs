@@ -432,9 +432,9 @@ internal class InputBuffer
             // this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(this.InputConsole.WindowBuffer.AsSpan(0, written).ToString()));
             Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
 
-            this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
-            // this.CursorLeft = newCursorLeft - this.Left;
-            // this.CursorTop = newCursorTop - this.Top;
+            // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
+            this.CursorLeft = newCursorLeft - this.Left;
+            this.CursorTop = newCursorTop - this.Top;
         }
         catch
         {
