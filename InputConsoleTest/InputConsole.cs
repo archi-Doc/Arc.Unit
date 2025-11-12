@@ -364,7 +364,7 @@ ProcessKeyInfo:
 
         try
         {
-            (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
+            // (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
             this.WindowWidth = Console.WindowWidth;
             this.WindowHeight = Console.WindowHeight;
         }
