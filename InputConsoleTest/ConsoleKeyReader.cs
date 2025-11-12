@@ -30,11 +30,15 @@ internal sealed class ConsoleKeyReader
             if (this.enableStdin)
             {// StdIn
                 // Peek
+                Console.WriteLine("KV in");
                 if (!Console.KeyAvailable)
                 {
+                    Console.WriteLine("KV out");
                     keyInfo = default;
                     return false;
                 }
+
+                Console.WriteLine("KV out2");
 
                 Interop.Sys.InitializeConsoleBeforeRead();
                 try
