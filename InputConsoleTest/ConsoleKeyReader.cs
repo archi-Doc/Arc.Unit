@@ -36,7 +36,7 @@ internal sealed class ConsoleKeyReader
                     return false;
                 }
 
-                /*Interop.Sys.InitializeConsoleBeforeRead();
+                Interop.Sys.InitializeConsoleBeforeRead();
                 try
                 {
                     Span<byte> bufPtr = stackalloc byte[100];
@@ -54,10 +54,10 @@ internal sealed class ConsoleKeyReader
                 }
 
                 keyInfo = new('a', ConsoleKey.A, false, false, false);
-                return true;*/
-
-                keyInfo = Console.ReadKey(intercept: true);
                 return true;
+
+                // keyInfo = Console.ReadKey(intercept: true);
+                // return true;
             }
             else
             {// Console.ReadKey
