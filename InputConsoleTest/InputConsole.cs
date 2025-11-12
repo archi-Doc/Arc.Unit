@@ -255,8 +255,9 @@ ProcessKeyInfo:
 
         var buffer = this.windowBuffer.AsSpan();
         var written = 0;
+        ReadOnlySpan<char> span;
 
-        var span = ConsoleHelper.SetCursorSpan;
+        /*var span = ConsoleHelper.SetCursorSpan;
         span.CopyTo(buffer);
         buffer = buffer.Slice(span.Length);
         written += span.Length;
@@ -274,7 +275,7 @@ ProcessKeyInfo:
         written += w;
         buffer[0] = 'H';
         buffer = buffer.Slice(1);
-        written += 1;
+        written += 1;*/
 
         if (showCursor)
         {
