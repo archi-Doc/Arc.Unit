@@ -400,8 +400,8 @@ internal class InputBuffer
 
         try
         {
-            Console.Out.Write("X");
-            // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
+            // Console.Out.Write("X");
+            Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
         }
         catch
