@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Text;
 using Arc.Collections;
 using Arc.Threading;
 using Arc.Unit;
@@ -43,6 +44,12 @@ public partial class InputConsole : IConsoleService
     public InputConsole(ConsoleColor inputColor = (ConsoleColor)(-1))
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
+        var writer = new StreamWriter(Console.OpenStandardOutput(), Encoding.UTF8, bufferSize: 65536)
+        {
+            AutoFlush = false,
+        };
+
+        Console.SetOut(writer);
 
         this.bufferPool = new(() => new InputBuffer(this), 32);
         if (inputColor >= 0)
