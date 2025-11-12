@@ -23,10 +23,22 @@ internal sealed class ConsoleKeyReader
         }
     }
 
-    public bool TryRead(out ConsoleKeyInfo keyInfo)
+    public unsafe bool TryRead(out ConsoleKeyInfo keyInfo)
     {
         if (this.enableStdin)
         {
+            Interop.Sys.InitializeConsoleBeforeRead();
+
+            Span<byte> bufPtr = stackalloc byte[100];
+            fixed (byte* buffer = bufPtr)
+            {
+                int result = Interop.Sys.ReadStdin(buffer, 100);
+                Console.WriteLine(result);
+                Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+            }
+
+            Interop.Sys.UninitializeConsoleAfterRead();
         }
 
         try
