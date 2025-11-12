@@ -29,6 +29,13 @@ internal sealed class ConsoleKeyReader
         {
             if (this.enableStdin)
             {// StdIn
+                // Peek
+                if (!Console.KeyAvailable)
+                {
+                    keyInfo = default;
+                    return false;
+                }
+
                 Interop.Sys.InitializeConsoleBeforeRead();
                 try
                 {
