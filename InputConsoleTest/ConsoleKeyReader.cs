@@ -38,7 +38,7 @@ internal sealed class ConsoleKeyReader
                     {
                         if (this.enableStdin)
                         {// StdIn
-                            if (!Console.KeyAvailable)
+                            if (!Interop.Sys.StdinReady())
                             {
                                 await Task.Delay(10);
                             }
@@ -72,7 +72,7 @@ internal sealed class ConsoleKeyReader
             fixed (byte* ptr = buffer)
             {
                 int result = Interop.Sys.ReadStdin(ptr, 100);
-                Console.WriteLine(result);
+                // Console.WriteLine(result);
                 // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
                 // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
             }

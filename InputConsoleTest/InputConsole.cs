@@ -33,7 +33,7 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
-    private readonly ConsoleKeyReaderOb reader = new();
+    private readonly ConsoleKeyReader reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
