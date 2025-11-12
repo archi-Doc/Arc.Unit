@@ -329,7 +329,7 @@ internal class InputBuffer
         var written = 0;
 
         // Hide cursor
-        span = ConsoleHelper.HideCursorSpan;
+        /*span = ConsoleHelper.HideCursorSpan;
         span.CopyTo(buffer);
         written += span.Length;
         buffer = buffer.Slice(span.Length);
@@ -355,7 +355,7 @@ internal class InputBuffer
             buffer[0] = 'H';
             buffer = buffer.Slice(1);
             written += 1;
-        }
+        }*/
 
         if (startIndex < 0 && this.Prompt is not null)
         {// Prompt
@@ -366,10 +366,10 @@ internal class InputBuffer
         }
 
         // Input color
-        /*span = ConsoleHelper.GetForegroundColorEscapeCode(this.InputConsole.InputColor).AsSpan();
+        span = ConsoleHelper.GetForegroundColorEscapeCode(this.InputConsole.InputColor).AsSpan();
         span.CopyTo(buffer);
         written += span.Length;
-        buffer = buffer.Slice(span.Length);*/
+        buffer = buffer.Slice(span.Length);
 
         // Characters
         span = charSpan;
