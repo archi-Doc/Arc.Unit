@@ -401,7 +401,7 @@ internal class InputBuffer
         }
 
         // Set cursor
-        /*span = ConsoleHelper.SetCursorSpan;
+        span = ConsoleHelper.SetCursorSpan;
         span.CopyTo(buffer);
         buffer = buffer.Slice(span.Length);
         written += span.Length;
@@ -419,7 +419,7 @@ internal class InputBuffer
         written += w;
         buffer[0] = 'H';
         buffer = buffer.Slice(1);
-        written += 1;*/
+        written += 1;
 
         // Show cursor
         span = ConsoleHelper.ShowCursorSpan;
@@ -433,11 +433,11 @@ internal class InputBuffer
             this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(span.ToString()));
             // Console.Out.Write(span);
 
-            this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
-            // this.InputConsole.CursorLeft = newCursorLeft;
-            // this.InputConsole.CursorTop = newCursorTop;
-            // this.CursorLeft = newCursorLeft - this.Left;
-            // this.CursorTop = newCursorTop - this.Top;
+            // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
+            this.InputConsole.CursorLeft = newCursorLeft;
+            this.InputConsole.CursorTop = newCursorTop;
+            this.CursorLeft = newCursorLeft - this.Left;
+            this.CursorTop = newCursorTop - this.Top;
         }
         catch
         {
