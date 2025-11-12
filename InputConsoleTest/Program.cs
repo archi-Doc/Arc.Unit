@@ -67,7 +67,7 @@ internal class Program
         // Console.Write($">> {sp}");
         // var st = Console.ReadLine();
 
-        Test();
+        // Test();
 
         while (!ThreadCore.Root.IsTerminated)
         {
