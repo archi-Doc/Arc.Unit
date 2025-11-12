@@ -67,14 +67,7 @@ internal class Program
         // Console.Write($">> {sp}");
         // var st = Console.ReadLine();
 
-        // Test();
-        /*while (true)
-        {
-            Span<byte> buffer = stackalloc byte[100];
-            Interop.Sys.InitializeConsoleBeforeRead();
-            int result = Interop.Sys.ReadStdin(buffer, 100);
-            Interop.Sys.UninitializeConsoleAfterRead();
-        }*/
+        Test();
 
         while (!ThreadCore.Root.IsTerminated)
         {
@@ -125,5 +118,21 @@ internal class Program
         }
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+    }
+
+    private static unsafe void Test()
+    {
+        var buffer = new byte[100];
+        while (true)
+        {
+            Interop.Sys.InitializeConsoleBeforeRead();
+            fixed (byte* p = buffer)
+            {
+                int result = Interop.Sys.ReadStdin(p, 100);
+                Console.WriteLine(result);
+            }
+
+            Interop.Sys.UninitializeConsoleAfterRead();
+        }
     }
 }
