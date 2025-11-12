@@ -33,7 +33,7 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
-    // private readonly ConsoleKeyReader reader = new();
+    private readonly ConsoleKeyReader reader = new();
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
@@ -84,42 +84,29 @@ public partial class InputConsole : IConsoleService
                 continue;
             }*/
 
-            ConsoleKeyInfo keyInfo = EnterKeyInfo;
-            try
+            if (!this.reader.TryRead(out var keyInfo))
             {
-                if (!Console.KeyAvailable)
-                {
-                    Thread.Sleep(10);
-                    continue;
-                }
-            }
-            catch
-            {
-                return new(InputResultKind.Terminated);
-            }
-
-ReadKey:
-            keyInfo = Console.ReadKey(intercept: true);
-
-            /*ConsoleKeyInfo keyInfo = EnterKeyInfo;
-            try
-            {
-                // keyInfo = this.reader.ReadAsync(ThreadCore.Root.CancellationToken).Result;
-                // Task.Run(() =>
-                // {
-                //    keyInfo = Console.ReadKey(intercept: true);
-                // }).Wait(ThreadCore.Root.CancellationToken);
-                // this.Logger?.TryGet()?.Log($"ReadKey");
-
-                keyInfo = Console.ReadKey(intercept: true);
-            }
-            catch
-            {
-                keyInfo = EnterKeyInfo;
                 Thread.Sleep(10);
-                return new(InputResultKind.Terminated);
-            }*/
+                continue;
+            }
 
+/*ConsoleKeyInfo keyInfo;
+try
+{
+    if (!Console.KeyAvailable)
+    {
+        Thread.Sleep(10);
+        continue;
+    }
+
+    keyInfo = Console.ReadKey(intercept: true);
+}
+catch
+{
+    return new(InputResultKind.Terminated);
+}*/
+
+ProcessKeyInfo:
             if (keyInfo.KeyChar == '\n' ||
                 keyInfo.Key == ConsoleKey.Enter)
             {
@@ -149,33 +136,23 @@ ReadKey:
             else
             {// Not control
                 charBuffer[position++] = keyInfo.KeyChar;
-                try
+                if (this.reader.TryRead(out keyInfo))
                 {
-                    if (Console.KeyAvailable)
-                    // if (this.reader.IsKeyAvailable)
-                    // if (false)
+                    flush = false;
+                    if (position >= (CharBufferSize - 2))
                     {
-                        flush = false;
-                        if (position >= (CharBufferSize - 2))
+                        if (position >= CharBufferSize ||
+                            char.IsLowSurrogate(keyInfo.KeyChar))
                         {
-                            if (position >= CharBufferSize ||
-                                char.IsLowSurrogate(keyInfo.KeyChar))
-                            {
-                                flush = true;
-                            }
+                            flush = true;
                         }
                     }
 
                     if (!flush)
                     {
-                        goto ReadKey;
+                        goto ProcessKeyInfo;
                     }
                 }
-                catch
-                {
-                }
-
-                keyInfo = default;
             }
 
             if (flush)
@@ -186,6 +163,11 @@ ReadKey:
                 {
                     Console.Out.WriteLine();
                     return new(result);
+                }
+
+                if (keyInfo.Key != ConsoleKey.None)
+                {// Process pending key input.
+                    goto ProcessKeyInfo;
                 }
             }
         }
