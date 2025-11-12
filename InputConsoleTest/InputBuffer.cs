@@ -299,6 +299,7 @@ internal class InputBuffer
 
     internal void Write(int startIndex, int endIndex, int cursorDif, bool eraseLine = false)
     {
+        int w;
         var length = startIndex < 0 ? this.Length : endIndex - startIndex;
         var charSpan = this.charArray.AsSpan(startIndex, length);
         var widthSpan = this.widthArray.AsSpan(startIndex, length);
@@ -344,7 +345,7 @@ internal class InputBuffer
 
             var x = newCursorTop + 1;
             var y = newCursorLeft + 1;
-            x.TryFormat(buffer, out var w);
+            x.TryFormat(buffer, out w);
             buffer = buffer.Slice(w);
             written += w;
             buffer[0] = ';';
@@ -399,13 +400,39 @@ internal class InputBuffer
             buffer = buffer.Slice(span.Length);
         }
 
+        // Set cursor
+        span = ConsoleHelper.SetCursorSpan;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;
+
+        (newCursorTop + 1).TryFormat(buffer, out w);
+        buffer = buffer.Slice(w);
+        written += w;
+        buffer[0] = ';';
+        buffer = buffer.Slice(1);
+        written += 1;
+        (newCursorLeft + 1).TryFormat(buffer, out w);
+        buffer = buffer.Slice(w);
+        written += w;
+        buffer[0] = 'H';
+        buffer = buffer.Slice(1);
+        written += 1;
+
+        // Show cursor
+        span = ConsoleHelper.ShowCursorSpan;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;
+
         try
         {
-            // Console.Out.Write("X");
             this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(this.InputConsole.WindowBuffer.AsSpan(0, written).ToString()));
             // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
-            // Console.Out.Flush();
+
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
+            this.CursorLeft = newCursorLeft - this.Left;
+            this.CursorTop = newCursorTop - this.Top;
         }
         catch
         {
