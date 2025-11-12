@@ -26,9 +26,9 @@ public partial class InputConsole : IConsoleService
 
     internal int WindowHeight { get; private set; }
 
-    internal int CursorLeft { get; set; } = -1;
+    internal int CursorLeft { get; set; }
 
-    internal int CursorTop { get; set; } = -1;
+    internal int CursorTop { get; set; }
 
     internal int StartingCursorTop { get; set; }
 
@@ -76,6 +76,8 @@ public partial class InputConsole : IConsoleService
         {
             Console.Out.Write(prompt);
         }
+
+        (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
 
         // Console.TreatControlCAsInput = true;
         ConsoleKeyInfo pendingKeyInfo = default;
@@ -367,10 +369,7 @@ ProcessKeyInfo:
         {
             this.WindowWidth = Console.WindowWidth;
             this.WindowHeight = Console.WindowHeight;
-            if (this.CursorLeft < 0 || this.CursorTop < 0)
-            {
-                (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
-            }
+            // (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
         }
         catch
         {
