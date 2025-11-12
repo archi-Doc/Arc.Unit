@@ -3,9 +3,8 @@
 using System.Buffers;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Text;
 
-namespace Arc.Unit;
+namespace Arc.InputConsole;
 
 internal static class InputConsoleHelper
 {

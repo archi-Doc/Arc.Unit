@@ -1,6 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Globalization;
+using System.Text;
+using System.Threading;
+using Arc.InputConsole;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,31 +13,6 @@ namespace ConsoleBufferTest;
 
 internal class Program
 {
-    internal static unsafe int ReadStdin(byte* buffer, int bufferSize)
-    {
-        int result = Interop.Sys.ReadStdin(buffer, bufferSize);
-        return result;
-    }
-
-    public static unsafe void Test()
-    {
-        Interop.Sys.InitializeConsoleBeforeRead();
-
-        Span<byte> bufPtr = stackalloc byte[100];
-        while (true)
-        {
-            fixed (byte* buffer = bufPtr)
-            {
-                int result = ReadStdin(buffer, 100);
-                Console.WriteLine(result);
-                Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
-            }
-        }
-
-        Interop.Sys.UninitializeConsoleAfterRead();
-    }
-
     public static async Task Main(string[] args)
     {
         AppDomain.CurrentDomain.ProcessExit += (s, e) =>
@@ -82,12 +61,14 @@ internal class Program
 
         var inputConsole = new InputConsole();
         inputConsole.Logger = product.Context.ServiceProvider.GetRequiredService<ILogger<InputConsole>>();
-        // var simpleConsole = new SimpleConsole();
-        // Console.In = simpleConsole;
 
         inputConsole.WriteLine("Hello, World!");
-
         Console.WriteLine(Environment.OSVersion.ToString());
+
+        // var sp = ConsoleHelper.GetForegroundColorEscapeCode(ConsoleColor.Red);
+        // Console.Write($">> {sp}");
+        // var st = Console.ReadLine();
+
         // Test();
 
         while (!ThreadCore.Root.IsTerminated)
@@ -98,18 +79,26 @@ internal class Program
                 continue;
             }*/
 
-            var input = inputConsole.ReadLine($"{Console.CursorTop}> ");
+            var result = inputConsole.ReadLine($"{Console.CursorTop}> "); // Success, Canceled, Terminated
 
-            if (string.Equals(input, "exit", StringComparison.InvariantCultureIgnoreCase))
+            if (result.Kind == InputResultKind.Terminated)
+            {
+                break;
+            }
+            else if (result.Kind == InputResultKind.Canceled)
+            {
+                continue;
+            }
+            else if (string.Equals(result.Text, "exit", StringComparison.InvariantCultureIgnoreCase))
             {// exit
                 ThreadCore.Root.Terminate(); // Send a termination signal to the root.
                 break;
             }
-            else if (string.IsNullOrEmpty(input))
+            else if (string.IsNullOrEmpty(result.Text))
             {// continue
                 continue;
             }
-            else if (string.Equals(input, "a", StringComparison.InvariantCultureIgnoreCase))
+            else if (string.Equals(result.Text, "a", StringComparison.InvariantCultureIgnoreCase))
             {
                 _ = Task.Run(() =>
                 {
@@ -119,7 +108,7 @@ internal class Program
             }
             else
             {
-                inputConsole.WriteLine($"Command: {input}");
+                inputConsole.WriteLine($"Command: {result.Text}");
             }
         }
 
@@ -131,5 +120,42 @@ internal class Program
         }
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+    }
+
+    private static unsafe void Test()
+    {
+        var buffer = new byte[100];
+
+        var st = "ABC\n0123456";
+        var handle = Interop.Sys.Dup(Interop.FileDescriptors.STDIN_FILENO);
+        var st2 = Encoding.UTF8.GetBytes(st);
+        fixed (byte* p = st2)
+        {
+            int bytesWritten = Interop.Sys.Write(handle, p, st2.Length);
+            Console.WriteLine(bytesWritten);
+        }
+
+        while (true)
+        {
+            if (!Interop.Sys.StdinReady())
+            {
+                Thread.Sleep(10);
+                continue;
+            }
+
+            Interop.Sys.InitializeConsoleBeforeRead();
+            try
+            {
+                fixed (byte* p = buffer)
+                {
+                    int result = Interop.Sys.ReadStdin(p, 100);
+                    Console.WriteLine(result);
+                }
+            }
+            finally
+            {
+                Interop.Sys.UninitializeConsoleAfterRead();
+            }
+        }
     }
 }

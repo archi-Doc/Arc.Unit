@@ -4,7 +4,7 @@ using Arc.Collections;
 
 namespace Arc.Unit;
 
-public class SimpleConsole : IConsoleService
+/*public class SimpleConsole : IConsoleService
 {
     private const int BufferSize = 1_024;
 
@@ -264,4 +264,4 @@ public class SimpleConsole : IConsoleService
 
         this.bufferPool.Return(stored);
     }
-}
+}*/
