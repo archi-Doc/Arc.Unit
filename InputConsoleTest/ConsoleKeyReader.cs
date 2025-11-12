@@ -1,16 +1,21 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Collections.Concurrent;
 using ConsoleBufferTest;
 
 namespace Arc.InputConsole;
 
 internal sealed class ConsoleKeyReader
 {
+    private readonly Task task;
+    private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
+        new();
+
     private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
-    public unsafe ConsoleKeyReader(CancellationToken cancellationToken = default)
+    public ConsoleKeyReader(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -21,65 +26,61 @@ internal sealed class ConsoleKeyReader
         {
             Console.WriteLine("No StdIn");
         }
-    }
 
-    public unsafe bool TryRead(out ConsoleKeyInfo keyInfo)
-    {
-        try
-        {
-            if (this.enableStdin)
-            {// StdIn
-                // Peek
-                Console.WriteLine("KV in");
-                if (!Console.KeyAvailable)
+        this.task = new Task(
+            () =>
+            {
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    Console.WriteLine("KV out");
-                    keyInfo = default;
-                    return false;
-                }
-
-                Console.WriteLine("KV out2");
-
-                Interop.Sys.InitializeConsoleBeforeRead();
-                try
-                {
-                    Span<byte> bufPtr = stackalloc byte[100];
-                    fixed (byte* buffer = bufPtr)
+                    try
                     {
-                        int result = Interop.Sys.ReadStdin(buffer, 100);
-                        Console.WriteLine(result);
-                        // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                        // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                        this.Process();
+                    }
+                    catch
+                    {
+                        Thread.Sleep(10);
                     }
                 }
-                finally
+            },
+            cancellationToken,
+            TaskCreationOptions.LongRunning);
+
+        this.task.Start();
+    }
+
+    public bool TryRead(out ConsoleKeyInfo keyInfo)
+    {
+        return this.queue.TryDequeue(out keyInfo);
+    }
+
+    private unsafe void Process()
+    {
+        if (this.enableStdin)
+        {// StdIn
+            Interop.Sys.InitializeConsoleBeforeRead();
+            try
+            {
+                Span<byte> bufPtr = stackalloc byte[100];
+                fixed (byte* buffer = bufPtr)
                 {
-                    Interop.Sys.UninitializeConsoleAfterRead();
+                    int result = Interop.Sys.ReadStdin(buffer, 100);
+                    Console.WriteLine(result);
+                    // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                    // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
                 }
-
-                keyInfo = new('a', ConsoleKey.A, false, false, false);
-                return true;
-
-                // keyInfo = Console.ReadKey(intercept: true);
-                // return true;
             }
-            else
-            {// Console.ReadKey
-                // Peek
-                if (!Console.KeyAvailable)
-                {
-                    keyInfo = default;
-                    return false;
-                }
-
-                keyInfo = Console.ReadKey(intercept: true);
-                return true;
+            finally
+            {
+                Interop.Sys.UninitializeConsoleAfterRead();
             }
+
+            var keyInfo = new ConsoleKeyInfo('a', ConsoleKey.A, false, false, false);
+            this.queue.Enqueue(keyInfo);
         }
-        catch
-        {
-            keyInfo = default;
-            return false;
+        else
+        {// Console.ReadKey
+            var keyInfo = Console.ReadKey(intercept: true);
+            this.queue.Enqueue(keyInfo);
         }
     }
 
