@@ -20,7 +20,7 @@ public partial class InputConsole : IConsoleService
 
     public bool IsInsertMode { get; set; } = true;
 
-    internal ConsoleKeyReader Reader { get; private set; } = new();
+    internal RawInterface RawConsole { get; private set; }
 
     internal int WindowWidth { get; private set; }
 
@@ -34,6 +34,8 @@ public partial class InputConsole : IConsoleService
 
     internal char[] WindowBuffer => this.windowBuffer;
 
+    internal byte[] Utf8Buffer => this.utf8Buffer;
+
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
     private readonly ObjectPool<InputBuffer> bufferPool;
@@ -41,11 +43,13 @@ public partial class InputConsole : IConsoleService
     private readonly Lock lockObject = new();
     private List<InputBuffer> buffers = new();
     private char[] windowBuffer = [];
+    private byte[] utf8Buffer = [];
 
     public InputConsole(ConsoleColor inputColor = (ConsoleColor)(-1))
     {
         Console.OutputEncoding = System.Text.Encoding.UTF8;
 
+        this.RawConsole = new(this);
         this.bufferPool = new(() => new InputBuffer(this), 32);
         if (inputColor >= 0)
         {
@@ -87,7 +91,7 @@ public partial class InputConsole : IConsoleService
                 continue;
             }*/
 
-            if (!this.Reader.TryRead(out var keyInfo))
+            if (!this.RawConsole.TryRead(out var keyInfo))
             {
                 Thread.Sleep(10);
                 continue;
@@ -139,7 +143,7 @@ ProcessKeyInfo:
             else
             {// Not control
                 charBuffer[position++] = keyInfo.KeyChar;
-                if (this.Reader.TryRead(out keyInfo))
+                if (this.RawConsole.TryRead(out keyInfo))
                 {
                     flush = false;
                     if (position >= (CharBufferSize - 2))
@@ -287,9 +291,8 @@ ProcessKeyInfo:
 
         try
         {
-            span = this.windowBuffer.AsSpan(0, written);
-            // this.Reader.WriteRaw(Encoding.UTF8.GetBytes(span.ToString()));
-            Console.Out.Write(span);
+            this.RawConsole.WriteRaw(this.windowBuffer.AsSpan(0, written));
+            // Console.Out.Write(this.windowBuffer.AsSpan(0, written));
         }
         catch
         {
@@ -404,6 +407,7 @@ ProcessKeyInfo:
         if (this.windowBuffer.Length != this.WindowBufferCapacity)
         {
             this.windowBuffer = new char[this.WindowBufferCapacity];
+            this.utf8Buffer = new byte[this.WindowBufferCapacity * 3];
         }
     }
 

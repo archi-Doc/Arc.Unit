@@ -1,20 +1,25 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Text;
 using ConsoleBufferTest;
 
 namespace Arc.InputConsole;
 
-internal sealed class ConsoleKeyReader
+internal sealed class RawInterface
 {
+    private readonly InputConsole inputConsole;
     private SafeHandle? handle;
     private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
-    public ConsoleKeyReader(CancellationToken cancellationToken = default)
+    public RawInterface(InputConsole inputConsole, CancellationToken cancellationToken = default)
     {
+        this.inputConsole = inputConsole;
+
         try
         {
             this.InitializeStdIn();
@@ -79,14 +84,19 @@ internal sealed class ConsoleKeyReader
         }
     }
 
-    public unsafe void WriteRaw(ReadOnlySpan<byte> data)
+    public unsafe void WriteRaw(ReadOnlySpan<char> data)
     {
         if (this.handle is not null)
         {
-            fixed (byte* p = data)
+            var length = Encoding.UTF8.GetBytes(data, this.inputConsole.Utf8Buffer);
+            fixed (byte* p = this.inputConsole.Utf8Buffer)
             {
-                _ = Interop.Sys.Write(this.handle, p, data.Length);
+                _ = Interop.Sys.Write(this.handle, p, length);
             }
+        }
+        else
+        {
+            Console.Out.Write(data);
         }
     }
 
