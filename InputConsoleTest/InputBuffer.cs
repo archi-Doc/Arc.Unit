@@ -433,9 +433,9 @@ internal class InputBuffer
             this.InputConsole.Reader.WriteRaw(Encoding.UTF8.GetBytes(span.ToString()));
             // Console.Out.Write(span);
 
-            // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
-            this.CursorLeft = newCursorLeft - this.Left;
-            this.CursorTop = newCursorTop - this.Top;
+            this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
+            // this.CursorLeft = newCursorLeft - this.Left;
+            // this.CursorTop = newCursorTop - this.Top;
         }
         catch
         {
