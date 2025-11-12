@@ -366,10 +366,10 @@ internal class InputBuffer
         }
 
         // Input color
-        span = ConsoleHelper.GetForegroundColorEscapeCode(this.InputConsole.InputColor).AsSpan();
+        /*span = ConsoleHelper.GetForegroundColorEscapeCode(this.InputConsole.InputColor).AsSpan();
         span.CopyTo(buffer);
         written += span.Length;
-        buffer = buffer.Slice(span.Length);
+        buffer = buffer.Slice(span.Length);*/
 
         // Characters
         span = charSpan;
@@ -385,10 +385,10 @@ internal class InputBuffer
         }
 
         // Reset color
-        span = ConsoleHelper.ResetSpan;
+        /*span = ConsoleHelper.ResetSpan;
         span.CopyTo(buffer);
         written += span.Length;
-        buffer = buffer.Slice(span.Length);
+        buffer = buffer.Slice(span.Length);*/
 
         if (eraseLine)
         {// Erase line
