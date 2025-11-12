@@ -4,7 +4,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using ConsoleBufferTest;
-using static FastExpressionCompiler.ExpressionCompiler;
 
 namespace Arc.InputConsole;
 

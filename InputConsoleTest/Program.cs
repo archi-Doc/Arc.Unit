@@ -91,7 +91,6 @@ internal class Program
             Interop.Sys.UninitializeConsoleAfterRead();
         }*/
 
-        Console.WriteLine("00");
         while (!ThreadCore.Root.IsTerminated)
         {
             /*if (!Console.KeyAvailable)
@@ -100,7 +99,6 @@ internal class Program
                 continue;
             }*/
 
-            Console.WriteLine("01");
             var result = inputConsole.ReadLine($"{Console.CursorTop}> "); // Success, Canceled, Terminated
 
             if (result.Kind == InputResultKind.Terminated)
