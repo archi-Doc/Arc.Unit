@@ -14,7 +14,7 @@ internal sealed class ConsoleKeyReader
     {
         try
         {
-            //this.InitializeStdIn();
+            this.InitializeStdIn();
             Console.WriteLine("StdIn");
         }
         catch
@@ -37,17 +37,21 @@ internal sealed class ConsoleKeyReader
             if (this.enableStdin)
             {// StdIn
                 Interop.Sys.InitializeConsoleBeforeRead();
-
-                Span<byte> bufPtr = stackalloc byte[100];
-                fixed (byte* buffer = bufPtr)
+                try
                 {
-                    int result = Interop.Sys.ReadStdin(buffer, 100);
-                    // Console.WriteLine(result);
-                    // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                    // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                    Span<byte> bufPtr = stackalloc byte[100];
+                    fixed (byte* buffer = bufPtr)
+                    {
+                        int result = Interop.Sys.ReadStdin(buffer, 100);
+                        // Console.WriteLine(result);
+                        // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                        // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                    }
                 }
-
-                Interop.Sys.UninitializeConsoleAfterRead();
+                finally
+                {
+                    Interop.Sys.UninitializeConsoleAfterRead();
+                }
 
                 keyInfo = new('a', ConsoleKey.A, false, false, false);
                 return true;
