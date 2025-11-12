@@ -329,7 +329,7 @@ internal class InputBuffer
         var written = 0;
 
         // Hide cursor
-        span = ConsoleHelper.HideCursorSpan;
+        /*span = ConsoleHelper.HideCursorSpan;
         span.CopyTo(buffer);
         written += span.Length;
         buffer = buffer.Slice(span.Length);
@@ -355,7 +355,7 @@ internal class InputBuffer
             buffer[0] = 'H';
             buffer = buffer.Slice(1);
             written += 1;
-        }
+        }*/
 
         if (startIndex < 0 && this.Prompt is not null)
         {// Prompt
@@ -400,8 +400,8 @@ internal class InputBuffer
 
         try
         {
-            Console.Out.Write("X");
-            // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
+            // Console.Out.Write("X");
+            Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
         }
         catch
