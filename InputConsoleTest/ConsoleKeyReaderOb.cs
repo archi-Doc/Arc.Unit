@@ -54,7 +54,7 @@ internal sealed class ConsoleKeyReaderOb
                 }
 
                 keyInfo = new('a', ConsoleKey.A, false, false, false);
-                return true;
+                return false;
             }
             else
             {// Console.ReadKey
