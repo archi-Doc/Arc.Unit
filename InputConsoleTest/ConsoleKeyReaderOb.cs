@@ -30,7 +30,7 @@ internal sealed class ConsoleKeyReaderOb
             if (this.enableStdin)
             {// StdIn
                 // Peek
-                if (!Console.KeyAvailable)
+                if (!Interop.Sys.StdinReady())
                 {
                     keyInfo = default;
                     return false;
