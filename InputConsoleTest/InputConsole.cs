@@ -26,9 +26,9 @@ public partial class InputConsole : IConsoleService
 
     internal int WindowHeight { get; private set; }
 
-    internal int CursorLeft { get; set; }
+    internal int CursorLeft { get; set; } = -1;
 
-    internal int CursorTop { get; set; }
+    internal int CursorTop { get; set; } = -1;
 
     internal int StartingCursorTop { get; set; }
 
@@ -357,16 +357,17 @@ ProcessKeyInfo:
 
     private void Prepare()
     {
-        this.CursorLeft = 0;
-        this.CursorTop = 0;
         this.WindowWidth = 120;
         this.WindowHeight = 30;
 
         try
         {
-            // (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
             this.WindowWidth = Console.WindowWidth;
             this.WindowHeight = Console.WindowHeight;
+            if (this.CursorLeft < 0 || this.CursorTop < 0)
+            {
+                (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
+            }
         }
         catch
         {
