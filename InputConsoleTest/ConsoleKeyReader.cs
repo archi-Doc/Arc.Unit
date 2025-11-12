@@ -38,13 +38,16 @@ internal sealed class ConsoleKeyReader
                     {
                         if (this.enableStdin)
                         {// StdIn
-                            if (!Interop.Sys.StdinReady())
+                            /*if (!Interop.Sys.StdinReady())
                             {
                                 await Task.Delay(10);
                                 continue;
                             }
 
-                            this.StdIn();
+                            this.StdIn();*/
+
+                            var keyInfo = Console.ReadKey(intercept: true);
+                            this.queue.Enqueue(keyInfo);
                         }
                         else
                         {// Console.ReadKey
