@@ -36,7 +36,7 @@ internal sealed class ConsoleKeyReader
                     fixed (byte* buffer = bufPtr)
                     {
                         int result = Interop.Sys.ReadStdin(buffer, 100);
-                        // Console.WriteLine(result);
+                        Console.WriteLine(result);
                         // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
                         // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
                     }
