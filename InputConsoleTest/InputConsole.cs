@@ -26,9 +26,9 @@ public partial class InputConsole : IConsoleService
 
     internal int WindowHeight { get; private set; }
 
-    internal int CursorLeft { get; private set; }
+    internal int CursorLeft { get; set; }
 
-    internal int CursorTop { get; private set; }
+    internal int CursorTop { get; set; }
 
     internal int StartingCursorTop { get; set; }
 
