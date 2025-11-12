@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.InteropServices;
+using Microsoft.Win32.SafeHandles;
 
 namespace ConsoleBufferTest;
 
@@ -60,9 +61,32 @@ internal static partial class Interop
         internal KEY_EVENT_RECORD keyEvent;
     }
 
+    internal static class FileDescriptors
+    {
+#pragma warning disable SA1310 // Field names should not contain underscore
+        internal static readonly SafeFileHandle STDIN_FILENO = CreateFileHandle(0);
+        internal static readonly SafeFileHandle STDOUT_FILENO = CreateFileHandle(1);
+        internal static readonly SafeFileHandle STDERR_FILENO = CreateFileHandle(2);
+#pragma warning restore SA1310 // Field names should not contain underscore
+
+        private static SafeFileHandle CreateFileHandle(int fileNumber)
+        {
+            return new SafeFileHandle((IntPtr)fileNumber, ownsHandle: false);
+        }
+    }
+
     internal static partial class Sys
     {
         private const string SystemNative = "libSystem.Native";
+
+        [LibraryImport(SystemNative, EntryPoint = "SystemNative_Dup", SetLastError = true)]
+        internal static partial SafeFileHandle Dup(SafeFileHandle oldfd);
+
+        [LibraryImport(SystemNative, EntryPoint = "SystemNative_Write", SetLastError = true)]
+        internal static unsafe partial int Write(SafeHandle fd, byte* buffer, int bufferSize);
+
+        [LibraryImport(SystemNative, EntryPoint = "SystemNative_Write", SetLastError = true)]
+        internal static unsafe partial int Write(IntPtr fd, byte* buffer, int bufferSize);
 
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
         internal static unsafe partial int ReadStdin(byte* buffer, int bufferSize);
@@ -70,9 +94,6 @@ internal static partial class Interop
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_StdinReady")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool StdinReady();
-
-        // [LibraryImport(SystemNative, EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
-        // internal static unsafe partial int ReadStdin(Span<byte> buffer, int bufferSize);
 
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_InitializeConsoleBeforeRead")]
         internal static partial void InitializeConsoleBeforeRead(byte minChars = 1, byte decisecondsTimeout = 0);

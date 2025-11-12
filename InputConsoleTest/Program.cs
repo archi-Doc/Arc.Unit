@@ -1,6 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System;
 using System.Globalization;
+using System.Text;
 using System.Threading;
 using Arc.InputConsole;
 using Arc.Threading;
@@ -67,7 +69,7 @@ internal class Program
         // Console.Write($">> {sp}");
         // var st = Console.ReadLine();
 
-        // Test();
+        Test();
 
         while (!ThreadCore.Root.IsTerminated)
         {
@@ -123,6 +125,16 @@ internal class Program
     private static unsafe void Test()
     {
         var buffer = new byte[100];
+
+        var st = "ABC\n0123456";
+        var handle = Interop.Sys.Dup(Interop.FileDescriptors.STDIN_FILENO);
+        var count = Encoding.UTF8.GetBytes(st, 0, st.Length, buffer, buffer.Length);
+        fixed (byte* p = buffer)
+        {
+            int bytesWritten = Interop.Sys.Write(handle, p, count);
+            Console.WriteLine(bytesWritten);
+        }
+
         while (true)
         {
             if (!Interop.Sys.StdinReady())

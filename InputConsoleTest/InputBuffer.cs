@@ -402,7 +402,7 @@ internal class InputBuffer
         {
             // Console.Out.Write("X");
             Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
-            Console.Out.Flush();
+            // Console.Out.Flush();
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
         }
         catch
