@@ -14,7 +14,7 @@ internal sealed class ConsoleKeyReader
     {
         try
         {
-            this.InitializeStdIn();
+            // this.InitializeStdIn();
             Console.WriteLine("StdIn");
         }
         catch
