@@ -1,7 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
-using System.Reflection.Metadata;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using ConsoleBufferTest;
@@ -10,15 +10,32 @@ namespace Arc.InputConsole;
 
 internal sealed class RawInterface
 {
+    private const int BufferCapacity = 1024;
+    private const int MinimalSequenceLength = 3;
+    private const char Escape = '\e';
+    private const char Delete = '\u007F';
+
     private readonly InputConsole inputConsole;
+    private readonly Encoding encoding;
+
+    private readonly Lock bufferLock = new();
+    private readonly byte[] buffer = new byte[BufferCapacity];
+    private int bufferPosition = 0;
+    private int bufferLength = 0;
+
     private SafeHandle? handle;
     private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
+    public Span<byte> BufferSpan => this.buffer.AsSpan(this.bufferPosition, this.bufferLength);
+
+    public bool IsBufferEmpty => this.bufferPosition >= this.bufferLength;
+
     public RawInterface(InputConsole inputConsole, CancellationToken cancellationToken = default)
     {
         this.inputConsole = inputConsole;
+        this.encoding = Encoding.UTF8;
 
         try
         {
@@ -37,6 +54,11 @@ internal sealed class RawInterface
         {
             if (this.enableStdin)
             {// StdIn
+                if (this.TryConsumeBuffer(out keyInfo))
+                {
+                    return true;
+                }
+
                 // Peek
                 if (!Interop.Sys.StdinReady())
                 {
@@ -44,25 +66,39 @@ internal sealed class RawInterface
                     return false;
                 }
 
-                Interop.Sys.InitializeConsoleBeforeRead();
-                try
+                using (this.bufferLock.EnterScope())
                 {
-                    Span<byte> bufPtr = stackalloc byte[100];
-                    fixed (byte* buffer = bufPtr)
+                    if (this.TryConsumeBufferInternal(out keyInfo))
                     {
-                        int result = Interop.Sys.ReadStdin(buffer, 100);
-                        // Console.Write(result);
-                        // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                        // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                        return true;
                     }
-                }
-                finally
-                {
-                    Interop.Sys.UninitializeConsoleAfterRead();
-                }
 
-                keyInfo = new('a', ConsoleKey.A, false, false, false);
-                return true;
+                    Interop.Sys.InitializeConsoleBeforeRead();
+                    try
+                    {
+                        Debug.Assert(this.bufferPosition == this.bufferLength);
+                        this.bufferPosition = 0;
+                        this.bufferLength = this.buffer.Length;
+
+                        var span = this.BufferSpan;
+                        fixed (byte* buffer = span)
+                        {
+                            var readLength = Interop.Sys.ReadStdin(buffer, span.Length);
+                            this.bufferLength = readLength;
+
+                            // Console.Write(result);
+                            // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
+                            // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                        }
+                    }
+                    finally
+                    {
+                        Interop.Sys.UninitializeConsoleAfterRead();
+                    }
+
+                    // keyInfo = new('a', ConsoleKey.A, false, false, false);
+                    return this.TryConsumeBufferInternal(out keyInfo);
+                }
             }
             else
             {// Console.ReadKey
@@ -98,6 +134,135 @@ internal sealed class RawInterface
         {
             Console.Out.Write(data);
         }
+    }
+
+    private static ConsoleKeyInfo ParseFromSingleChar(char single, bool isAlt)
+    {
+        bool isShift = false, isCtrl = false;
+        char keyChar = single;
+
+        ConsoleKey key = single switch
+        {
+            '\b' => ConsoleKey.Backspace,
+            '\t' => ConsoleKey.Tab,
+            '\r' or '\n' => ConsoleKey.Enter,
+            ' ' => ConsoleKey.Spacebar,
+            Escape => ConsoleKey.Escape,
+            Delete => ConsoleKey.Backspace,
+            '*' => ConsoleKey.Multiply,
+            '/' => ConsoleKey.Divide,
+            '-' => ConsoleKey.Subtract,
+            '+' => ConsoleKey.Add,
+            '=' => default,
+            '!' or '@' or '#' or '$' or '%' or '^' or '&' or '&' or '*' or '(' or ')' => default,
+            ',' => ConsoleKey.OemComma,
+            '.' => ConsoleKey.OemPeriod,
+            _ when char.IsAsciiLetterLower(single) => ConsoleKey.A + single - 'a',
+            _ when char.IsAsciiLetterUpper(single) => UppercaseCharacter(single, out isShift),
+            _ when char.IsAsciiDigit(single) => ConsoleKey.D0 + single - '0',
+            _ when char.IsBetween(single, (char)1, (char)26) => ControlAndLetterPressed(single, isAlt, out keyChar, out isCtrl),
+            _ when char.IsBetween(single, (char)28, (char)31) => ControlAndDigitPressed(single, out keyChar, out isCtrl),
+            '\u0000' => ControlAndDigitPressed(single, out keyChar, out isCtrl),
+            _ => default,
+        };
+
+        if (single is '\b' or '\n')
+        {
+            isCtrl = true;
+        }
+
+        if (isAlt)
+        {
+            isAlt = key != default;
+        }
+
+        return new ConsoleKeyInfo(keyChar, key, isShift, isAlt, isCtrl);
+
+        static ConsoleKey UppercaseCharacter(char single, out bool isShift)
+        {
+            isShift = true;
+            return ConsoleKey.A + single - 'A';
+        }
+
+        static ConsoleKey ControlAndLetterPressed(char single, bool isAlt, out char keyChar, out bool isCtrl)
+        {
+            Debug.Assert(single != 'b' && single != '\t' && single != '\n' && single != '\r');
+
+            isCtrl = true;
+            keyChar = isAlt ? default : single;
+            return ConsoleKey.A + single - 1;
+        }
+
+        static ConsoleKey ControlAndDigitPressed(char single, out char keyChar, out bool isCtrl)
+        {
+            Debug.Assert(single == default || char.IsBetween(single, (char)28, (char)31));
+
+            isCtrl = true;
+            keyChar = default;
+            return single switch
+            {
+                '\u0000' => ConsoleKey.D2,
+                _ => ConsoleKey.D4 + single - 28,
+            };
+        }
+    }
+
+    private bool TryConsumeBuffer(out ConsoleKeyInfo keyInfo)
+    {
+        if (this.IsBufferEmpty)
+        {
+            keyInfo = default;
+            return false;
+        }
+
+        using (this.bufferLock.EnterScope())
+        {
+            return this.TryConsumeBufferInternal(out keyInfo);
+        }
+    }
+
+    private bool TryConsumeBufferInternal(out ConsoleKeyInfo keyInfo)
+    {
+        if (this.IsBufferEmpty)
+        {
+            keyInfo = default;
+            return false;
+        }
+
+        keyInfo = default;
+        return false;
+
+        /*var span = this.BufferSpan;
+        if (span[0] != this.posixDisableValue && span[0] == this.veraseCharacter)
+        {
+            keyInfo = new(span[0], ConsoleKey.Backspace, false, false, false);
+            this.bufferPosition++;
+            this.bufferLength--;
+            return true;
+        }
+        else if (span.Length >= MinimalSequenceLength + 1 && span[0] == Escape && span[1] == Escape)
+        {
+            startIndex++;
+            if (TryParseTerminalInputSequence(buffer, terminalFormatStrings, out ConsoleKeyInfo parsed, ref startIndex, endIndex))
+            {
+                keyInfo = new(parsed.KeyChar, parsed.Key, (parsed.Modifiers & ConsoleModifiers.Shift) != 0, alt: true, (parsed.Modifiers & ConsoleModifiers.Control) != 0);
+            }
+
+            startIndex--;
+        }
+        else if (span.Length >= MinimalSequenceLength && TryParseTerminalInputSequence(buffer, terminalFormatStrings, out ConsoleKeyInfo parsed, ref startIndex, endIndex))
+        {
+            return parsed;
+        }
+
+        if (span.Length == 2 && span[0] == Escape && span[1] != Escape)
+        {
+            startIndex++; // skip the Escape
+            keyInfo = ParseFromSingleChar(span[startIndex++], isAlt: true);
+        }
+
+        keyInfo = ParseFromSingleChar(span[startIndex++], isAlt: false);
+        return true;*/
     }
 
     private void InitializeStdIn()
