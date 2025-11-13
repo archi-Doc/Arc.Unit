@@ -86,9 +86,13 @@ internal sealed class RawInterface
                             var readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
                             this.bufferLength = readLength;
 
+                            var ready = Interop.Sys.StdinReady();
                             readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
+                            ready = Interop.Sys.StdinReady();
                             readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
+                            ready = Interop.Sys.StdinReady();
                             readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
+                            ready = Interop.Sys.StdinReady();
 
                             // Console.Write(result);
                             // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
