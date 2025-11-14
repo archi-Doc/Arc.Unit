@@ -8,9 +8,7 @@ namespace Arc.InputConsole;
 /// <summary>Provides format strings and related information for use with the current terminal.</summary>
 internal sealed class TerminalFormatStrings
 {
-    public readonly string? Title;
-
-    public readonly Dictionary<string, ConsoleKeyInfo> KeyFormatToConsoleKey = new(StringComparer.Ordinal);
+    public readonly Arc.Crypto.Utf16Hashtable<ConsoleKeyInfo> KeyFormatToConsoleKey = new();
 
     public readonly bool IsRxvtTerm;
 
@@ -22,7 +20,6 @@ internal sealed class TerminalFormatStrings
         }
 
         this.IsRxvtTerm = !string.IsNullOrEmpty(db.Term) && db.Term.Contains("rxvt", StringComparison.OrdinalIgnoreCase);
-        this.Title = GetTitle(db);
 
         this.AddKey(db, TermInfo.WellKnownStrings.KeyF1, ConsoleKey.F1);
         this.AddKey(db, TermInfo.WellKnownStrings.KeyF2, ConsoleKey.F2);
@@ -85,50 +82,6 @@ internal sealed class TerminalFormatStrings
         this.AddPrefixKey(db, "kPRV", ConsoleKey.PageUp);
     }
 
-    private static string GetTitle(TermInfo.Database db)
-    {
-        // Try to get the format string from tsl/fsl and use it if they're available
-        string? tsl = db.GetString(TermInfo.WellKnownStrings.ToStatusLine);
-        string? fsl = db.GetString(TermInfo.WellKnownStrings.FromStatusLine);
-        if (tsl != null && fsl != null)
-        {
-            return tsl + "%p1%s" + fsl;
-        }
-
-        string term = db.Term;
-        if (term == null)
-        {
-            return string.Empty;
-        }
-
-        if (term.StartsWith("xterm", StringComparison.Ordinal))
-        {
-            term = "xterm";
-        }
-        else if (term.StartsWith("screen", StringComparison.Ordinal))
-        {
-            term = "screen";
-        }
-
-        switch (term)
-        {
-            case "aixterm":
-            case "dtterm":
-            case "linux":
-            case "rxvt":
-            case "xterm":
-                return "\e]0;%p1%s\x07";
-            case "cygwin":
-                return "\e];%p1%s\x07";
-            case "konsole":
-                return "\e]30;%p1%s\x07";
-            case "screen":
-                return "\ek%p1%s\e\\";
-            default:
-                return string.Empty;
-        }
-    }
-
     private void AddKey(TermInfo.Database db, TermInfo.WellKnownStrings keyId, ConsoleKey key)
     {
         this.AddKey(db, keyId, key, shift: false, alt: false, control: false);
@@ -139,7 +92,7 @@ internal sealed class TerminalFormatStrings
         string? keyFormat = db.GetString(keyId);
         if (!string.IsNullOrEmpty(keyFormat))
         {
-            this.KeyFormatToConsoleKey[keyFormat] = new ConsoleKeyInfo(key == ConsoleKey.Enter ? '\r' : '\0', key, shift, alt, control);
+            this.KeyFormatToConsoleKey.Add(keyFormat, new ConsoleKeyInfo(key == ConsoleKey.Enter ? '\r' : '\0', key, shift, alt, control));
         }
     }
 
@@ -160,7 +113,7 @@ internal sealed class TerminalFormatStrings
         string? keyFormat = db.GetExtendedString(extendedName);
         if (!string.IsNullOrEmpty(keyFormat))
         {
-            this.KeyFormatToConsoleKey[keyFormat] = new ConsoleKeyInfo('\0', key, shift, alt, control);
+            this.KeyFormatToConsoleKey.Add(keyFormat, new ConsoleKeyInfo('\0', key, shift, alt, control));
         }
     }
 }

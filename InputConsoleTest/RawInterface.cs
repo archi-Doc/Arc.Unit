@@ -293,7 +293,7 @@ internal sealed class RawInterface
             return false;
         }
 
-        Dictionary<string, ConsoleKeyInfo>.AlternateLookup<ReadOnlySpan<char>> terminfoDb = this.terminalFormatStrings.KeyFormatToConsoleKey.GetAlternateLookup<ReadOnlySpan<char>>();
+        var terminfoDb = this.terminalFormatStrings.KeyFormatToConsoleKey;
         ConsoleModifiers modifiers = ConsoleModifiers.None;
         ConsoleKey key;
 
