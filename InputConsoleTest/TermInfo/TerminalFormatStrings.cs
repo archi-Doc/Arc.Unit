@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Generic;
-using System.Diagnostics;
-
 namespace Arc.InputConsole;
 
 #pragma warning disable SA1203 // Constants should appear before fields
@@ -11,75 +8,10 @@ namespace Arc.InputConsole;
 /// <summary>Provides format strings and related information for use with the current terminal.</summary>
 internal sealed class TerminalFormatStrings
 {
-    /// <summary>The format string to use to change the foreground color.</summary>
-    public readonly string? Foreground;
-
-    /// <summary>The format string to use to change the background color.</summary>
-    public readonly string? Background;
-
-    /// <summary>The format string to use to reset the foreground and background colors.</summary>
-    public readonly string? Reset;
-
-    /// <summary>The maximum number of colors supported by the terminal.</summary>
-    public readonly int MaxColors;
-
-    /// <summary>The number of columns in a format.</summary>
-    public readonly int Columns;
-
-    /// <summary>The number of lines in a format.</summary>
-    public readonly int Lines;
-
-    /// <summary>The format string to use to make cursor visible.</summary>
-    public readonly string? CursorVisible;
-
-    /// <summary>The format string to use to make cursor invisible.</summary>
-    public readonly string? CursorInvisible;
-
-    /// <summary>The format string to use to set the window title.</summary>
     public readonly string? Title;
 
-    /// <summary>The format string to use for an audible bell.</summary>
-    public readonly string? Bell;
-
-    /// <summary>The format string to use to clear the terminal.</summary>
-    /// <remarks>If supported, this includes the format string for first clearing the terminal scrollback buffer.</remarks>
-    public readonly string? Clear;
-
-    /// <summary>The format string to use to set the position of the cursor.</summary>
-    public readonly string? CursorAddress;
-
-    /// <summary>The format string to use to move the cursor to the left.</summary>
-    public readonly string? CursorLeft;
-
-    /// <summary>The format string to use to clear to the end of line.</summary>
-    public readonly string? ClrEol;
-
-    /// <summary>The ANSI-compatible string for the Cursor Position report request.</summary>
-    /// <remarks>
-    /// This should really be in user string 7 in the terminfo file, but some terminfo databases
-    /// are missing it.  As this is defined to be supported by any ANSI-compatible terminal,
-    /// we assume it's available; doing so means CursorTop/Left will work even if the terminfo database
-    /// doesn't contain it (as appears to be the case with e.g. screen and tmux on Ubuntu), at the risk
-    /// of outputting the sequence on some terminal that's not compatible.
-    /// </remarks>
-    public const string CursorPositionReport = "\e[6n";
-
-    /// <summary>
-    /// The dictionary of keystring to ConsoleKeyInfo.
-    /// Only some members of the ConsoleKeyInfo are used; in particular, the actual char is ignored.
-    /// </summary>
     public readonly Dictionary<string, ConsoleKeyInfo> KeyFormatToConsoleKey = new(StringComparer.Ordinal);
 
-    /// <summary> Max key length.</summary>
-    public readonly int MaxKeyFormatLength;
-
-    /// <summary> Min key length.</summary>
-    public readonly int MinKeyFormatLength;
-
-    /// <summary>The ANSI string used to enter "application" / "keypad transmit" mode.</summary>
-    public readonly string? KeypadXmit;
-
-    /// <summary>Indicates that it was created out of rxvt TERM.</summary>
     public readonly bool IsRxvtTerm;
 
     public TerminalFormatStrings(TermInfo.Database? db)
@@ -89,36 +21,8 @@ internal sealed class TerminalFormatStrings
             return;
         }
 
-        this.KeypadXmit = db.GetString(TermInfo.WellKnownStrings.KeypadXmit);
-        this.Foreground = db.GetString(TermInfo.WellKnownStrings.SetAnsiForeground);
-        this.Background = db.GetString(TermInfo.WellKnownStrings.SetAnsiBackground);
-        this.Reset = db.GetString(TermInfo.WellKnownStrings.OrigPairs) ?? db.GetString(TermInfo.WellKnownStrings.OrigColors);
-        this.Bell = db.GetString(TermInfo.WellKnownStrings.Bell);
-        this.Clear = db.GetString(TermInfo.WellKnownStrings.Clear);
-        if (db.GetExtendedString("E3") is string clearScrollbackBuffer)
-        {
-            this.Clear += clearScrollbackBuffer; // the E3 command must come after the Clear command
-        }
-
-        this.Columns = db.GetNumber(TermInfo.WellKnownNumbers.Columns);
-        this.Lines = db.GetNumber(TermInfo.WellKnownNumbers.Lines);
-        this.CursorVisible = db.GetString(TermInfo.WellKnownStrings.CursorVisible);
-        this.CursorInvisible = db.GetString(TermInfo.WellKnownStrings.CursorInvisible);
-        this.CursorAddress = db.GetString(TermInfo.WellKnownStrings.CursorAddress);
-        this.CursorLeft = db.GetString(TermInfo.WellKnownStrings.CursorLeft);
-        this.ClrEol = db.GetString(TermInfo.WellKnownStrings.ClrEol);
-
         this.IsRxvtTerm = !string.IsNullOrEmpty(db.Term) && db.Term.Contains("rxvt", StringComparison.OrdinalIgnoreCase);
         this.Title = GetTitle(db);
-
-        Debug.WriteLineIf(
-            db.GetString(TermInfo.WellKnownStrings.CursorPositionReport) != CursorPositionReport, "Getting the cursor position will only work if the terminal supports the CPR sequence," + "but the terminfo database does not contain an entry for it.");
-
-        int maxColors = db.GetNumber(TermInfo.WellKnownNumbers.MaxColors);
-        this.MaxColors = // normalize to either the full range of all ANSI colors, just the dark ones, or none
-            maxColors >= 16 ? 16 :
-            maxColors >= 8 ? 8 :
-            0;
 
         this.AddKey(db, TermInfo.WellKnownStrings.KeyF1, ConsoleKey.F1);
         this.AddKey(db, TermInfo.WellKnownStrings.KeyF2, ConsoleKey.F2);
@@ -179,25 +83,6 @@ internal sealed class TerminalFormatStrings
         this.AddPrefixKey(db, "kHOM", ConsoleKey.Home);
         this.AddPrefixKey(db, "kNXT", ConsoleKey.PageDown);
         this.AddPrefixKey(db, "kPRV", ConsoleKey.PageUp);
-
-        if (this.KeyFormatToConsoleKey.Count > 0)
-        {
-            this.MaxKeyFormatLength = int.MinValue;
-            this.MinKeyFormatLength = int.MaxValue;
-
-            foreach (KeyValuePair<string, ConsoleKeyInfo> entry in this.KeyFormatToConsoleKey)
-            {
-                if (entry.Key.Length > this.MaxKeyFormatLength)
-                {
-                    this.MaxKeyFormatLength = entry.Key.Length;
-                }
-
-                if (entry.Key.Length < this.MinKeyFormatLength)
-                {
-                    this.MinKeyFormatLength = entry.Key.Length;
-                }
-            }
-        }
     }
 
     private static string GetTitle(TermInfo.Database db)
