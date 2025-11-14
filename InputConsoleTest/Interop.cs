@@ -12,17 +12,12 @@ namespace ConsoleBufferTest;
 
 internal static partial class Interop
 {
-    // private static IntPtr InputHandle => Interop.Sys.GetStdHandle(-10);
-
     [Flags]
     internal enum OpenFlags
     {
-        // Access modes (mutually exclusive)
         O_RDONLY = 0x0000,
         O_WRONLY = 0x0001,
         O_RDWR = 0x0002,
-
-        // Flags (combinable)
         O_CLOEXEC = 0x0010,
         O_CREAT = 0x0020,
         O_EXCL = 0x0040,
@@ -58,27 +53,6 @@ internal static partial class Interop
         TRUE = 1,
     }
 
-    /*[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct KEY_EVENT_RECORD
-    {
-        internal BOOL bKeyDown;
-        internal ushort wRepeatCount;
-        internal ushort wVirtualKeyCode;
-        internal ushort wVirtualScanCode;
-        internal ushort _uChar; // Union between WCHAR and ASCII char
-        internal uint dwControlKeyState;
-
-        // _uChar is stored as short to avoid any ambiguity for interop marshaling
-        internal char uChar => (char)this._uChar;
-    }*/
-
-    /*[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    internal struct INPUT_RECORD
-    {
-        internal ushort EventType;
-        internal KEY_EVENT_RECORD keyEvent;
-    }*/
-
     internal static class FileDescriptors
     {
         internal static readonly SafeFileHandle STDIN_FILENO = CreateFileHandle(0);
@@ -104,9 +78,6 @@ internal static partial class Interop
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_Write", SetLastError = true)]
         internal static unsafe partial int Write(SafeHandle fd, byte* buffer, int bufferSize);
 
-        // [LibraryImport(SystemNative, EntryPoint = "SystemNative_Write", SetLastError = true)]
-        // internal static unsafe partial int Write(IntPtr fd, byte* buffer, int bufferSize);
-
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_ReadStdin", SetLastError = true)]
         internal static unsafe partial int ReadStdin(byte* buffer, int bufferSize);
 
@@ -122,13 +93,5 @@ internal static partial class Interop
 
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_GetControlCharacters")]
         internal static unsafe partial void GetControlCharacters(Span<Interop.ControlCharacterNames> controlCharacterNames, Span<byte> controlCharacterValues, int controlCharacterLength, out byte posixDisableValue);
-
-        /*[LibraryImport("kernel32.dll", EntryPoint = "ReadConsoleInputW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static partial bool ReadConsoleInput(IntPtr hConsoleInput, out INPUT_RECORD buffer, int numInputRecords_UseOne, out int numEventsRead);*/
-
-        // [LibraryImport("kernel32.dll")]
-        // [SuppressGCTransition]
-        // internal static partial IntPtr GetStdHandle(int nStdHandle);  // param is NOT a handle, but it returns one!
     }
 }
