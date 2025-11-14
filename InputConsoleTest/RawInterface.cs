@@ -10,7 +10,7 @@ namespace Arc.InputConsole;
 
 internal sealed class RawInterface
 {
-    private const int BufferCapacity = 1024;
+    private const int BufferCapacity = 26; // 1024
     private const int MinimalSequenceLength = 3;
     private const char Escape = '\e';
     private const char Delete = '\u007F';
@@ -19,18 +19,25 @@ internal sealed class RawInterface
     private readonly Encoding encoding;
 
     private readonly Lock bufferLock = new();
-    private readonly byte[] buffer = new byte[BufferCapacity];
-    private int bufferPosition = 0;
-    private int bufferLength = 0;
+    private readonly byte[] bytes = new byte[BufferCapacity];
+    private readonly char[] chars = new char[BufferCapacity];
+    // private int bytesPosition = 0;
+    private int bytesLength = 0;
+    private int charsPosition = 0;
+    private int charsLength = 0;
 
     private SafeHandle? handle;
     private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
-    public Span<byte> BufferSpan => this.buffer.AsSpan(this.bufferPosition, this.bufferLength);
+    // public Span<byte> BytesSpan => this.bytes.AsSpan(this.bytesPosition, this.bytesLength);
 
-    public bool IsBufferEmpty => this.bufferPosition >= this.bufferLength;
+    public Span<char> CharsSpan => this.chars.AsSpan(this.charsPosition, this.charsLength);
+
+    public bool IsBytesEmpty => this.bytesLength == 0;
+
+    public bool IsCharsEmpty => this.charsLength == 0;
 
     public RawInterface(InputConsole inputConsole, CancellationToken cancellationToken = default)
     {
@@ -76,27 +83,27 @@ internal sealed class RawInterface
                     Interop.Sys.InitializeConsoleBeforeRead();
                     try
                     {
-                        Debug.Assert(this.bufferPosition == this.bufferLength);
-                        this.bufferPosition = 0;
-                        this.bufferLength = this.buffer.Length;
-
-                        var span = this.BufferSpan;
+                        var span = this.bytes.AsSpan(this.bytesLength, this.bytes.Length - this.bytesLength);
                         fixed (byte* buffer = span)
                         {
-                            var readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
-                            this.bufferLength = readLength;
-
-                            var ready = Interop.Sys.StdinReady();
-                            readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
-                            ready = Interop.Sys.StdinReady();
-                            readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
-                            ready = Interop.Sys.StdinReady();
-                            readLength = Interop.Sys.ReadStdin(buffer, /*span.Length*/9);
-                            ready = Interop.Sys.StdinReady();
+                            var readLength = Interop.Sys.ReadStdin(buffer, span.Length);
+                            this.bytesLength += readLength;
 
                             // Console.Write(result);
                             // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
                             // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
+                        }
+
+                        var validLength = InputConsoleHelper.GetValidUtf8Length(this.bytes.AsSpan(0, this.bytesLength));
+
+                        Debug.Assert(this.IsCharsEmpty);
+                        this.charsPosition = 0;
+                        this.charsLength = this.encoding.GetChars(this.bytes.AsSpan(0, validLength), this.chars.AsSpan());
+                        if (validLength < this.bytesLength)
+                        {
+                            // Move remaining bytes to the front
+                            this.bytesLength -= validLength;
+                            this.bytes.AsSpan(validLength, this.bytesLength).CopyTo(this.bytes.AsSpan());
                         }
                     }
                     finally
@@ -217,7 +224,7 @@ internal sealed class RawInterface
 
     private bool TryConsumeBuffer(out ConsoleKeyInfo keyInfo)
     {
-        if (this.IsBufferEmpty)
+        if (this.IsCharsEmpty)
         {
             keyInfo = default;
             return false;
@@ -231,7 +238,7 @@ internal sealed class RawInterface
 
     private bool TryConsumeBufferInternal(out ConsoleKeyInfo keyInfo)
     {
-        if (this.IsBufferEmpty)
+        if (this.IsCharsEmpty)
         {
             keyInfo = default;
             return false;

@@ -14,7 +14,7 @@ internal sealed class ConsoleKeyReaderObsolete
     private readonly ConcurrentQueue<ConsoleKeyInfo> queue =
         new();
 
-    private bool enableStdin;
+    // private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
@@ -108,7 +108,7 @@ internal sealed class ConsoleKeyReaderObsolete
             Interop.Sys.InitializeConsoleBeforeRead();
             Interop.Sys.UninitializeConsoleAfterRead();
 
-            this.enableStdin = true;
+            // this.enableStdin = true;
             Console.WriteLine("Unix");
         }
         catch
