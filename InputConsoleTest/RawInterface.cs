@@ -21,7 +21,7 @@ internal sealed class RawInterface
     private readonly InputConsole inputConsole;
     private readonly Encoding encoding;
     private readonly TermInfo.Database? db;
-    private readonly TerminalFormatStrings? terminalFormatStrings;
+    private readonly TerminalFormatStrings terminalFormatStrings;
 
     private readonly Lock bufferLock = new();
     private readonly byte[] bytes = new byte[BufferCapacity];
@@ -53,13 +53,14 @@ internal sealed class RawInterface
         {
             this.InitializeStdIn();
             this.db = TermInfo.DatabaseFactory.ReadActiveDatabase();
-            this.terminalFormatStrings = new(this.db);
             Console.WriteLine("StdIn");
         }
         catch
         {
             Console.WriteLine("No StdIn");
         }
+
+        this.terminalFormatStrings = new(this.db);
     }
 
     public unsafe bool TryRead(out ConsoleKeyInfo keyInfo)
@@ -292,10 +293,10 @@ internal sealed class RawInterface
             return false;
         }
 
-        // Dictionary<string, ConsoleKeyInfo>.AlternateLookup<ReadOnlySpan<char>> terminfoDb = terminalFormatStrings.KeyFormatToConsoleKey.GetAlternateLookup<ReadOnlySpan<char>>();
+        Dictionary<string, ConsoleKeyInfo>.AlternateLookup<ReadOnlySpan<char>> terminfoDb = this.terminalFormatStrings.KeyFormatToConsoleKey.GetAlternateLookup<ReadOnlySpan<char>>();
         ConsoleModifiers modifiers = ConsoleModifiers.None;
         ConsoleKey key;
-        /*
+        
         // Is it a three character sequence? (examples: '^[[H' (Home), '^[OP' (F1))
         if (input[1] == 'O' || char.IsAsciiLetter(input[2]) || input.Length == MinimalSequenceLength)
         {
@@ -305,8 +306,8 @@ internal sealed class RawInterface
                 // Example: ^[OH either means Home or simply is not used by given terminal.
                 // But with "^[[{character}" sequences, there are conflicts between rxvt and SCO.
                 // Example: "^[[a" is Shift+UpArrow for rxvt and Shift+F3 for SCO.
-                (key, modifiers) = input[1] == 'O' || terminalFormatStrings.IsRxvtTerm
-                    ? MapKeyIdOXterm(input[2], terminalFormatStrings.IsRxvtTerm)
+                (key, modifiers) = input[1] == 'O' || this.terminalFormatStrings.IsRxvtTerm
+                    ? MapKeyIdOXterm(input[2], this.terminalFormatStrings.IsRxvtTerm)
                     : MapSCO(input[2]);
 
                 if (key == default)
@@ -392,7 +393,7 @@ internal sealed class RawInterface
 
         key = input[SequencePrefixLength + digitCount + 2] is VtSequenceEndTag
             ? MapEscapeSequenceNumber(byte.Parse(input.Slice(SequencePrefixLength, digitCount)))
-            : MapKeyIdOXterm(input[SequencePrefixLength + digitCount + 2], terminalFormatStrings.IsRxvtTerm).key;
+            : MapKeyIdOXterm(input[SequencePrefixLength + digitCount + 2], this.terminalFormatStrings.IsRxvtTerm).Key;
 
         if (key == default)
         {
@@ -400,7 +401,7 @@ internal sealed class RawInterface
         }
 
         this.charsStartIndex += SequencePrefixLength + digitCount + 3; // 3 stands for separator, modifier and end tag or id
-        parsed = Create(default, key, modifiers);*/
+        parsed = Create(default, key, modifiers);
         return true;
 
         // maps "^[O{character}" for all Terminals and "^[[{character}" for rxvt Terminals

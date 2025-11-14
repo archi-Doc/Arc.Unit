@@ -216,11 +216,11 @@ internal sealed class TerminalFormatStrings
             return string.Empty;
         }
 
-        if (term.StartsWith("xterm", StringComparison.Ordinal)) // normalize all xterms to enable easier matching
+        if (term.StartsWith("xterm", StringComparison.Ordinal))
         {
             term = "xterm";
         }
-        else if (term.StartsWith("screen", StringComparison.Ordinal)) // normalize all tmux configs
+        else if (term.StartsWith("screen", StringComparison.Ordinal))
         {
             term = "screen";
         }
@@ -260,7 +260,7 @@ internal sealed class TerminalFormatStrings
 
     private void AddPrefixKey(TermInfo.Database db, string extendedNamePrefix, ConsoleKey key)
     {
-        if (db.HasExtendedStrings) // avoid string concatenation in case when there are no Extended Strings (typical scenario)
+        if (db.HasExtendedStrings)
         {
             this.AddKey(db, extendedNamePrefix + "3", key, shift: false, alt: true, control: false);
             this.AddKey(db, extendedNamePrefix + "4", key, shift: true, alt: true, control: false);
