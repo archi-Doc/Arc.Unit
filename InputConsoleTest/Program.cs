@@ -64,6 +64,7 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
         Console.WriteLine(Environment.OSVersion.ToString());
+        Console.WriteLine(Environment.GetEnvironmentVariable("TERM"));
 
         // var sp = ConsoleHelper.GetForegroundColorEscapeCode(ConsoleColor.Red);
         // Console.Write($">> {sp}");
