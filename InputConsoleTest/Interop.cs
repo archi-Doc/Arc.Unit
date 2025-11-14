@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
 using Microsoft.Win32.SafeHandles;
 
 namespace ConsoleBufferTest;
@@ -128,8 +127,8 @@ internal static partial class Interop
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool ReadConsoleInput(IntPtr hConsoleInput, out INPUT_RECORD buffer, int numInputRecords_UseOne, out int numEventsRead);*/
 
-        [LibraryImport("kernel32.dll")]
-        [SuppressGCTransition]
-        internal static partial IntPtr GetStdHandle(int nStdHandle);  // param is NOT a handle, but it returns one!
+        // [LibraryImport("kernel32.dll")]
+        // [SuppressGCTransition]
+        // internal static partial IntPtr GetStdHandle(int nStdHandle);  // param is NOT a handle, but it returns one!
     }
 }

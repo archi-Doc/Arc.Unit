@@ -13,31 +13,14 @@ internal static partial class TermInfo
     /// <summary>Provides a terminfo database.</summary>
     internal sealed class Database
     {
-        /// <summary>The name of the terminfo file.</summary>
         private readonly string _term;
-
-        /// <summary>Raw data of the database instance.</summary>
         private readonly byte[] _data;
-
-        /// <summary>The number of bytes in the names section of the database.</summary>
         private readonly int _nameSectionNumBytes;
-
-        /// <summary>The number of bytes in the Booleans section of the database.</summary>
         private readonly int _boolSectionNumBytes;
-
-        /// <summary>The number of integers in the numbers section of the database.</summary>
         private readonly int _numberSectionNumInts;
-
-        /// <summary>The number of offsets in the strings section of the database.</summary>
         private readonly int _stringSectionNumOffsets;
-
-        /// <summary>The number of bytes in the strings table of the database.</summary>
         private readonly int _stringTableNumBytes;
-
-        /// <summary>Whether or not to read the number section as 32-bit integers.</summary>
         private readonly bool _readAs32Bit;
-
-        /// <summary>The size of the integers on the number section.</summary>
         private readonly int _sizeOfInt;
 
         /// <summary>Extended / user-defined entries in the terminfo database.</summary>
@@ -82,37 +65,20 @@ internal static partial class TermInfo
             this._extendedStrings = ParseExtendedStrings(data, extendedBeginning, this._readAs32Bit);
         }
 
-        /// <summary>Gets the name of the associated terminfo, if any.</summary>
         public string Term => this._term;
 
         internal bool HasExtendedStrings => this._extendedStrings is not null;
 
-        /// <summary>The offset into data where the names section begins.</summary>
-        private const int NamesOffset = 12; // comes right after the header, which is always 12 bytes
+        private const int NamesOffset = 12;
 
-        /// <summary>Gets the offset into data where the Booleans section begins.</summary>
-        private int BooleansOffset
-        {
-            get { return NamesOffset + this._nameSectionNumBytes; }
-        } // after the names section
+        private int BooleansOffset => NamesOffset + this._nameSectionNumBytes;
 
-        /// <summary>Gets the offset into data where the numbers section begins.</summary>
         private int NumbersOffset => RoundUpToEven(this.BooleansOffset + this._boolSectionNumBytes);
 
-        /// <summary>
-        /// Gets the offset into data where the string offsets section begins.  We index into this section
-        /// to find the location within the strings table where a string value exists.
-        /// </summary>
-        private int StringOffsetsOffset
-        {
-            get { return this.NumbersOffset + (this._numberSectionNumInts * this._sizeOfInt); }
-        }
+        private int StringOffsetsOffset => this.NumbersOffset + (this._numberSectionNumInts * this._sizeOfInt);
 
         /// <summary>Gets the offset into data where the string table exists.</summary>
-        private int StringsTableOffset
-        {
-            get { return this.StringOffsetsOffset + (this._stringSectionNumOffsets * 2); }
-        }
+        private int StringsTableOffset => this.StringOffsetsOffset + (this._stringSectionNumOffsets * 2);
 
         /// <summary>Gets a string from the strings section by the string's well-known index.</summary>
         /// <param name="stringTableIndex">The index of the string to find.</param>

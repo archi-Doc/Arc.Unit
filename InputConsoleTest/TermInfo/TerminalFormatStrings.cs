@@ -5,7 +5,6 @@ namespace Arc.InputConsole;
 #pragma warning disable SA1203 // Constants should appear before fields
 #pragma warning disable SA1401 // Fields should be private
 
-/// <summary>Provides format strings and related information for use with the current terminal.</summary>
 internal sealed class TerminalFormatStrings
 {
     public readonly Arc.Crypto.Utf16Hashtable<ConsoleKeyInfo> KeyFormatToConsoleKey = new();
