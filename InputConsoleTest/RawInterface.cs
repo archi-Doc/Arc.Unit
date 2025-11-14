@@ -296,7 +296,7 @@ internal sealed class RawInterface
         Dictionary<string, ConsoleKeyInfo>.AlternateLookup<ReadOnlySpan<char>> terminfoDb = this.terminalFormatStrings.KeyFormatToConsoleKey.GetAlternateLookup<ReadOnlySpan<char>>();
         ConsoleModifiers modifiers = ConsoleModifiers.None;
         ConsoleKey key;
-        
+
         // Is it a three character sequence? (examples: '^[[H' (Home), '^[OP' (F1))
         if (input[1] == 'O' || char.IsAsciiLetter(input[2]) || input.Length == MinimalSequenceLength)
         {
