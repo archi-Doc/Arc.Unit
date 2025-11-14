@@ -263,6 +263,7 @@ internal sealed class RawInterface
             if (this.TryParseTerminalInputSequence(out var parsed))
             {
                 keyInfo = new(parsed.KeyChar, parsed.Key, (parsed.Modifiers & ConsoleModifiers.Shift) != 0, alt: true, (parsed.Modifiers & ConsoleModifiers.Control) != 0);
+                return true;
             }
 
             this.charsStartIndex--;
@@ -275,10 +276,13 @@ internal sealed class RawInterface
         if (span.Length == 2 && span[0] == Escape && span[1] != Escape)
         {
             this.charsStartIndex++;
-            keyInfo = ParseFromSingleChar(span[this.charsStartIndex++], isAlt: true);
+            keyInfo = ParseFromSingleChar(span[0], isAlt: true);
+            this.charsStartIndex++;
+            return true;
         }
 
-        keyInfo = ParseFromSingleChar(span[this.charsStartIndex++], isAlt: false);
+        keyInfo = ParseFromSingleChar(span[0], isAlt: false);
+        this.charsStartIndex++;
         return true;
     }
 
