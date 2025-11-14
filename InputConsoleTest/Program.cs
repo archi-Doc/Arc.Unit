@@ -59,13 +59,12 @@ internal class Program
         var logger = product.Context.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>();
         logger.TryGet()?.Log("Start");
 
+        Console.WriteLine(Environment.OSVersion.ToString());
+        Console.Write("Enter to start:");
+        Console.ReadLine();
+
         var inputConsole = new InputConsole();
         inputConsole.Logger = product.Context.ServiceProvider.GetRequiredService<ILogger<InputConsole>>();
-
-        inputConsole.WriteLine("Hello, World!");
-        Console.WriteLine(Environment.OSVersion.ToString());
-        Console.Write("Enter to start");
-        Console.ReadLine();
 
         // var sp = ConsoleHelper.GetForegroundColorEscapeCode(ConsoleColor.Red);
         // Console.Write($">> {sp}");
