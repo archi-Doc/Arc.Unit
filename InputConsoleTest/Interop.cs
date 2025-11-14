@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Win32.SafeHandles;
 
 namespace ConsoleBufferTest;
@@ -12,6 +13,23 @@ namespace ConsoleBufferTest;
 internal static partial class Interop
 {
     private static IntPtr InputHandle => Interop.Sys.GetStdHandle(-10);
+
+    [Flags]
+    internal enum OpenFlags
+    {
+        // Access modes (mutually exclusive)
+        O_RDONLY = 0x0000,
+        O_WRONLY = 0x0001,
+        O_RDWR = 0x0002,
+
+        // Flags (combinable)
+        O_CLOEXEC = 0x0010,
+        O_CREAT = 0x0020,
+        O_EXCL = 0x0040,
+        O_TRUNC = 0x0080,
+        O_SYNC = 0x0100,
+        O_NOFOLLOW = 0x0200,
+    }
 
     internal enum ControlCharacterNames : int
     {
@@ -78,6 +96,9 @@ internal static partial class Interop
     internal static partial class Sys
     {
         private const string SystemNative = "libSystem.Native";
+
+        [LibraryImport(SystemNative, EntryPoint = "SystemNative_Open", StringMarshalling = StringMarshalling.Utf8, SetLastError = true)]
+        internal static partial SafeFileHandle Open(string filename, OpenFlags flags, int mode);
 
         [LibraryImport(SystemNative, EntryPoint = "SystemNative_Dup", SetLastError = true)]
         internal static partial SafeFileHandle Dup(SafeFileHandle oldfd);
