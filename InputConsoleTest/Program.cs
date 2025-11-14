@@ -64,8 +64,8 @@ internal class Program
 
         inputConsole.WriteLine("Hello, World!");
         Console.WriteLine(Environment.OSVersion.ToString());
+        Console.Write("Enter to start");
         Console.ReadLine();
-        var db = TermInfo.DatabaseFactory.ReadActiveDatabase();
 
         // var sp = ConsoleHelper.GetForegroundColorEscapeCode(ConsoleColor.Red);
         // Console.Write($">> {sp}");

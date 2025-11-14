@@ -1,12 +1,10 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using ConsoleBufferTest;
 using Microsoft.Win32.SafeHandles;
 
-namespace System;
+namespace Arc.InputConsole;
 
 internal static partial class TermInfo
 {
@@ -16,13 +14,13 @@ internal static partial class TermInfo
         /// The default locations in which to search for terminfo databases.
         /// This is the ordering of well-known locations used by ncurses.
         /// </summary>
-        internal static readonly string[] SystemTermInfoLocations = {
+        internal static readonly string[] SystemTermInfoLocations = [
             "/etc/terminfo",
             "/lib/terminfo",
             "/usr/share/terminfo",
             "/usr/share/misc/terminfo",
             "/usr/local/share/terminfo",
-        };
+        ];
 
         internal static string? HomeTermInfoLocation
         {
@@ -128,7 +126,8 @@ internal static partial class TermInfo
                     }
 
                     fileOffset += bytesRead;
-                } while (fileOffset < termInfoLength);
+                }
+                while (fileOffset < termInfoLength);
 
                 // Create the database from the data
                 return new Database(term, data);

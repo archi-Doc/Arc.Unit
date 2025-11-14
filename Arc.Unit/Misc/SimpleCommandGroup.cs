@@ -80,7 +80,7 @@ public abstract class SimpleCommandGroup<TCommand> : ISimpleCommandAsync
     {
         if (args.Length == 0 && this.defaultArgument != null)
         {// Default argument
-            args = new string[] { this.defaultArgument, };
+            args = [this.defaultArgument,];
         }
 
         await this.SimpleParser.ParseAndRunAsync(args).ConfigureAwait(false);

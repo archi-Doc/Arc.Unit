@@ -20,6 +20,8 @@ internal sealed class RawInterface
 
     private readonly InputConsole inputConsole;
     private readonly Encoding encoding;
+    private readonly TermInfo.Database? db;
+    private readonly TerminalFormatStrings? terminalFormatStrings;
 
     private readonly Lock bufferLock = new();
     private readonly byte[] bytes = new byte[BufferCapacity];
@@ -50,6 +52,8 @@ internal sealed class RawInterface
         try
         {
             this.InitializeStdIn();
+            this.db = TermInfo.DatabaseFactory.ReadActiveDatabase();
+            this.terminalFormatStrings = new(this.db);
             Console.WriteLine("StdIn");
         }
         catch

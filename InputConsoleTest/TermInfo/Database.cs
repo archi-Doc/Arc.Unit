@@ -1,12 +1,12 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers.Binary;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace System;
+namespace Arc.InputConsole;
+
+#pragma warning disable SA1203 // Constants should appear before fields
 
 internal static partial class TermInfo
 {
@@ -82,28 +82,37 @@ internal static partial class TermInfo
             this._extendedStrings = ParseExtendedStrings(data, extendedBeginning, this._readAs32Bit);
         }
 
-        /// <summary>The name of the associated terminfo, if any.</summary>
-        public string Term { get { return this._term; } }
+        /// <summary>Gets the name of the associated terminfo, if any.</summary>
+        public string Term => this._term;
 
         internal bool HasExtendedStrings => this._extendedStrings is not null;
 
         /// <summary>The offset into data where the names section begins.</summary>
         private const int NamesOffset = 12; // comes right after the header, which is always 12 bytes
 
-        /// <summary>The offset into data where the Booleans section begins.</summary>
-        private int BooleansOffset { get { return NamesOffset + this._nameSectionNumBytes; } } // after the names section
+        /// <summary>Gets the offset into data where the Booleans section begins.</summary>
+        private int BooleansOffset
+        {
+            get { return NamesOffset + this._nameSectionNumBytes; }
+        } // after the names section
 
-        /// <summary>The offset into data where the numbers section begins.</summary>
-        private int NumbersOffset { get { return RoundUpToEven(this.BooleansOffset + this._boolSectionNumBytes); } } // after the Booleans section, at an even position
+        /// <summary>Gets the offset into data where the numbers section begins.</summary>
+        private int NumbersOffset => RoundUpToEven(this.BooleansOffset + this._boolSectionNumBytes);
 
         /// <summary>
-        /// The offset into data where the string offsets section begins.  We index into this section
+        /// Gets the offset into data where the string offsets section begins.  We index into this section
         /// to find the location within the strings table where a string value exists.
         /// </summary>
-        private int StringOffsetsOffset { get { return this.NumbersOffset + (this._numberSectionNumInts * this._sizeOfInt); } }
+        private int StringOffsetsOffset
+        {
+            get { return this.NumbersOffset + (this._numberSectionNumInts * this._sizeOfInt); }
+        }
 
-        /// <summary>The offset into data where the string table exists.</summary>
-        private int StringsTableOffset { get { return this.StringOffsetsOffset + (this._stringSectionNumOffsets * 2); } }
+        /// <summary>Gets the offset into data where the string table exists.</summary>
+        private int StringsTableOffset
+        {
+            get { return this.StringOffsetsOffset + (this._stringSectionNumOffsets * 2); }
+        }
 
         /// <summary>Gets a string from the strings section by the string's well-known index.</summary>
         /// <param name="stringTableIndex">The index of the string to find.</param>
@@ -266,7 +275,10 @@ internal static partial class TermInfo
             return extendedStrings;
         }
 
-        private static int RoundUpToEven(int i) { return i % 2 == 1 ? i + 1 : i; }
+        private static int RoundUpToEven(int i)
+        {
+            return i % 2 == 1 ? i + 1 : i;
+        }
 
         /// <summary>Read a 16-bit or 32-bit value from the buffer starting at the specified position.</summary>
         /// <param name="buffer">The buffer from which to read.</param>
@@ -282,9 +294,7 @@ internal static partial class TermInfo
         /// <returns>The 16-bit value read.</returns>
         private static short ReadInt16(byte[] buffer, int pos)
         {
-            return unchecked((short)
-                ((((int)buffer[pos + 1]) << 8) |
-                 ((int)buffer[pos] & 0xff)));
+            return unchecked((short)((((int)buffer[pos + 1]) << 8) | ((int)buffer[pos] & 0xff)));
         }
 
         /// <summary>Read a 32-bit value from the buffer starting at the specified position.</summary>
