@@ -99,10 +99,10 @@ internal sealed class RawInterface
                         Debug.Assert(this.IsCharsEmpty);
                         this.charsPosition = 0;
                         this.charsLength = this.encoding.GetChars(this.bytes.AsSpan(0, validLength), this.chars.AsSpan());
+                        this.bytesLength -= validLength;
                         if (validLength < this.bytesLength)
                         {
                             // Move remaining bytes to the front
-                            this.bytesLength -= validLength;
                             this.bytes.AsSpan(validLength, this.bytesLength).CopyTo(this.bytes.AsSpan());
                         }
                     }
