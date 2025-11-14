@@ -140,33 +140,12 @@ internal static partial class TermInfo
             return ReadString(this._data, this.StringsTableOffset + tableIndex);
         }
 
-        /// <summary>Gets a string from the extended strings section.</summary>
-        /// <param name="name">The name of the string as contained in the extended names section.</param>
-        /// <returns>The string if it's in the database; otherwise, null.</returns>
         public string? GetExtendedString(string name)
         {
             Debug.Assert(name != null);
 
             string? value;
             return this._extendedStrings is not null && this._extendedStrings.TryGetValue(name, out value) ? value : null;
-        }
-
-        /// <summary>Gets a number from the numbers section by the number's well-known index.</summary>
-        /// <param name="numberIndex">The index of the string to find.</param>
-        /// <returns>The number if it's in the database; otherwise, -1.</returns>
-        public int GetNumber(WellKnownNumbers numberIndex)
-        {
-            int index = (int)numberIndex;
-            Debug.Assert(index >= 0);
-
-            if (index >= this._numberSectionNumInts)
-            {
-                // Some terminfo files may not contain enough entries to actually
-                // have the requested one.
-                return -1;
-            }
-
-            return ReadInt(this._data, this.NumbersOffset + (index * this._sizeOfInt), this._readAs32Bit);
         }
 
         /// <summary>Parses the extended string information from the terminfo data.</summary>

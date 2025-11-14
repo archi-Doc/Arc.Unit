@@ -10,7 +10,7 @@ namespace Arc.InputConsole;
 
 internal sealed class RawInterface
 {
-    private const int BufferCapacity = 26; // 1024
+    private const int BufferCapacity = 1024;
     private const int MinimalSequenceLength = 3;
     private const int SequencePrefixLength = 2; // ^[[ ("^[" stands for Escape)
     private const char Escape = '\e';
@@ -26,7 +26,6 @@ internal sealed class RawInterface
     private readonly Lock bufferLock = new();
     private readonly byte[] bytes = new byte[BufferCapacity];
     private readonly char[] chars = new char[BufferCapacity];
-    // private int bytesPosition = 0;
     private int bytesLength = 0;
     private int charsStartIndex = 0;
     private int charsEndIndex = 0;
@@ -35,8 +34,6 @@ internal sealed class RawInterface
     private bool enableStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
-
-    // public Span<byte> BytesSpan => this.bytes.AsSpan(this.bytesPosition, this.bytesLength);
 
     public Span<char> CharsSpan => this.chars.AsSpan(this.charsStartIndex, this.charsEndIndex - this.charsStartIndex);
 
@@ -96,10 +93,6 @@ internal sealed class RawInterface
                         {
                             var readLength = Interop.Sys.ReadStdin(buffer, span.Length);
                             this.bytesLength += readLength;
-
-                            // Console.Write(result);
-                            // Console.WriteLine(System.Text.Encoding.UTF8.GetString(buffer, result));
-                            // Console.WriteLine(BitConverter.ToString(bufPtr.Slice(0, result).ToArray()));
                         }
 
                         var validLength = InputConsoleHelper.GetValidUtf8Length(this.bytes.AsSpan(0, this.bytesLength));
