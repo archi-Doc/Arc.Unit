@@ -44,6 +44,7 @@ public partial class InputConsole : IConsoleService
     private List<InputBuffer> buffers = new();
     private char[] windowBuffer = [];
     private byte[] utf8Buffer = [];
+    private bool multiLineMode = false;
 
     public InputConsole(ConsoleColor inputColor = (ConsoleColor)(-1))
     {
@@ -57,7 +58,7 @@ public partial class InputConsole : IConsoleService
         }
     }
 
-    public InputResult ReadLine(string? prompt = default)
+    public InputResult ReadLine(string? prompt = default, bool allowMultipleLines = false)
     {
         InputBuffer? buffer;
         Span<char> charBuffer = stackalloc char[CharBufferSize];
@@ -170,7 +171,7 @@ ProcessKeyInfo:
 
             if (flush)
             {// Flush
-                var result = this.Flush(keyInfo, charBuffer.Slice(0, position));
+                var result = this.Flush(keyInfo, charBuffer.Slice(0, position), allowMultipleLines);
                 position = 0;
                 if (result is not null)
                 {
@@ -410,7 +411,7 @@ ProcessKeyInfo:
         }
     }
 
-    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> charBuffer)
+    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> charBuffer, bool allowMultipleLines)
     {
         this.Prepare();
         using (this.lockObject.EnterScope())
@@ -423,6 +424,26 @@ ProcessKeyInfo:
 
             if (buffer.ProcessInternal(keyInfo, charBuffer))
             {// Exit input mode and return the concatenated string.
+                if (allowMultipleLines &&
+                    (SimpleCommandLine.SimpleParserHelper.Count() % 2) > 0)
+                {// Multiple line
+                    if (buffer == this.buffers[0])
+                    {// Start
+                        this.multiLineMode = true;
+                    }
+                    else
+                    {// End
+                        this.multiLineMode = false;
+                    }
+                }
+
+                if (this.multiLineMode)
+                {
+                    buffer = this.RentBuffer();
+                    this.buffers.Add(buffer);
+                    return null;
+                }
+
                 var length = 0;
                 for (int i = 0; i < this.buffers.Count; i++)
                 {
