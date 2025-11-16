@@ -111,8 +111,8 @@ internal class Program
             }
             else
             {
-                //var text = BaseHelper.ConvertLfToCrLf.T
-                inputConsole.WriteLine($"Command: {result.Text}");
+                var text = BaseHelper.RemoveCrLf(result.Text);
+                inputConsole.WriteLine($"Command: {text}");
             }
         }
 
