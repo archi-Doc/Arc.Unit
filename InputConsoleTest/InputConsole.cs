@@ -33,6 +33,8 @@ public partial class InputConsole : IConsoleService
 
     internal int StartingCursorTop { get; set; }
 
+    internal bool MultilineMode { get; set; }
+
     internal char[] WindowBuffer => this.windowBuffer;
 
     internal byte[] Utf8Buffer => this.utf8Buffer;
@@ -45,7 +47,6 @@ public partial class InputConsole : IConsoleService
     private List<InputBuffer> buffers = new();
     private char[] windowBuffer = [];
     private byte[] utf8Buffer = [];
-    private bool multiLineMode = false;
 
     public InputConsole(ConsoleColor inputColor = (ConsoleColor)(-1))
     {
@@ -438,15 +439,15 @@ ProcessKeyInfo:
                 {// Multiple line
                     if (buffer == this.buffers[0])
                     {// Start
-                        this.multiLineMode = true;
+                        this.MultilineMode = true;
                     }
                     else
                     {// End
-                        this.multiLineMode = false;
+                        this.MultilineMode = false;
                     }
                 }
 
-                if (this.multiLineMode)
+                if (this.MultilineMode)
                 {
                     buffer = this.RentBuffer();
                     buffer.Initialize(multilinePrompt);

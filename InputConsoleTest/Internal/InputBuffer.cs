@@ -149,9 +149,28 @@ internal class InputBuffer
                 this.MoveRight(arrayPosition);
                 return false;
             }
-            else if (key == ConsoleKey.UpArrow ||
-                key == ConsoleKey.DownArrow)
+            else if (key == ConsoleKey.UpArrow)
             {// History or move line
+                if (this.InputConsole.MultilineMode)
+                {// Up
+                    this.MoveUpOrDown(true);
+                }
+                else
+                {// History
+                }
+
+                return false;
+            }
+            else if (key == ConsoleKey.DownArrow)
+            {// History or move line
+                if (this.InputConsole.MultilineMode)
+                {// Down
+                    this.MoveUpOrDown(false);
+                }
+                else
+                {// History
+                }
+
                 return false;
             }
             else if (key == ConsoleKey.Insert)
@@ -552,6 +571,20 @@ internal class InputBuffer
             {
                 this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
             }
+        }
+    }
+
+    private void MoveUpOrDown(bool up)
+    {//
+        var cursorIndex = this.GetCursorIndex() + (up ? -this.InputConsole.WindowWidth : +this.InputConsole.WindowWidth);
+        cursorIndex = Math.Max(this.PromtWidth, cursorIndex);
+        cursorIndex = Math.Min(this.TotalWidth, cursorIndex);
+
+        var newCursor = this.ToCursor(cursorIndex - this.PromtWidth);
+        if (this.CursorLeft != newCursor.Left ||
+            this.CursorTop != newCursor.Top)
+        {
+            this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
         }
     }
 
