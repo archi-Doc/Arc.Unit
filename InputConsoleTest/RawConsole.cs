@@ -8,7 +8,7 @@ using ConsoleBufferTest;
 
 namespace Arc.InputConsole;
 
-internal sealed class RawInterface
+internal sealed class RawConsole
 {
     private const int BufferCapacity = 1024;
     private const int MinimalSequenceLength = 3;
@@ -31,7 +31,7 @@ internal sealed class RawInterface
     private int charsEndIndex = 0;
 
     private SafeHandle? handle;
-    private bool enableStdin;
+    private bool useStdin;
     private byte posixDisableValue;
     private byte veraseCharacter;
 
@@ -41,20 +41,19 @@ internal sealed class RawInterface
 
     public bool IsCharsEmpty => this.charsStartIndex >= this.charsEndIndex;
 
-    public RawInterface(InputConsole inputConsole, CancellationToken cancellationToken = default)
+    public RawConsole(InputConsole inputConsole, CancellationToken cancellationToken = default)
     {
         this.inputConsole = inputConsole;
         this.encoding = Encoding.UTF8;
 
         try
         {
-            this.InitializeStdIn();
+            this.InitializeStdin();
             this.db = TermInfo.DatabaseFactory.ReadActiveDatabase();
-            Console.WriteLine("StdIn");
+            Console.WriteLine("Stdin");
         }
         catch
         {
-            Console.WriteLine("No StdIn");
         }
 
         this.terminalFormatStrings = new(this.db);
@@ -64,16 +63,15 @@ internal sealed class RawInterface
     {
         try
         {
-            if (this.enableStdin)
-            {// StdIn
+            if (this.useStdin)
+            {// Stdin
                 if (this.TryConsumeBuffer(out keyInfo))
                 {
                     return true;
                 }
 
-                // Peek
                 if (!Interop.Sys.StdinReady())
-                {
+                {// No key available
                     keyInfo = default;
                     return false;
                 }
@@ -95,7 +93,7 @@ internal sealed class RawInterface
                             this.bytesLength += readLength;
                         }
 
-                        var validLength = InputConsoleHelper.GetValidUtf8Length(this.bytes.AsSpan(0, this.bytesLength));
+                        var validLength = BaseHelper.GetValidUtf8Length(this.bytes.AsSpan(0, this.bytesLength));
 
                         Debug.Assert(this.IsCharsEmpty);
                         this.charsStartIndex = 0;
@@ -116,9 +114,8 @@ internal sealed class RawInterface
             }
             else
             {// Console.ReadKey
-                // Peek
                 if (!Console.KeyAvailable)
-                {
+                {// No key available
                     keyInfo = default;
                     return false;
                 }
@@ -134,7 +131,7 @@ internal sealed class RawInterface
         }
     }
 
-    public unsafe void WriteRaw(ReadOnlySpan<char> data)
+    public unsafe void WriteInternal(ReadOnlySpan<char> data)
     {
         if (this.handle is not null)
         {
@@ -150,7 +147,65 @@ internal sealed class RawInterface
         }
     }
 
-    private static ConsoleKeyInfo ParseFromSingleChar(char single, bool isAlt)
+    private bool TryConsumeBuffer(out ConsoleKeyInfo keyInfo)
+    {
+        if (this.IsCharsEmpty)
+        {
+            keyInfo = default;
+            return false;
+        }
+
+        using (this.bufferLock.EnterScope())
+        {
+            return this.TryConsumeBufferInternal(out keyInfo);
+        }
+    }
+
+    private bool TryConsumeBufferInternal(out ConsoleKeyInfo keyInfo)
+    {
+        if (this.IsCharsEmpty)
+        {
+            keyInfo = default;
+            return false;
+        }
+
+        var span = this.CharsSpan;
+        if (span[0] != this.posixDisableValue && span[0] == this.veraseCharacter)
+        {
+            keyInfo = new(span[0], ConsoleKey.Backspace, false, false, false);
+            this.charsStartIndex++;
+            return true;
+        }
+        else if (span.Length >= MinimalSequenceLength + 1 && span[0] == Escape && span[1] == Escape)
+        {
+            this.charsStartIndex++;
+            if (this.TryParseTerminalInputSequence(out var parsed))
+            {
+                keyInfo = new(parsed.KeyChar, parsed.Key, (parsed.Modifiers & ConsoleModifiers.Shift) != 0, alt: true, (parsed.Modifiers & ConsoleModifiers.Control) != 0);
+                return true;
+            }
+
+            this.charsStartIndex--;
+        }
+        else if (span.Length >= MinimalSequenceLength && this.TryParseTerminalInputSequence(out keyInfo))
+        {
+            return true;
+        }
+
+        if (span.Length == 2 && span[0] == Escape && span[1] != Escape)
+        {
+            this.charsStartIndex++;
+            keyInfo = this.ParseFromSingleChar(span[0], isAlt: true);
+            this.charsStartIndex++;
+            return true;
+        }
+
+        keyInfo = this.ParseFromSingleChar(span[0], isAlt: false);
+        this.charsStartIndex++;
+        return true;
+    }
+
+    private ConsoleKeyInfo ParseFromSingleChar(char single, bool isAlt)
     {
         bool isShift = false, isCtrl = false;
         char keyChar = single;
@@ -219,64 +274,6 @@ internal sealed class RawInterface
                 _ => ConsoleKey.D4 + single - 28,
             };
         }
-    }
-
-    private bool TryConsumeBuffer(out ConsoleKeyInfo keyInfo)
-    {
-        if (this.IsCharsEmpty)
-        {
-            keyInfo = default;
-            return false;
-        }
-
-        using (this.bufferLock.EnterScope())
-        {
-            return this.TryConsumeBufferInternal(out keyInfo);
-        }
-    }
-
-    private bool TryConsumeBufferInternal(out ConsoleKeyInfo keyInfo)
-    {
-        if (this.IsCharsEmpty)
-        {
-            keyInfo = default;
-            return false;
-        }
-
-        var span = this.CharsSpan;
-        if (span[0] != this.posixDisableValue && span[0] == this.veraseCharacter)
-        {
-            keyInfo = new(span[0], ConsoleKey.Backspace, false, false, false);
-            this.charsStartIndex++;
-            return true;
-        }
-        else if (span.Length >= MinimalSequenceLength + 1 && span[0] == Escape && span[1] == Escape)
-        {
-            this.charsStartIndex++;
-            if (this.TryParseTerminalInputSequence(out var parsed))
-            {
-                keyInfo = new(parsed.KeyChar, parsed.Key, (parsed.Modifiers & ConsoleModifiers.Shift) != 0, alt: true, (parsed.Modifiers & ConsoleModifiers.Control) != 0);
-                return true;
-            }
-
-            this.charsStartIndex--;
-        }
-        else if (span.Length >= MinimalSequenceLength && this.TryParseTerminalInputSequence(out keyInfo))
-        {
-            return true;
-        }
-
-        if (span.Length == 2 && span[0] == Escape && span[1] != Escape)
-        {
-            this.charsStartIndex++;
-            keyInfo = ParseFromSingleChar(span[0], isAlt: true);
-            this.charsStartIndex++;
-            return true;
-        }
-
-        keyInfo = ParseFromSingleChar(span[0], isAlt: false);
-        this.charsStartIndex++;
-        return true;
     }
 
     private bool TryParseTerminalInputSequence(out ConsoleKeyInfo parsed)
@@ -537,30 +534,26 @@ internal sealed class RawInterface
             => new(keyChar, key, (modifiers & ConsoleModifiers.Shift) != 0, (modifiers & ConsoleModifiers.Alt) != 0, (modifiers & ConsoleModifiers.Control) != 0);
     }
 
-    private void InitializeStdIn()
+    private void InitializeStdin()
     {
         this.handle = Interop.Sys.Dup(Interop.FileDescriptors.STDIN_FILENO);
 
-        const int NumControlCharacterNames = 4;
-        Span<Interop.ControlCharacterNames> controlCharacterNames = stackalloc Interop.ControlCharacterNames[NumControlCharacterNames]
-        {
+        Span<Interop.ControlCharacterNames> controlCharacterNames =
+        [
             Interop.ControlCharacterNames.VERASE,
             Interop.ControlCharacterNames.VEOL,
             Interop.ControlCharacterNames.VEOL2,
             Interop.ControlCharacterNames.VEOF,
-        };
+        ];
 
-        Span<byte> controlCharacterValues = stackalloc byte[NumControlCharacterNames];
-        Interop.Sys.GetControlCharacters(controlCharacterNames, controlCharacterValues, NumControlCharacterNames, out var posixDisableValue);
+        Span<byte> controlCharacterValues = stackalloc byte[controlCharacterNames.Length];
+        Interop.Sys.GetControlCharacters(controlCharacterNames, controlCharacterValues, controlCharacterNames.Length, out var posixDisableValue);
         this.posixDisableValue = posixDisableValue;
         this.veraseCharacter = controlCharacterValues[0];
-
-        Console.WriteLine(this.posixDisableValue);
-        Console.WriteLine(this.veraseCharacter);
 
         Interop.Sys.InitializeConsoleBeforeRead();
         Interop.Sys.UninitializeConsoleAfterRead();
 
-        this.enableStdin = true;
+        this.useStdin = true;
     }
 }

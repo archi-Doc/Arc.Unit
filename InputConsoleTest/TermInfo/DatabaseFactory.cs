@@ -8,7 +8,7 @@ namespace Arc.InputConsole;
 
 internal static partial class TermInfo
 {
-    internal sealed class DatabaseFactory
+    internal static class DatabaseFactory
     {
         /// <summary>
         /// The default locations in which to search for terminfo databases.

@@ -6,66 +6,6 @@ namespace Arc.InputConsole;
 
 internal static class InputConsoleHelper
 {
-    public static int GetValidUtf8Length(ReadOnlySpan<byte> bytes)
-    {
-        var length = bytes.Length;
-        var i = length - 1;
-        if (length == 0)
-        {// Empty buffer
-            return 0;
-        }
-
-        if (bytes[i] <= 0x7F)
-        {// ASCII byte
-            return length;
-        }
-
-        if ((bytes[i] & 0b1100_0000) == 0b1000_0000)
-        {
-            i--;
-            if (i >= 0 && (bytes[i] & 0b1100_0000) == 0b1000_0000)
-            {
-                i--;
-                if (i >= 0 && (bytes[i] & 0b1100_0000) == 0b1000_0000)
-                {
-                    i--;
-                }
-            }
-        }
-
-        if (i < 0)
-        {
-            return 0;
-        }
-
-        int seqLen;
-        if ((bytes[i] & 0b1110_0000) == 0b1100_0000)
-        {
-            seqLen = 2;
-        }
-        else if ((bytes[i] & 0b1111_0000) == 0b1110_0000)
-        {
-            seqLen = 3;
-        }
-        else if ((bytes[i] & 0b1111_1000) == 0b1111_0000)
-        {
-            seqLen = 4;
-        }
-        else
-        {
-            return length;
-        }
-
-        if (length < i + seqLen)
-        {
-            return i;
-        }
-        else
-        {
-            return length;
-        }
-    }
-
     public static byte GetCharWidth(int codePoint)
     {
         // Control characters
