@@ -429,7 +429,7 @@ internal class InputBuffer
 
         try
         {
-            this.InputConsole.RawConsole.WriteRaw(this.InputConsole.WindowBuffer.AsSpan(0, written));
+            this.InputConsole.RawConsole.WriteInternal(this.InputConsole.WindowBuffer.AsSpan(0, written));
             // Console.Out.Write(this.InputConsole.WindowBuffer.AsSpan(0, written));
 
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);

@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Arc.Collections;
+
 namespace Arc.InputConsole;
 
 #pragma warning disable SA1203 // Constants should appear before fields
@@ -7,7 +9,7 @@ namespace Arc.InputConsole;
 
 internal sealed class TerminalFormatStrings
 {
-    public readonly Arc.Crypto.Utf16Hashtable<ConsoleKeyInfo> KeyFormatToConsoleKey = new();
+    public readonly Utf16Hashtable<ConsoleKeyInfo> KeyFormatToConsoleKey = new();
 
     public readonly bool IsRxvtTerm;
 

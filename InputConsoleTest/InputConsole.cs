@@ -20,7 +20,7 @@ public partial class InputConsole : IConsoleService
 
     public bool IsInsertMode { get; set; } = true;
 
-    internal RawInterface RawConsole { get; private set; }
+    internal RawConsole RawConsole { get; private set; }
 
     internal int WindowWidth { get; private set; }
 
@@ -293,7 +293,7 @@ ProcessKeyInfo:
 
         try
         {
-            this.RawConsole.WriteRaw(this.windowBuffer.AsSpan(0, written));
+            this.RawConsole.WriteInternal(this.windowBuffer.AsSpan(0, written));
             // Console.Out.Write(this.windowBuffer.AsSpan(0, written));
         }
         catch
