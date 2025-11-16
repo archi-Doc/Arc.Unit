@@ -14,7 +14,7 @@ internal static partial class TermInfo
         /// The default locations in which to search for terminfo databases.
         /// This is the ordering of well-known locations used by ncurses.
         /// </summary>
-        internal static readonly string[] SystemTermInfoLocations = [
+        private static readonly string[] SystemTermInfoLocations = [
             "/etc/terminfo",
             "/lib/terminfo",
             "/usr/share/terminfo",
@@ -22,7 +22,7 @@ internal static partial class TermInfo
             "/usr/local/share/terminfo",
         ];
 
-        internal static string? HomeTermInfoLocation
+        private static string? HomeTermInfoLocation
         {
             get
             {
@@ -42,7 +42,7 @@ internal static partial class TermInfo
         /// <summary>Read the database for the specified terminal.</summary>
         /// <param name="term">The identifier for the terminal.</param>
         /// <returns>The database, or null if it could not be found.</returns>
-        internal static Database? ReadDatabase(string term)
+        private static Database? ReadDatabase(string term)
         {
             Database? db;
             var terminfo = Environment.GetEnvironmentVariable("TERMINFO");

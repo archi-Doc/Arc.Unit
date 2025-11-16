@@ -10,7 +10,6 @@ namespace Arc.InputConsole;
 internal sealed class TerminalFormatStrings
 {
     public readonly Utf16Hashtable<ConsoleKeyInfo> KeyFormatToConsoleKey = new();
-
     public readonly bool IsRxvtTerm;
 
     public TerminalFormatStrings(TermInfo.Database? db)
