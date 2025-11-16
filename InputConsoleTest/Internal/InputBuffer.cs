@@ -182,7 +182,7 @@ internal class InputBuffer
         return (int)BaseHelper.Sum(this.widthArray.AsSpan(0, this.Length));
     }*/
 
-    public void SetPrompt(string? prompt)
+    public void Initialize(string? prompt)
     {
         if (prompt?.Length > MaxPromptWidth)
         {
@@ -191,6 +191,9 @@ internal class InputBuffer
 
         this.Prompt = prompt;
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
+        this.Length = 0;
+        this.Width = 0;
+        this.Height = 0;
     }
 
     private void EnsureCapacity(int capacity)

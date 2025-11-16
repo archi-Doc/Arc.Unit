@@ -58,7 +58,10 @@ public partial class InputConsole : IConsoleService
         }
     }
 
-    public InputResult ReadLine(string? prompt = default, bool allowMultipleLines = false)
+    public InputResult ReadLine(string? prompt)
+        => this.ReadLine(prompt);
+
+    public InputResult ReadLine(string? prompt = default, string? multilinePrompt = default)
     {
         InputBuffer? buffer;
         Span<char> charBuffer = stackalloc char[CharBufferSize];
@@ -68,7 +71,7 @@ public partial class InputConsole : IConsoleService
         {
             this.ReturnAllBuffersInternal();
             buffer = this.RentBuffer();
-            buffer.SetPrompt(prompt);
+            buffer.Initialize(prompt);
             this.buffers.Add(buffer);
             this.StartingCursorTop = Console.CursorTop;
         }
@@ -171,7 +174,7 @@ ProcessKeyInfo:
 
             if (flush)
             {// Flush
-                var result = this.Flush(keyInfo, charBuffer.Slice(0, position), allowMultipleLines);
+                var result = this.Flush(keyInfo, charBuffer.Slice(0, position), multilinePrompt);
                 position = 0;
                 if (result is not null)
                 {
@@ -411,7 +414,7 @@ ProcessKeyInfo:
         }
     }
 
-    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> charBuffer, bool allowMultipleLines)
+    private string? Flush(ConsoleKeyInfo keyInfo, Span<char> charBuffer, string? multilinePrompt)
     {
         this.Prepare();
         using (this.lockObject.EnterScope())
@@ -424,8 +427,8 @@ ProcessKeyInfo:
 
             if (buffer.ProcessInternal(keyInfo, charBuffer))
             {// Exit input mode and return the concatenated string.
-                if (allowMultipleLines &&
-                    (SimpleCommandLine.SimpleParserHelper.Count() % 2) > 0)
+                if (multilinePrompt is not null &&
+                    (SimpleCommandLine.SimpleParserHelper.CountTripleQuotes(buffer.TextSpan) % 2) > 0)
                 {// Multiple line
                     if (buffer == this.buffers[0])
                     {// Start
@@ -440,7 +443,11 @@ ProcessKeyInfo:
                 if (this.multiLineMode)
                 {
                     buffer = this.RentBuffer();
+                    buffer.Initialize(multilinePrompt);
                     this.buffers.Add(buffer);
+                    Console.Out.WriteLine();
+                    Console.Out.Write(multilinePrompt);
+                    (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
                     return null;
                 }
 

@@ -80,7 +80,7 @@ internal class Program
                 continue;
             }*/
 
-            var result = inputConsole.ReadLine($"{Console.CursorTop}> ", true); // Success, Canceled, Terminated
+            var result = inputConsole.ReadLine($"{Console.CursorTop}> ", "# "); // Success, Canceled, Terminated
 
             if (result.Kind == InputResultKind.Terminated)
             {
