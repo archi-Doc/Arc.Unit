@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics;
 using System.Text;
 using Arc.Collections;
 using Arc.Threading;
@@ -427,6 +428,11 @@ ProcessKeyInfo:
 
             if (buffer.ProcessInternal(keyInfo, charBuffer))
             {// Exit input mode and return the concatenated string.
+                if (this.buffers.Count == 0)
+                {
+                    return string.Empty;
+                }
+
                 if (multilinePrompt is not null &&
                     (SimpleCommandLine.SimpleParserHelper.CountTripleQuotes(buffer.TextSpan) % 2) > 0)
                 {// Multiple line
@@ -451,20 +457,23 @@ ProcessKeyInfo:
                     return null;
                 }
 
-                var length = 0;
-                for (int i = 0; i < this.buffers.Count; i++)
+                var length = this.buffers[0].Length;
+                for (var i = 1; i < this.buffers.Count; i++)
                 {
-                    length += this.buffers[i].Length;
+                    length += 1 + this.buffers[i].Length;
                 }
 
                 var result = string.Create(length, this.buffers, static (span, buffers) =>
                 {
-                    var position = 0;
-                    for (int i = 0; i < buffers.Count; i++)
+                    buffers[0].TextSpan.CopyTo(span);
+                    span = span.Slice(buffers[0].Length);
+                    for (var i = 1; i < buffers.Count; i++)
                     {
-                        var buffer = buffers[i];
-                        buffer.TextSpan.CopyTo(span.Slice(position, buffer.Length));
-                        position += buffer.Length;
+                        span[0] = '\n';
+                        span = span.Slice(1);
+
+                        buffers[i].TextSpan.CopyTo(span);
+                        span = span.Slice(buffers[i].Length);
                     }
                 });
 

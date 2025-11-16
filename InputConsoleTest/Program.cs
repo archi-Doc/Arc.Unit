@@ -4,10 +4,12 @@ using System;
 using System.Globalization;
 using System.Text;
 using System.Threading;
+using Arc;
 using Arc.InputConsole;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
+using SimpleCommandLine;
 
 namespace ConsoleBufferTest;
 
@@ -109,6 +111,7 @@ internal class Program
             }
             else
             {
+                //var text = BaseHelper.ConvertLfToCrLf.T
                 inputConsole.WriteLine($"Command: {result.Text}");
             }
         }
