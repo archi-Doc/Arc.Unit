@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Arc.Unit/Arc.Unit.csproj" />
+  <Project Path="InputConsoleTest/InputConsoleTest.csproj" />
+  <Project Path="Playground/Playground.csproj" />
+  <Project Path="QuickStart/QuickStart.csproj" />
+</Solution>
