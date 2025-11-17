@@ -72,8 +72,7 @@ public partial class InputConsole : IConsoleService
         using (this.lockObject.EnterScope())
         {
             this.ReturnAllBuffersInternal();
-            buffer = this.RentBuffer();
-            buffer.Initialize(prompt);
+            buffer = this.RentBuffer(prompt);
             this.buffers.Add(buffer);
             this.StartingCursorTop = Console.CursorTop;
         }
@@ -89,7 +88,7 @@ public partial class InputConsole : IConsoleService
         ConsoleKeyInfo pendingKeyInfo = default;
         while (!ThreadCore.Root.IsTerminated)
         {
-            // this.CheckResize();
+            this.PrepareWindow();
 
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
             if (!this.RawConsole.TryRead(out var keyInfo))
@@ -326,48 +325,48 @@ ProcessKeyInfo:
         return false;
     }
 
-    private void CheckResize()
-    {//
-        var windowWidth = Console.WindowWidth;
-        var windowHeight = Console.WindowHeight;
+    private void PrepareWindow()
+    {
+        var windowWidth = 120;
+        var windowHeight = 30;
+
+        try
+        {
+            windowWidth = Console.WindowWidth;
+            windowHeight = Console.WindowHeight;
+        }
+        catch
+        {
+        }
+
+        if (windowWidth <= 0)
+        {
+            windowWidth = 1;
+        }
+
+        if (windowHeight <= 0)
+        {
+            windowHeight = 1;
+        }
+
         if (windowWidth == this.WindowWidth &&
             windowHeight == this.WindowHeight)
         {
             return;
         }
 
-        this.Prepare();
+        this.WindowWidth = windowWidth;
+        this.WindowHeight = windowHeight;
+
+        /*this.Prepare();
         using (this.lockObject.EnterScope())
         {
             this.PrepareAndFindBuffer();
-        }
+        }*/
     }
 
     private void Prepare()
     {
-        this.WindowWidth = 120;
-        this.WindowHeight = 30;
-
-        try
-        {
-            this.WindowWidth = Console.WindowWidth;
-            this.WindowHeight = Console.WindowHeight;
-            // (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
-        }
-        catch
-        {
-        }
-
-        if (this.WindowWidth <= 0)
-        {
-            this.WindowWidth = 1;
-        }
-
-        if (this.WindowHeight <= 0)
-        {
-            this.WindowHeight = 1;
-        }
-
         if (this.CursorLeft < 0)
         {
             this.CursorLeft = 0;
@@ -426,8 +425,7 @@ ProcessKeyInfo:
 
                 if (this.MultilineMode)
                 {
-                    buffer = this.RentBuffer();
-                    buffer.Initialize(multilinePrompt);
+                    buffer = this.RentBuffer(multilinePrompt);
                     this.buffers.Add(buffer);
                     Console.Out.WriteLine();
                     Console.Out.Write(multilinePrompt);
@@ -514,10 +512,10 @@ ProcessKeyInfo:
         }
     }
 
-    private InputBuffer RentBuffer()
+    private InputBuffer RentBuffer(string? prompt)
     {
         var buffer = this.bufferPool.Rent();
-        buffer.Clear();
+        buffer.Initialize(prompt);
         return buffer;
     }
 

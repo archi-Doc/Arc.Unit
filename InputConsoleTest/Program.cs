@@ -62,8 +62,8 @@ internal class Program
         logger.TryGet()?.Log("Start");
 
         Console.WriteLine(Environment.OSVersion.ToString());
-        Console.Write("Enter to start:");
-        Console.ReadLine();
+        // Console.Write("Enter to start:");
+        // Console.ReadLine();
 
         var inputConsole = new InputConsole();
         inputConsole.Logger = product.Context.ServiceProvider.GetRequiredService<ILogger<InputConsole>>();
@@ -124,42 +124,5 @@ internal class Program
         }
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
-    }
-
-    private static unsafe void Test()
-    {
-        var buffer = new byte[100];
-
-        var st = "ABC\n0123456";
-        var handle = Interop.Sys.Dup(Interop.FileDescriptors.STDIN_FILENO);
-        var st2 = Encoding.UTF8.GetBytes(st);
-        fixed (byte* p = st2)
-        {
-            int bytesWritten = Interop.Sys.Write(handle, p, st2.Length);
-            Console.WriteLine(bytesWritten);
-        }
-
-        while (true)
-        {
-            if (!Interop.Sys.StdinReady())
-            {
-                Thread.Sleep(10);
-                continue;
-            }
-
-            Interop.Sys.InitializeConsoleBeforeRead();
-            try
-            {
-                fixed (byte* p = buffer)
-                {
-                    int result = Interop.Sys.ReadStdin(p, 100);
-                    Console.WriteLine(result);
-                }
-            }
-            finally
-            {
-                Interop.Sys.UninitializeConsoleAfterRead();
-            }
-        }
     }
 }

@@ -58,14 +58,6 @@ internal class InputBuffer
         this.InputConsole = inputConsole;
     }
 
-    public void Clear()
-    {
-        this.Prompt = default;
-        this.PromtWidth = 0;
-        this.Length = 0;
-        this.Width = 0;
-    }
-
     public bool ProcessInternal(ConsoleKeyInfo keyInfo, Span<char> charBuffer)
     {
         if (charBuffer.Length > 0)
