@@ -432,7 +432,7 @@ ProcessKeyInfo:
                     Console.Out.WriteLine();
                     Console.Out.Write(multilinePrompt);
                     (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
-                    this.StartingCursorTop = Console.CursorTop;
+                    this.StartingCursorTop = Console.CursorTop - this.GetBuffersHeightInternal();
                     return null;
                 }
 
@@ -464,6 +464,17 @@ ProcessKeyInfo:
                 return null;
             }
         }
+    }
+
+    private int GetBuffersHeightInternal()
+    {
+        var height = 0;
+        foreach (var x in this.buffers)
+        {
+            height += x.Height;
+        }
+
+        return height;
     }
 
     private InputBuffer? PrepareAndFindBuffer()
