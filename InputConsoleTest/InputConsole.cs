@@ -92,34 +92,11 @@ public partial class InputConsole : IConsoleService
             // this.CheckResize();
 
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
-
-            /*if (!this.reader.TryRead(out var keyInfo))
-            {
-                Thread.Sleep(10);
-                continue;
-            }*/
-
             if (!this.RawConsole.TryRead(out var keyInfo))
             {
                 Thread.Sleep(10);
                 continue;
             }
-
-/*ConsoleKeyInfo keyInfo;
-try
-{
-    if (!Console.KeyAvailable)
-    {
-        Thread.Sleep(10);
-        continue;
-    }
-
-    keyInfo = Console.ReadKey(intercept: true);
-}
-catch
-{
-    return new(InputResultKind.Terminated);
-}*/
 
 ProcessKeyInfo:
             if (keyInfo.KeyChar == '\n' ||
@@ -455,6 +432,7 @@ ProcessKeyInfo:
                     Console.Out.WriteLine();
                     Console.Out.Write(multilinePrompt);
                     (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
+                    this.StartingCursorTop = Console.CursorTop;
                     return null;
                 }
 
