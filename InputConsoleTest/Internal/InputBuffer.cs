@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Arc.Unit;
 
@@ -17,6 +18,8 @@ internal class InputBuffer
     private const int MaxPromptWidth = 256;
 
     public InputConsole InputConsole { get; }
+
+    public int Index { get; set; }
 
     public int Left { get; set; }
 
@@ -91,6 +94,8 @@ internal class InputBuffer
                         this.RemoveAt(arrayPosition - 1);
                         this.Write(arrayPosition - 1, this.Length, 0, true);
                     }
+
+                    this.UpdateHeight(true);
                 }
 
                 return false;
@@ -112,6 +117,7 @@ internal class InputBuffer
                     }
 
                     this.Write(arrayPosition, this.Length, 0, true);
+                    this.UpdateHeight(true);
                 }
 
                 return false;
@@ -175,6 +181,16 @@ internal class InputBuffer
         return false;
     }
 
+    internal void UpdateHeight(bool refresh)
+    {
+        var previousHeight = this.Height;
+        this.Height = (this.TotalWidth + this.WindowWidth) / this.WindowWidth;
+        if (refresh && previousHeight != this.Height)
+        {
+            this.InputConsole.HeightChanged(this.Index, this.Height - previousHeight);
+        }
+    }
+
     private void ClearLine()
     {
         Array.Fill<char>(this.charArray, ' ', 0, this.Width);
@@ -193,8 +209,9 @@ internal class InputBuffer
         return (int)BaseHelper.Sum(this.widthArray.AsSpan(0, this.Length));
     }*/
 
-    public void Initialize(string? prompt)
+    public void Initialize(int index, string? prompt)
     {
+        this.Index = index;
         if (prompt?.Length > MaxPromptWidth)
         {
             prompt = prompt.Substring(0, MaxPromptWidth);
@@ -204,7 +221,7 @@ internal class InputBuffer
         this.PromtWidth = InputConsoleHelper.GetWidth(this.Prompt);
         this.Length = 0;
         this.Width = 0;
-        this.Height = 0;
+        this.Height = 1;
     }
 
     private void EnsureCapacity(int capacity)
@@ -311,14 +328,37 @@ internal class InputBuffer
         return arrayPosition;
     }
 
+    private void TrimCursorIndex(ref int cursorIndex)
+    {
+        if (cursorIndex <= 0)
+        {
+            cursorIndex = 0;
+            return;
+        }
+
+        var newIndex = 0;
+        for (var arrayPosition = 0; arrayPosition < this.Length; arrayPosition++)
+        {
+            var width = this.widthArray[arrayPosition];
+            cursorIndex -= width;
+            newIndex += width;
+            if (cursorIndex <= 0)
+            {
+                break;
+            }
+        }
+
+        cursorIndex = newIndex;
+    }
+
     internal void Write(int startIndex, int endIndex, int cursorDif, bool eraseLine = false)
     {
         int x, y, w;
-        var length = startIndex < 0 ? this.Length : endIndex - startIndex;
+        var length = endIndex < 0 ? this.Length : endIndex - startIndex;
         var charSpan = this.charArray.AsSpan(startIndex, length);
         var widthSpan = this.widthArray.AsSpan(startIndex, length);
-        var totalWidth = startIndex < 0 ? this.TotalWidth : (int)BaseHelper.Sum(widthSpan);
-        var startPosition = startIndex < 0 ? 0 : this.PromtWidth + (int)BaseHelper.Sum(this.widthArray.AsSpan(0, startIndex));
+        var totalWidth = endIndex < 0 ? this.TotalWidth : (int)BaseHelper.Sum(widthSpan);
+        var startPosition = endIndex < 0 ? 0 : this.PromtWidth + (int)BaseHelper.Sum(this.widthArray.AsSpan(0, startIndex));
 
         var startCursor = this.Left + (this.Top * this.WindowWidth) + startPosition;
         var windowRemaining = (this.WindowWidth * this.WindowHeight) - startCursor;
@@ -373,7 +413,7 @@ internal class InputBuffer
             written += 1;
         }
 
-        if (startIndex < 0 && this.Prompt is not null)
+        if (endIndex < 0 && this.Prompt is not null)
         {// Prompt
             span = this.Prompt.AsSpan();
             span.CopyTo(buffer);
@@ -408,10 +448,15 @@ internal class InputBuffer
 
         if (eraseLine)
         {// Erase line
-            span = ConsoleHelper.EraseLineSpan;
+            /*span = ConsoleHelper.EraseLineSpan;
             span.CopyTo(buffer);
             written += span.Length;
-            buffer = buffer.Slice(span.Length);
+            buffer = buffer.Slice(span.Length);*/
+
+            buffer[0] = ' ';
+            buffer[1] = ' ';
+            written += 2;
+            buffer = buffer.Slice(2);
         }
 
         // Set cursor
@@ -512,11 +557,16 @@ internal class InputBuffer
         }
     }
 
-    private int GetCursorIndex()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int GetCursorIndex(int cursorLeft, int cursorTop)
     {
-        var index = this.CursorLeft - this.PromtWidth + (this.CursorTop * this.InputConsole.WindowWidth);
+        var index = cursorLeft - this.PromtWidth + (cursorTop * this.InputConsole.WindowWidth);
         return index;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int GetCursorIndex()
+        => this.GetCursorIndex(this.CursorLeft, this.CursorTop);
 
     private (int Left, int Top) ToCursor(int cursorIndex)
     {
@@ -568,15 +618,54 @@ internal class InputBuffer
 
     private void MoveUpOrDown(bool up)
     {//
-        var cursorIndex = this.GetCursorIndex() + (up ? -this.InputConsole.WindowWidth : +this.InputConsole.WindowWidth);
-        cursorIndex = Math.Max(this.PromtWidth, cursorIndex);
-        cursorIndex = Math.Min(this.TotalWidth, cursorIndex);
+        var buffer = this;
+        var cursorLeft = this.CursorLeft;
+        var cursorTop = this.CursorTop;
 
-        var newCursor = this.ToCursor(cursorIndex - this.PromtWidth);
-        if (this.CursorLeft != newCursor.Left ||
-            this.CursorTop != newCursor.Top)
+        if (up)
+        {// Up arrow
+            if (cursorTop <= 0)
+            {
+                if (this.Index <= 0)
+                {
+                    return;
+                }
+
+                buffer = this.InputConsole.Buffers[this.Index - 1];
+                cursorTop = buffer.Height - 1;
+            }
+            else
+            {// Current buffer (move upward)
+                cursorTop--;
+            }
+        }
+        else
+        {// Down arrow
+            if (cursorTop + 1 >= this.Height)
+            {
+                if (this.Index + 1 >= this.InputConsole.Buffers.Count)
+                {
+                    return;
+                }
+
+                buffer = this.InputConsole.Buffers[this.Index + 1];
+                cursorTop = 0;
+            }
+            else
+            {// Current buffer (move downward)
+                cursorTop++;
+            }
+        }
+
+        var cursorIndex = buffer.GetCursorIndex(cursorLeft, cursorTop);
+        buffer.TrimCursorIndex(ref cursorIndex);
+
+        var newCursor = buffer.ToCursor(cursorIndex);
+        if (buffer.CursorLeft != newCursor.Left ||
+            buffer.CursorTop != newCursor.Top ||
+            buffer != this)
         {
-            this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
+            buffer.SetCursorPosition(newCursor.Left, newCursor.Top, false);
         }
     }
 

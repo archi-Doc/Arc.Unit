@@ -1,10 +1,10 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics;
-using System.Text;
 using Arc.Collections;
 using Arc.Threading;
 using Arc.Unit;
+
+#pragma warning disable SA1204 // Static elements should appear before instance elements
 
 namespace Arc.InputConsole;
 
@@ -39,6 +39,8 @@ public partial class InputConsole : IConsoleService
 
     internal byte[] Utf8Buffer => this.utf8Buffer;
 
+    internal List<InputBuffer> Buffers => this.buffers;
+
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
     private readonly ObjectPool<InputBuffer> bufferPool;
@@ -72,7 +74,7 @@ public partial class InputConsole : IConsoleService
         using (this.lockObject.EnterScope())
         {
             this.ReturnAllBuffersInternal();
-            buffer = this.RentBuffer(prompt);
+            buffer = this.RentBuffer(0, prompt);
             this.buffers.Add(buffer);
             this.StartingCursorTop = Console.CursorTop;
         }
@@ -273,14 +275,7 @@ ProcessKeyInfo:
             written += span.Length;
         }
 
-        try
-        {
-            this.RawConsole.WriteInternal(this.windowBuffer.AsSpan(0, written));
-            // Console.Out.Write(this.windowBuffer.AsSpan(0, written));
-        }
-        catch
-        {
-        }
+        this.RawConsole.WriteInternal(this.windowBuffer.AsSpan(0, written));
 
         this.CursorLeft = cursorLeft;
         this.CursorTop = cursorTop;
@@ -298,6 +293,72 @@ ProcessKeyInfo:
                 x.CursorTop += scroll;
             }
         }
+    }
+
+    internal void HeightChanged(int index, int dif)
+    {
+        var cursorTop = this.CursorTop;
+        var cursorLeft = this.CursorLeft;
+
+        for (var i = index + 1; i < this.buffers.Count; i++)
+        {
+            var buffer = this.buffers[i];
+            buffer.Top += dif;
+            buffer.Write(0, -1, 0);
+        }
+
+        if (dif < 0)
+        {
+            var buffer = this.buffers[this.buffers.Count - 1];
+            var top = buffer.Top + buffer.Height;
+            this.ClearLine(top);
+        }
+
+        this.SetCursorPosition(cursorLeft, cursorTop, true);
+    }
+
+    private void ClearLine(int top)
+    {
+        var buffer = this.windowBuffer.AsSpan();
+        var written = 0;
+        ReadOnlySpan<char> span;
+
+        /*span = ConsoleHelper.SaveCursorSpan;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;*/
+
+        span = ConsoleHelper.SetCursorSpan;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;
+
+        var x = top + 1;
+        var y = 0 + 1;
+        x.TryFormat(buffer, out var w);
+        buffer = buffer.Slice(w);
+        written += w;
+        buffer[0] = ';';
+        buffer = buffer.Slice(1);
+        written += 1;
+        y.TryFormat(buffer, out w);
+        buffer = buffer.Slice(w);
+        written += w;
+        buffer[0] = 'H';
+        buffer = buffer.Slice(1);
+        written += 1;
+
+        span = ConsoleHelper.EraseLine2Span;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;
+
+        /*span = ConsoleHelper.RestoreCursorSpan;
+        span.CopyTo(buffer);
+        buffer = buffer.Slice(span.Length);
+        written += span.Length;*/
+
+        this.RawConsole.WriteInternal(this.windowBuffer.AsSpan(0, written));
     }
 
     private static bool IsControl(ConsoleKeyInfo keyInfo)
@@ -425,12 +486,12 @@ ProcessKeyInfo:
 
                 if (this.MultilineMode)
                 {
-                    buffer = this.RentBuffer(multilinePrompt);
+                    buffer = this.RentBuffer(this.buffers.Count, multilinePrompt);
                     this.buffers.Add(buffer);
                     Console.Out.WriteLine();
                     Console.Out.Write(multilinePrompt);
                     (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
-                    this.StartingCursorTop = Console.CursorTop - this.GetBuffersHeightInternal();
+                    this.StartingCursorTop = this.CursorTop - this.GetBuffersHeightInternal();
                     return null;
                 }
 
@@ -467,9 +528,10 @@ ProcessKeyInfo:
     private int GetBuffersHeightInternal()
     {
         var height = 0;
-        foreach (var x in this.buffers)
+        for (var i = 1; i < this.buffers.Count; i++)
         {
-            height += x.Height;
+            this.buffers[i].UpdateHeight(false);
+            height += this.buffers[i].Height;
         }
 
         return height;
@@ -491,7 +553,7 @@ ProcessKeyInfo:
             {
                 x.Left = 0;
                 x.Top = y;
-                x.Height = (x.TotalWidth + this.WindowWidth) / this.WindowWidth;
+                x.UpdateHeight(false);
                 y += x.Height;
                 if (buffer is null &&
                     this.CursorTop >= x.Top &&
@@ -503,7 +565,8 @@ ProcessKeyInfo:
                 }
                 else
                 {
-                    x.CursorTop = 0;
+                    x.CursorLeft = -1;
+                    x.CursorTop = -1;
                 }
             }
 
@@ -512,10 +575,10 @@ ProcessKeyInfo:
         }
     }
 
-    private InputBuffer RentBuffer(string? prompt)
+    private InputBuffer RentBuffer(int index, string? prompt)
     {
         var buffer = this.bufferPool.Rent();
-        buffer.Initialize(prompt);
+        buffer.Initialize(index, prompt);
         return buffer;
     }
 

@@ -133,17 +133,23 @@ internal sealed class RawConsole
 
     public unsafe void WriteInternal(ReadOnlySpan<char> data)
     {
-        if (this.handle is not null)
+        try
         {
-            var length = Encoding.UTF8.GetBytes(data, this.inputConsole.Utf8Buffer);
-            fixed (byte* p = this.inputConsole.Utf8Buffer)
+            if (this.handle is not null)
             {
-                _ = Interop.Sys.Write(this.handle, p, length);
+                var length = Encoding.UTF8.GetBytes(data, this.inputConsole.Utf8Buffer);
+                fixed (byte* p = this.inputConsole.Utf8Buffer)
+                {
+                    _ = Interop.Sys.Write(this.handle, p, length);
+                }
+            }
+            else
+            {
+                Console.Out.Write(data);
             }
         }
-        else
+        catch
         {
-            Console.Out.Write(data);
         }
     }
 
