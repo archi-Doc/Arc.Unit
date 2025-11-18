@@ -19,6 +19,8 @@ public partial class InputConsole : IConsoleService
 
     public ConsoleColor InputColor { get; set; } = ConsoleColor.Yellow;
 
+    public string MultilineIdentifier { get; set; } = "\"\"\"";
+
     public bool IsInsertMode { get; set; } = true;
 
     internal RawConsole RawConsole { get; private set; }
@@ -290,7 +292,7 @@ ProcessKeyInfo:
             foreach (var x in this.buffers)
             {
                 x.Top -= scroll;
-                x.CursorTop += scroll;
+                // x.CursorTop += scroll;
             }
         }
     }
@@ -471,6 +473,15 @@ ProcessKeyInfo:
 
         this.WindowWidth = windowWidth;
         this.WindowHeight = windowHeight;
+
+        var newCursor = Console.GetCursorPosition();
+        var dif = newCursor.Top - this.CursorTop;
+        (this.CursorLeft, this.CursorTop) = newCursor;
+        this.StartingCursorTop += dif;
+        foreach (var x in this.buffers)
+        {
+            x.Top += dif;
+        }
 
         /*this.Prepare();
         using (this.lockObject.EnterScope())
