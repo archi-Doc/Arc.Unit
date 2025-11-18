@@ -76,12 +76,6 @@ internal class Program
 
         while (!ThreadCore.Root.IsTerminated)
         {
-            /*if (!Console.KeyAvailable)
-            {
-                await Task.Delay(100);
-                continue;
-            }*/
-
             var result = await inputConsole.ReadLine($"{Console.CursorTop}> ", "# "); // Success, Canceled, Terminated
 
             if (result.Kind == InputResultKind.Terminated)
@@ -90,6 +84,7 @@ internal class Program
             }
             else if (result.Kind == InputResultKind.Canceled)
             {
+                inputConsole.WriteLine("Canceled");
                 continue;
             }
             else if (string.Equals(result.Text, "exit", StringComparison.InvariantCultureIgnoreCase))

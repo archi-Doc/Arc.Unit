@@ -116,13 +116,17 @@ ProcessKeyInfo:
             {// CrLf -> Lf
                 continue;
             }
-
-            /*else if (keyInfo.Key == ConsoleKey.C &&
+            else if (keyInfo.Key == ConsoleKey.Escape)
+            {
+                Console.Out.WriteLine();
+                return new(InputResultKind.Canceled);
+            }
+            else if (keyInfo.Key == ConsoleKey.C &&
                 keyInfo.Modifiers.HasFlag(ConsoleModifiers.Control))
             { // Ctrl+C
-                ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-                return null;
-            }*/
+                // ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+                // return null;
+            }
 
             bool flush = true;
             if (IsControl(keyInfo))
@@ -536,7 +540,7 @@ ProcessKeyInfo:
                 }
 
                 if (multilinePrompt is not null &&
-                    (SimpleCommandLine.SimpleParserHelper.CountTripleQuotes(buffer.TextSpan) % 2) > 0)
+                    (SimpleCommandLine.SimpleParserHelper.CountOccurrences(buffer.TextSpan, this.MultilineIdentifier) % 2) > 0)
                 {// Multiple line
                     if (buffer == this.buffers[0])
                     {// Start
