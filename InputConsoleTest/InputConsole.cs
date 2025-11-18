@@ -43,6 +43,7 @@ public partial class InputConsole : IConsoleService
 
     private int WindowBufferCapacity => (this.WindowWidth * this.WindowHeight * 2) + WindowBufferMargin;
 
+    private readonly char[] charBuffer = new char[CharBufferSize];
     private readonly ObjectPool<InputBuffer> bufferPool;
 
     private readonly Lock lockObject = new();
@@ -65,10 +66,9 @@ public partial class InputConsole : IConsoleService
     public InputResult ReadLine(string? prompt)
         => this.ReadLine(prompt);
 
-    public InputResult ReadLine(string? prompt = default, string? multilinePrompt = default)
+    public async Task<InputResult> ReadLine(string? prompt = default, string? multilinePrompt = default)
     {
         InputBuffer? buffer;
-        Span<char> charBuffer = stackalloc char[CharBufferSize];
         var position = 0;
 
         using (this.lockObject.EnterScope())
@@ -95,7 +95,7 @@ public partial class InputConsole : IConsoleService
             // Polling isn’t an ideal approach, but due to the fact that the normal method causes a significant performance drop and that the function must be able to exit when the application terminates, this implementation was chosen.
             if (!this.RawConsole.TryRead(out var keyInfo))
             {
-                Thread.Sleep(10);
+                await Task.Delay(10);
                 continue;
             }
 
@@ -128,7 +128,7 @@ ProcessKeyInfo:
             }
             else
             {// Not control
-                charBuffer[position++] = keyInfo.KeyChar;
+                this.charBuffer[position++] = keyInfo.KeyChar;
                 if (this.RawConsole.TryRead(out keyInfo))
                 {
                     flush = false;
@@ -154,7 +154,7 @@ ProcessKeyInfo:
 
             if (flush)
             {// Flush
-                var result = this.Flush(keyInfo, charBuffer.Slice(0, position), multilinePrompt);
+                var result = this.Flush(keyInfo, this.charBuffer.AsSpan().Slice(0, position), multilinePrompt);
                 position = 0;
                 if (result is not null)
                 {

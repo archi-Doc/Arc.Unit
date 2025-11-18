@@ -82,7 +82,7 @@ internal class Program
                 continue;
             }*/
 
-            var result = inputConsole.ReadLine($"{Console.CursorTop}> ", "# "); // Success, Canceled, Terminated
+            var result = await inputConsole.ReadLine($"{Console.CursorTop}> ", "# "); // Success, Canceled, Terminated
 
             if (result.Kind == InputResultKind.Terminated)
             {
@@ -103,9 +103,9 @@ internal class Program
             }
             else if (string.Equals(result.Text, "a", StringComparison.InvariantCultureIgnoreCase))
             {
-                _ = Task.Run(() =>
+                _ = Task.Run(async () =>
                 {
-                    Thread.Sleep(1000);
+                    await Task.Delay(1000);
                     inputConsole.WriteLine("AAAAA");
                 });
             }

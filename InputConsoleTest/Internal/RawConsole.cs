@@ -348,8 +348,7 @@ internal sealed class RawConsole
             ? 0
             : char.IsDigit(input[SequencePrefixLength + 1]) ? 2 : 1;
 
-        if (digitCount == 0 // it does not start with a digit, it's not a sequence
-            || SequencePrefixLength + digitCount >= input.Length) // it's too short to be a complete sequence
+        if (digitCount == 0 || SequencePrefixLength + digitCount >= input.Length)
         {
             parsed = default;
             return false;

@@ -642,7 +642,7 @@ internal class InputBuffer
     }
 
     private void MoveUpOrDown(bool up)
-    {//
+    {
         var buffer = this;
         var cursorLeft = this.CursorLeft;
         var cursorTop = this.CursorTop;
@@ -650,7 +650,7 @@ internal class InputBuffer
         if (up)
         {// Up arrow
             if (cursorTop <= 0)
-            {
+            {// Previous buffer
                 if (this.Index <= 0)
                 {
                     return;
@@ -667,7 +667,7 @@ internal class InputBuffer
         else
         {// Down arrow
             if (cursorTop + 1 >= this.Height)
-            {
+            {// Next buffer
                 if (this.Index + 1 >= this.InputConsole.Buffers.Count)
                 {
                     return;
