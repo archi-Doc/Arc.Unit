@@ -637,14 +637,7 @@ ProcessKeyInfo:
                     this.CursorTop >= x.Top &&
                     this.CursorTop < y)
                 {
-                    x.CursorLeft = this.CursorLeft - x.Left;
-                    x.CursorTop = this.CursorTop - x.Top;
                     buffer = x;
-                }
-                else
-                {
-                    x.CursorLeft = -1;
-                    x.CursorTop = -1;
                 }
             }
 

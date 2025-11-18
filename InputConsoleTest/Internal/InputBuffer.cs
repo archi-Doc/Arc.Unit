@@ -26,14 +26,14 @@ internal class InputBuffer
     public int Top { get; set; }
 
     /// <summary>
-    /// Gets or sets the cursor's horizontal position relative to the buffer's left edge.
+    /// Gets the cursor's horizontal position relative to the buffer's left edge.
     /// </summary>
-    public int CursorLeft { get; set; }
+    public int CursorLeft => this.InputConsole.CursorLeft - this.Left;
 
     /// <summary>
-    /// Gets or sets the cursor's vertical position relative to the buffer's top edge.
+    /// Gets the cursor's vertical position relative to the buffer's top edge.
     /// </summary>
-    public int CursorTop { get; set; }
+    public int CursorTop => this.InputConsole.CursorTop - this.Top;
 
     public string? Prompt { get; private set; }
 
@@ -524,8 +524,6 @@ internal class InputBuffer
             // this.SetCursorPosition(newCursorLeft - this.Left, newCursorTop - this.Top, true);
             this.InputConsole.CursorLeft = newCursorLeft;
             this.InputConsole.CursorTop = newCursorTop;
-            this.CursorLeft = newCursorLeft - this.Left;
-            this.CursorTop = newCursorTop - this.Top;
         }
         catch
         {
@@ -706,8 +704,6 @@ internal class InputBuffer
                 cursorTop != this.CursorTop)
             {
                 this.InputConsole.SetCursorPosition(this.Left + cursorLeft, this.Top + cursorTop, showCursor);
-                this.CursorLeft = cursorLeft;
-                this.CursorTop = cursorTop;
             }
         }
         catch
