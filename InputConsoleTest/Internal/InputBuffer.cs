@@ -92,13 +92,13 @@ internal class InputBuffer
                         (arrayPosition > 1) &&
                         char.IsHighSurrogate(this.charArray[arrayPosition - 2]))
                     {
-                        this.Remove2At(arrayPosition - 2);
-                        this.Write(arrayPosition - 2, this.Length, 0, true);
+                        var removedWidth = this.Remove2At(arrayPosition - 2);
+                        this.Write(arrayPosition - 2, this.Length, 0, removedWidth);
                     }
                     else
                     {
-                        this.RemoveAt(arrayPosition - 1);
-                        this.Write(arrayPosition - 1, this.Length, 0, true);
+                        var removedWidth = this.RemoveAt(arrayPosition - 1);
+                        this.Write(arrayPosition - 1, this.Length, 0, removedWidth);
                     }
 
                     this.UpdateHeight(true);
@@ -117,18 +117,19 @@ internal class InputBuffer
                 var arrayPosition = this.GetArrayPosition();
                 if (arrayPosition < this.Length)
                 {
+                    int removedWidth;
                     if (char.IsHighSurrogate(this.charArray[arrayPosition]) &&
                         (arrayPosition + 1) < this.Length &&
                         char.IsLowSurrogate(this.charArray[arrayPosition + 1]))
                     {
-                        this.Remove2At(arrayPosition);
+                        removedWidth = this.Remove2At(arrayPosition);
                     }
                     else
                     {
-                        this.RemoveAt(arrayPosition);
+                        removedWidth = this.RemoveAt(arrayPosition);
                     }
 
-                    this.Write(arrayPosition, this.Length, 0, true);
+                    this.Write(arrayPosition, this.Length, 0, removedWidth);
                     this.UpdateHeight(true);
                 }
 
@@ -208,7 +209,7 @@ internal class InputBuffer
         Array.Fill<char>(this.charArray, ' ', 0, this.Width);
         Array.Fill<byte>(this.widthArray, 1, 0, this.Width);
         this.Length = this.Width;
-        this.Write(0, this.Width, 0, false);
+        this.Write(0, this.Width, 0, 0);
 
         this.Length = 0;
         this.Width = 0;
@@ -286,7 +287,7 @@ internal class InputBuffer
 
             this.Length += charBuffer.Length;
             this.Width += width;
-            this.Write(arrayPosition, this.Length, width);
+            this.Write(arrayPosition, this.Length, width, 0);
         }
         else
         {// Overtype (Not implemented yet)
@@ -363,7 +364,15 @@ internal class InputBuffer
         cursorIndex = newIndex;
     }
 
-    internal void Write(int startIndex, int endIndex, int cursorDif, bool eraseLine = false)
+    internal (int Left, int Top) ToCursor(int cursorIndex)
+    {
+        cursorIndex += this.PromtWidth;
+        var top = cursorIndex / this.InputConsole.WindowWidth;
+        var left = cursorIndex - (top * this.InputConsole.WindowWidth);
+        return (left, top);
+    }
+
+    internal void Write(int startIndex, int endIndex, int cursorDif, int removedWidth, bool eraseLine = false)
     {
         int x, y, w;
         var length = endIndex < 0 ? this.Length : endIndex - startIndex;
@@ -458,17 +467,26 @@ internal class InputBuffer
         written += span.Length;
         buffer = buffer.Slice(span.Length);
 
-        if (eraseLine)
-        {// Erase line
-            /*span = ConsoleHelper.EraseLineSpan;
-            span.CopyTo(buffer);
-            written += span.Length;
-            buffer = buffer.Slice(span.Length);*/
-
+        if (removedWidth == 1)
+        {
+            buffer[0] = ' ';
+            written += 1;
+            buffer = buffer.Slice(1);
+        }
+        else if (removedWidth == 2)
+        {
             buffer[0] = ' ';
             buffer[1] = ' ';
             written += 2;
             buffer = buffer.Slice(2);
+        }
+
+        if (eraseLine)
+        {// Erase line
+            span = ConsoleHelper.EraseLineSpan;
+            span.CopyTo(buffer);
+            written += span.Length;
+            buffer = buffer.Slice(span.Length);
         }
 
         // Set cursor
@@ -514,21 +532,24 @@ internal class InputBuffer
         }
     }
 
-    private void RemoveAt(int index)
+    private int RemoveAt(int index)
     {
+        var w = this.widthArray[index];
         this.Length--;
-        this.Width -= this.widthArray[index];
+        this.Width -= w;
         this.charArray.AsSpan(index + 1, this.Length - index).CopyTo(this.charArray.AsSpan(index));
         this.widthArray.AsSpan(index + 1, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
+        return w;
     }
 
-    private void Remove2At(int index)
+    private int Remove2At(int index)
     {
-        this.Length -= 2;
         var w = this.widthArray[index] + this.widthArray[index + 1];
+        this.Length -= 2;
         this.Width -= w;
         this.charArray.AsSpan(index + 2, this.Length - index).CopyTo(this.charArray.AsSpan(index));
         this.widthArray.AsSpan(index + 2, this.Length - index).CopyTo(this.widthArray.AsSpan(index));
+        return w;
     }
 
     private int GetLeftWidth(int index)
@@ -579,14 +600,6 @@ internal class InputBuffer
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private int GetCursorIndex()
         => this.GetCursorIndex(this.CursorLeft, this.CursorTop);
-
-    private (int Left, int Top) ToCursor(int cursorIndex)
-    {
-        cursorIndex += this.PromtWidth;
-        var top = cursorIndex / this.InputConsole.WindowWidth;
-        var left = cursorIndex - (top * this.InputConsole.WindowWidth);
-        return (left, top);
-    }
 
     private void MoveLeft(int arrayPosition)
     {

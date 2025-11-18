@@ -304,7 +304,7 @@ ProcessKeyInfo:
         {
             var buffer = this.buffers[i];
             buffer.Top += dif;
-            buffer.Write(0, -1, 0);
+            buffer.Write(0, -1, 0, 0, true);
         }
 
         if (dif < 0)
@@ -332,7 +332,7 @@ ProcessKeyInfo:
             var buffer = this.buffers[i];
             buffer.Index = i;
             buffer.Top += dif;
-            buffer.Write(0, -1, 0);
+            buffer.Write(0, -1, 0, 0, true);
         }
 
         this.ClearLastLine(dif);
@@ -354,6 +354,20 @@ ProcessKeyInfo:
         var cursorLeft = buffer.Left + buffer.PromtWidth;
         var cursorTop = buffer.Top;
         this.SetCursorPosition(cursorLeft, cursorTop, false);
+    }
+
+    private void SetCursorAtEnd()
+    {
+        if (this.buffers.Count == 0)
+        {
+            return;
+        }
+
+        var buffer = this.buffers[this.buffers.Count - 1];
+        var newCursor = buffer.ToCursor(buffer.Width);
+        newCursor.Left += buffer.Left;
+        newCursor.Top += buffer.Top;
+        this.SetCursorPosition(newCursor.Left, newCursor.Top, false);
     }
 
     private void ClearLine(int top)
@@ -525,13 +539,26 @@ ProcessKeyInfo:
 
                 if (this.MultilineMode)
                 {
-                    buffer = this.RentBuffer(this.buffers.Count, multilinePrompt);
-                    this.buffers.Add(buffer);
-                    Console.Out.WriteLine();
-                    Console.Out.Write(multilinePrompt);
-                    (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
-                    this.StartingCursorTop = this.CursorTop - this.GetBuffersHeightInternal();
-                    return null;
+                    if (buffer.Index == (this.buffers.Count - 1))
+                    {// New InputBuffer
+                        if (buffer.Length == 0)
+                        {// Empty
+                            return null;
+                        }
+
+                        buffer = this.RentBuffer(this.buffers.Count, multilinePrompt);
+                        this.buffers.Add(buffer);
+                        Console.Out.WriteLine();
+                        Console.Out.Write(multilinePrompt);
+                        (this.CursorLeft, this.CursorTop) = Console.GetCursorPosition();
+                        this.StartingCursorTop = this.CursorTop - this.GetBuffersHeightInternal();
+                        return null;
+                    }
+                    else
+                    {// Next buffer
+                        this.SetCursor(this.buffers[buffer.Index + 1]);
+                        return null;
+                    }
                 }
 
                 var length = this.buffers[0].Length;
@@ -554,6 +581,7 @@ ProcessKeyInfo:
                     }
                 });
 
+                this.SetCursorAtEnd();
                 this.ReturnAllBuffersInternal();
                 return result;
             }
