@@ -78,6 +78,12 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.Backspace)
             {
+                if (this.Length == 0)
+                {// Delete empty buffer
+                    this.InputConsole.TryDeleteBuffer(this.Index);
+                    return false;
+                }
+
                 var arrayPosition = this.GetArrayPosition();
                 if (arrayPosition > 0)
                 {
@@ -102,6 +108,12 @@ internal class InputBuffer
             }
             else if (key == ConsoleKey.Delete)
             {
+                if (this.Length == 0)
+                {// Delete empty buffer
+                    this.InputConsole.TryDeleteBuffer(this.Index);
+                    return false;
+                }
+
                 var arrayPosition = this.GetArrayPosition();
                 if (arrayPosition < this.Length)
                 {

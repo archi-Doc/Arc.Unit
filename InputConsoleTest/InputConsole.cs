@@ -317,6 +317,45 @@ ProcessKeyInfo:
         this.SetCursorPosition(cursorLeft, cursorTop, true);
     }
 
+    internal void TryDeleteBuffer(int index)
+    {
+        if (index < 0 ||
+            index >= (this.buffers.Count - 1))
+        {
+            return;
+        }
+
+        var dif = -this.buffers[index].Height;
+        this.buffers.RemoveAt(index);
+        for (var i = index; i < this.buffers.Count; i++)
+        {
+            var buffer = this.buffers[i];
+            buffer.Index = i;
+            buffer.Top += dif;
+            buffer.Write(0, -1, 0);
+        }
+
+        this.ClearLastLine(dif);
+        this.SetCursor(this.buffers[index]);
+    }
+
+    private void ClearLastLine(int dif)
+    {
+        var buffer = this.buffers[this.buffers.Count - 1];
+        var top = buffer.Top + buffer.Height;
+        for (var i = 0; i < -dif; i++)
+        {
+            this.ClearLine(top + i);
+        }
+    }
+
+    private void SetCursor(InputBuffer buffer)
+    {
+        var cursorLeft = buffer.Left + buffer.PromtWidth;
+        var cursorTop = buffer.Top;
+        this.SetCursorPosition(cursorLeft, cursorTop, false);
+    }
+
     private void ClearLine(int top)
     {
         var buffer = this.windowBuffer.AsSpan();
