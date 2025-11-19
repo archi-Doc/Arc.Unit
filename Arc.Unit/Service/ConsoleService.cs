@@ -12,7 +12,7 @@ internal class ConsoleService : IConsoleService
     {
         try
         {
-            Console.Write(message);
+            Console.Out.Write(message);
         }
         catch
         {
@@ -23,7 +23,7 @@ internal class ConsoleService : IConsoleService
     {
         try
         {
-            Console.WriteLine(message);
+            Console.Out.WriteLine(message);
         }
         catch
         {

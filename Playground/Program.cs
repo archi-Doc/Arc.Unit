@@ -145,6 +145,13 @@ public class Program
         var array = memoryLogger.ToArray();
         var st = Encoding.UTF8.GetString(array);
 
+        await Task.Delay(300);
+
+        var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
+        consoleService.WriteLine("Hello, World!");
+        var tx = consoleService.ReadLine("? ");
+        consoleService.Write(tx.Text);
+
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
         await unitLogger.FlushAndTerminate();
