@@ -8,7 +8,7 @@ public interface IConsoleService
 
     public void WriteLine(string? message = default);
 
-    public InputResult ReadLine(string? prompt = default);
+    public Task<InputResult> ReadLine(string? prompt = default, CancellationToken cancellationToken = default);
 
     public ConsoleKeyInfo ReadKey(bool intercept);
 

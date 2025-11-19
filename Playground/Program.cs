@@ -149,7 +149,7 @@ public class Program
 
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
         consoleService.WriteLine("Hello, World!");
-        var tx = consoleService.ReadLine("? ");
+        var tx = await consoleService.ReadLine("? ");
         consoleService.Write(tx.Text);
 
         ThreadCore.Root.Terminate();
