@@ -12,7 +12,7 @@ internal class ConsoleService : IConsoleService
     {
         try
         {
-            Console.Write(message);
+            Console.Out.Write(message);
         }
         catch
         {
@@ -23,24 +23,31 @@ internal class ConsoleService : IConsoleService
     {
         try
         {
-            Console.WriteLine(message);
+            Console.Out.WriteLine(message);
         }
         catch
         {
         }
     }
 
-    public InputResult ReadLine(string? prompt)
+    public async Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
     {
         try
         {
             if (prompt is not null)
             {
-                Console.Write(prompt);
+                await Console.Out.WriteAsync(prompt).ConfigureAwait(false);
             }
 
-            var text = Console.ReadLine();
-            return new(text ?? string.Empty);
+            try
+            {
+                var text = await Console.In.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+                return new(text ?? string.Empty);
+            }
+            catch (OperationCanceledException)
+            {
+                return new(InputResultKind.Canceled);
+            }
         }
         catch
         {
