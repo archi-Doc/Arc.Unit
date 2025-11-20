@@ -30,15 +30,10 @@ internal class ConsoleService : IConsoleService
         }
     }
 
-    public async Task<InputResult> ReadLine(string? prompt, CancellationToken cancellationToken)
+    public async Task<InputResult> ReadLine(CancellationToken cancellationToken)
     {
         try
         {
-            if (prompt is not null)
-            {
-                await Console.Out.WriteAsync(prompt).ConfigureAwait(false);
-            }
-
             try
             {
                 var text = await Console.In.ReadLineAsync(cancellationToken).ConfigureAwait(false);
