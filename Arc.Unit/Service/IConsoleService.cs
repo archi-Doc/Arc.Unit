@@ -22,10 +22,9 @@ public interface IConsoleService
     /// <summary>
     /// Reads a line of text from the console asynchronously.
     /// </summary>
-    /// <param name="prompt">An optional prompt message to display before reading input.</param>
     /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation, containing the input result.</returns>
-    public Task<InputResult> ReadLine(string? prompt = default, CancellationToken cancellationToken = default);
+    public Task<InputResult> ReadLine(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads the next key pressed by the user.
