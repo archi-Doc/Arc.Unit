@@ -8,9 +8,15 @@ public static class ConsoleHelper
     public const string DefaultForegroundColor = "\u001b[39m\u001b[22m"; // reset to default foreground color
     public const string DefaultBackgroundColor = "\u001b[49m"; // reset to the background color
 
+    public static ReadOnlySpan<char> NewLineSpan => Environment.NewLine;
+
     public static ReadOnlySpan<char> EraseToEndOfLineSpan => "\u001b[K";
 
+    public static ReadOnlySpan<char> EraseToEndOfLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "\u001b[K\r\n" : "\u001b[K\n";
+
     public static ReadOnlySpan<char> EraseEntireLineSpan => "\u001b[2K";
+
+    public static ReadOnlySpan<char> EraseEntireLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "\u001b[2K\r\n" : "\u001b[2K\n";
 
     public static ReadOnlySpan<char> ResetSpan => "\u001b[0m";
 
@@ -23,6 +29,8 @@ public static class ConsoleHelper
     public static ReadOnlySpan<char> ShowCursorSpan => "\u001b[?25h";
 
     public static ReadOnlySpan<char> SetCursorSpan => "\u001b["; // "\e[n;mH
+
+    public static ReadOnlySpan<char> ResetCursor => "\u001b[0;0H";
 
     public static string GetForegroundColorEscapeCode(ConsoleColor color)
     {
