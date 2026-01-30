@@ -144,7 +144,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.options = options;
     }
 
-    void IUnitPreparable.Prepare(UnitMessage.Prepare message)
+    async Task IUnitPreparable.Prepare(UnitMessage.Prepare message)
     {
         this.logger.TryGet()?.Log("Unit prepared.");
         this.logger.TryGet()?.Log($"Program: {this.options.ProgramDirectory}");
@@ -156,7 +156,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log("Unit started.");
     }
 
-    void IUnitExecutable.Stop(UnitMessage.Stop message)
+    async Task IUnitExecutable.Stop(UnitMessage.Stop message)
     {
         this.logger.TryGet()?.Log("Unit stopped.");
     }

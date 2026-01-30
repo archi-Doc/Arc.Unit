@@ -4,7 +4,7 @@ using System.Text;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using static SimpleCommandLine.SimpleParser;
+using SimplePrompt;
 
 namespace Sandbox;
 
@@ -120,6 +120,11 @@ public class Program
         builder.AddBuilder(builder2);
 
         var unit = builder.Build("-datadirectory 'a'");
+
+        var simpleConsole = SimpleConsole.GetOrCreate();
+        var logger2 = unit.Context.ServiceProvider.GetRequiredService<ILogger<ITestInterface>>();
+        logger2.TryGet(LogLevel.Information)?.Log("tttttttttttttttttttttttttttttttttttttttttttttttttttttt");
+        var st2 = await simpleConsole.ReadLine();
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
         var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
