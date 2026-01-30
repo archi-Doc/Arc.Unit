@@ -16,7 +16,7 @@ public interface IUnitExecutable : IRadioService
     /// </summary>
     /// <param name="message">Unit message.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken);
 
     /// <summary>
@@ -24,7 +24,8 @@ public interface IUnitExecutable : IRadioService
     /// This method is called after <see cref="IUnitExecutable.StartAsync(UnitMessage.StartAsync, CancellationToken)"/>.
     /// </summary>
     /// <param name="message">Unit message.</param>
-    public void Stop(UnitMessage.Stop message);
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public Task Stop(UnitMessage.Stop message);
 
     /// <summary>
     /// Performs the termination process for unit objects.<br/>
@@ -32,6 +33,6 @@ public interface IUnitExecutable : IRadioService
     /// </summary>
     /// <param name="message">Unit message.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken);
 }

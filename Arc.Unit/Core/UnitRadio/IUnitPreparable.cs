@@ -15,5 +15,6 @@ public interface IUnitPreparable : IRadioService
     /// This method is called once at the very beginning.
     /// </summary>
     /// <param name="message">Unit message.</param>
-    public void Prepare(UnitMessage.Prepare message);
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+    public Task Prepare(UnitMessage.Prepare message);
 }

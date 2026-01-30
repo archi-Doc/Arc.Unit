@@ -17,7 +17,7 @@ public interface IUnitSerializable : IRadioService
     /// </summary>
     /// <param name="message">Unit message.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task LoadAsync(UnitMessage.LoadAsync message, CancellationToken cancellationToken);
 
     /// <summary>
@@ -26,6 +26,6 @@ public interface IUnitSerializable : IRadioService
     /// </summary>
     /// <param name="message">Unit message.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Task.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task SaveAsync(UnitMessage.SaveAsync message, CancellationToken cancellationToken);
 }
