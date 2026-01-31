@@ -4,7 +4,7 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
-public static class UnitMessage
+/*public static class UnitMessage
 {// Create instance -> Prepare -> LoadAsync -> StartAsync -> Stop -> TerminateAsync, SaveAsync (after Prepare)
     public record Prepare();
 
@@ -17,4 +17,4 @@ public static class UnitMessage
     public record Load(string DataPath);
 
     public record Save(string DataPath);
-}
+}*/

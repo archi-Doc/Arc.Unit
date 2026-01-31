@@ -46,7 +46,7 @@ public class TestClass
         {
         }
 
-        public async Task Prepare(UnitMessage.Prepare message)
+        public async Task Prepare(UnitContext unitContext, CancellationToken cancellationToken)
         {
         }
     }

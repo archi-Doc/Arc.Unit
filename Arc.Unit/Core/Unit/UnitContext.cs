@@ -128,23 +128,23 @@ public sealed class UnitContext
         }
     }
 
-    public Task SendPrepare(UnitMessage.Prepare message)
-        => this.Radio.Send<IUnitPreparable>().Prepare(message);
+    public Task SendPrepare(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitPreparable>().Prepare(this, cancellationToken);
 
-    public Task SendStart(UnitMessage.Start message, CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitExecutable>().Start(message, cancellationToken);
+    public Task SendStart(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Start(this, cancellationToken);
 
-    public Task SendStop(UnitMessage.Stop message)
-        => this.Radio.Send<IUnitExecutable>().Stop(message);
+    public Task SendStop(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Stop(this, cancellationToken);
 
-    public Task SendTerminate(UnitMessage.Terminate message, CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitExecutable>().Terminate(message, cancellationToken);
+    public Task SendTerminate(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Terminate(this, cancellationToken);
 
-    public Task SendLoad(UnitMessage.Load message, CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitSerializable>().Load(message, cancellationToken);
+    public Task SendLoad(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitSerializable>().Load(this, cancellationToken);
 
-    public Task SendSave(UnitMessage.Save message, CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitSerializable>().Save(message, cancellationToken);
+    public Task SendSave(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitSerializable>().Save(this, cancellationToken);
 
     /// <summary>
     /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
