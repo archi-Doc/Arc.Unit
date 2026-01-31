@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using Arc.Threading;
 using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +24,11 @@ public sealed class UnitContext
     /// Gets an instance of <see cref="IServiceProvider"/>.
     /// </summary>
     public IServiceProvider ServiceProvider { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets the <see cref="UnitCore"/> associated with this context.
+    /// </summary>
+    public UnitCore Core { get; private set; } = default!;
 
     /// <summary>
     /// Gets the <see cref="UnitOptions"/> associated with this context.
@@ -152,6 +158,7 @@ public sealed class UnitContext
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
 
+        this.Core = serviceProvider.GetRequiredService<UnitCore>();
         var options = serviceProvider.GetRequiredService<UnitOptions>();
         options.CopyFrom(builderContext);
         this.Options = options;
