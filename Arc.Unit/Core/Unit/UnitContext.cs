@@ -16,9 +16,9 @@ public sealed class UnitContext
     #region FieldAndProperty
 
     /// <summary>
-    /// Gets or sets a value indicating whether an exit has been requested for the current unit context.
+    /// Gets or sets a value indicating whether a termination has been requested for the current unit context.
     /// </summary>
-    public bool ExitRequested { get; set; }
+    public bool TerminationRequested { get; set; }
 
     /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
