@@ -8,14 +8,24 @@ namespace QuickStart;
 [SimpleCommand("console", Default = true)]
 public class ConsoleCommand : ISimpleCommandAsync
 {
-    public ConsoleCommand(ILogger<ConsoleCommand> logger, IConsoleService consoleService)
+    private readonly UnitContext unitContext;
+    private readonly UnitOptions unitOptions;
+    private readonly ILogger logger;
+    private readonly IConsoleService consoleService;
+
+    public ConsoleCommand(UnitContext unitContext, UnitOptions unitOptions, ILogger<ConsoleCommand> logger, IConsoleService consoleService)
     {
+        this.unitContext = unitContext;
+        this.unitOptions = unitOptions;
         this.logger = logger;
         this.consoleService = consoleService;
     }
 
     public async Task RunAsync(string[] args)
     {
+        this.consoleService.WriteLine($"Name: {this.unitOptions.UnitName}");
+        this.consoleService.WriteLine($"Directory: {this.unitContext.Options.ProgramDirectory}");
+
         this.logger.TryGet()?.Log("Console command");
         this.logger.TryGet(LogLevel.Debug)?.Log("Start");
         this.consoleService.WriteLine("Console test");
@@ -25,7 +35,4 @@ public class ConsoleCommand : ISimpleCommandAsync
 
         this.logger.TryGet(LogLevel.Debug)?.Log("End");
     }
-
-    private readonly ILogger logger;
-    private readonly IConsoleService consoleService;
 }

@@ -20,6 +20,11 @@ public sealed class UnitContext
     public IServiceProvider ServiceProvider { get; private set; } = default!;
 
     /// <summary>
+    /// Gets the <see cref="UnitOptions"/> associated with this context.
+    /// </summary>
+    public UnitOptions Options { get; private set; } = new();
+
+    /// <summary>
     /// Gets an instance of <see cref="RadioClass"/>.
     /// </summary>
     public RadioClass Radio { get; private set; } = default!;
@@ -141,6 +146,10 @@ public sealed class UnitContext
         this.optionTypeToInstance = builderContext.OptionTypeToInstance;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
+
+        var options = serviceProvider.GetRequiredService<UnitOptions>();
+        options.CopyFrom(builderContext);
+        this.Options = options;
 
         ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
         ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));

@@ -111,10 +111,7 @@ public class Program
             })
             .PostConfigure(context =>
             {
-                context.SetOptions(context.GetOptions<UnitOptions>() with
-                {
-                    UnitName = "mod",
-                });
+                context.UnitName = "mod";
             });
         builder.AddBuilder(builder2);
         builder.AddBuilder(builder2);
