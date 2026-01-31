@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using Arc.Threading;
 using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,9 +16,24 @@ public sealed class UnitContext
     #region FieldAndProperty
 
     /// <summary>
+    /// Gets or sets a value indicating whether a termination has been requested for the current unit context.
+    /// </summary>
+    public bool TerminationRequested { get; set; }
+
+    /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
     /// </summary>
     public IServiceProvider ServiceProvider { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets the <see cref="UnitCore"/> associated with this context.
+    /// </summary>
+    public UnitCore Core { get; private set; } = default!;
+
+    /// <summary>
+    /// Gets the <see cref="UnitOptions"/> associated with this context.
+    /// </summary>
+    public UnitOptions Options { get; private set; } = new();
 
     /// <summary>
     /// Gets an instance of <see cref="RadioClass"/>.
@@ -112,23 +128,23 @@ public sealed class UnitContext
         }
     }
 
-    public void SendPrepare(UnitMessage.Prepare message)
-        => this.Radio.Send<IUnitPreparable>().Prepare(message);
+    public Task SendPrepare(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitPreparable>().Prepare(this, cancellationToken);
 
-    public async Task SendStartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitExecutable>().StartAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendStart(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Start(this, cancellationToken);
 
-    public void SendStop(UnitMessage.Stop message)
-        => this.Radio.Send<IUnitExecutable>().Stop(message);
+    public Task SendStop(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Stop(this, cancellationToken);
 
-    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitExecutable>().TerminateAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendTerminate(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Terminate(this, cancellationToken);
 
-    public async Task SendLoadAsync(UnitMessage.LoadAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitSerializable>().LoadAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendLoad(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitSerializable>().Load(this, cancellationToken);
 
-    public async Task SendSaveAsync(UnitMessage.SaveAsync message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitSerializable>().SaveAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendSave(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitSerializable>().Save(this, cancellationToken);
 
     /// <summary>
     /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
@@ -141,6 +157,11 @@ public sealed class UnitContext
         this.optionTypeToInstance = builderContext.OptionTypeToInstance;
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
+
+        this.Core = serviceProvider.GetRequiredService<UnitCore>();
+        var options = serviceProvider.GetRequiredService<UnitOptions>();
+        options.CopyFrom(builderContext);
+        this.Options = options;
 
         ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
         ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));

@@ -25,6 +25,8 @@ public class Program
         var builder = new ConsoleUnit.Builder()
             .Configure(context =>
             {
+                context.UnitName = "QuickUnit";
+
                 // Add Command
                 context.AddCommand(typeof(ExampleCommand));
             });

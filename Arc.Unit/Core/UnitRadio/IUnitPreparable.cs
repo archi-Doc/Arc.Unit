@@ -14,7 +14,8 @@ public interface IUnitPreparable : IRadioService
     /// Performs the initialization process for unit objects.<br/>
     /// This method is called once at the very beginning.
     /// </summary>
-    /// <param name="message">Unit message.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task Prepare(UnitMessage.Prepare message);
+    /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns>A <see cref="Task"/> representing the asynchronous load operation.</returns>
+    public Task Prepare(UnitContext unitContext, CancellationToken cancellationToken);
 }

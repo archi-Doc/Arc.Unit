@@ -184,8 +184,7 @@ public class UnitBuilder
         builderContext.ProcessedBuilderTypes.Clear();
         this.PreConfigureInternal(builderContext);
 
-        // Configuration: UnitOptions, UnitLogger
-        UnitOptions.Configure(builderContext);
+        // Configuration: UnitLogger
         UnitLogger.Configure(builderContext);
 
         // Configuration
