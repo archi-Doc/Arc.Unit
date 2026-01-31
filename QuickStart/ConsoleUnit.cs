@@ -90,8 +90,8 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
-            this.Context.SendPrepare(new());
-            await this.Context.SendStartAsync(new(ThreadCore.Root));
+            await this.Context.SendPrepare(new());
+            await this.Context.SendStart(new(ThreadCore.Root));
 
             var parserOptions = SimpleParserOptions.Standard with
             {
@@ -104,8 +104,8 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // await SimpleParser.ParseAndRunAsync(this.Context.Commands, "example -string test", parserOptions);
             await SimpleParser.ParseAndRunAsync(this.Context.Commands, param.Args, parserOptions);
 
-            this.Context.SendStop(new());
-            await this.Context.SendTerminateAsync(new());
+            await this.Context.SendStop(new());
+            await this.Context.SendTerminate(new());
         }
     }
 
@@ -151,7 +151,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log($"Data: {this.options.DataDirectory}");
     }
 
-    async Task IUnitExecutable.StartAsync(UnitMessage.Start message, CancellationToken cancellationToken)
+    async Task IUnitExecutable.Start(UnitMessage.Start message, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Unit started.");
     }
@@ -161,7 +161,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log("Unit stopped.");
     }
 
-    async Task IUnitExecutable.TerminateAsync(UnitMessage.Terminate message, CancellationToken cancellationToken)
+    async Task IUnitExecutable.Terminate(UnitMessage.Terminate message, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Unit terminated.");
     }

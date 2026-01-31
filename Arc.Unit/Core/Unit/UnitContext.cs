@@ -15,6 +15,11 @@ public sealed class UnitContext
     #region FieldAndProperty
 
     /// <summary>
+    /// Gets or sets a value indicating whether an exit has been requested for the current unit context.
+    /// </summary>
+    public bool ExitRequested { get; set; }
+
+    /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
     /// </summary>
     public IServiceProvider ServiceProvider { get; private set; } = default!;
@@ -117,23 +122,23 @@ public sealed class UnitContext
         }
     }
 
-    public void SendPrepare(UnitMessage.Prepare message)
+    public Task SendPrepare(UnitMessage.Prepare message)
         => this.Radio.Send<IUnitPreparable>().Prepare(message);
 
-    public async Task SendStartAsync(UnitMessage.Start message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitExecutable>().StartAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendStart(UnitMessage.Start message, CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Start(message, cancellationToken);
 
-    public void SendStop(UnitMessage.Stop message)
+    public Task SendStop(UnitMessage.Stop message)
         => this.Radio.Send<IUnitExecutable>().Stop(message);
 
-    public async Task SendTerminateAsync(UnitMessage.Terminate message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitExecutable>().TerminateAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendTerminate(UnitMessage.Terminate message, CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().Terminate(message, cancellationToken);
 
-    public async Task SendLoadAsync(UnitMessage.Load message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitSerializable>().LoadAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendLoad(UnitMessage.Load message, CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitSerializable>().Load(message, cancellationToken);
 
-    public async Task SendSaveAsync(UnitMessage.Save message, CancellationToken cancellationToken = default)
-        => await this.Radio.Send<IUnitSerializable>().SaveAsync(message, cancellationToken).ConfigureAwait(false);
+    public Task SendSave(UnitMessage.Save message, CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitSerializable>().Save(message, cancellationToken);
 
     /// <summary>
     /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
