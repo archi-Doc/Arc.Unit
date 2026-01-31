@@ -115,19 +115,19 @@ public sealed class UnitContext
     public void SendPrepare(UnitMessage.Prepare message)
         => this.Radio.Send<IUnitPreparable>().Prepare(message);
 
-    public async Task SendStartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken = default)
+    public async Task SendStartAsync(UnitMessage.Start message, CancellationToken cancellationToken = default)
         => await this.Radio.Send<IUnitExecutable>().StartAsync(message, cancellationToken).ConfigureAwait(false);
 
     public void SendStop(UnitMessage.Stop message)
         => this.Radio.Send<IUnitExecutable>().Stop(message);
 
-    public async Task SendTerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken = default)
+    public async Task SendTerminateAsync(UnitMessage.Terminate message, CancellationToken cancellationToken = default)
         => await this.Radio.Send<IUnitExecutable>().TerminateAsync(message, cancellationToken).ConfigureAwait(false);
 
-    public async Task SendLoadAsync(UnitMessage.LoadAsync message, CancellationToken cancellationToken = default)
+    public async Task SendLoadAsync(UnitMessage.Load message, CancellationToken cancellationToken = default)
         => await this.Radio.Send<IUnitSerializable>().LoadAsync(message, cancellationToken).ConfigureAwait(false);
 
-    public async Task SendSaveAsync(UnitMessage.SaveAsync message, CancellationToken cancellationToken = default)
+    public async Task SendSaveAsync(UnitMessage.Save message, CancellationToken cancellationToken = default)
         => await this.Radio.Send<IUnitSerializable>().SaveAsync(message, cancellationToken).ConfigureAwait(false);
 
     /// <summary>

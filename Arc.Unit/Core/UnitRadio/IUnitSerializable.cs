@@ -18,14 +18,14 @@ public interface IUnitSerializable : IRadioService
     /// <param name="message">Unit message.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task LoadAsync(UnitMessage.LoadAsync message, CancellationToken cancellationToken);
+    public Task LoadAsync(UnitMessage.Load message, CancellationToken cancellationToken);
 
     /// <summary>
     ///  Performs the saving process for unit objects.<br/>
-    ///  This method is called after <see cref="IUnitExecutable.StartAsync(UnitMessage.StartAsync, CancellationToken)"/> and may be called once or multiple times.<br/>
+    ///  This method is called after <see cref="IUnitExecutable.StartAsync(UnitMessage.Start, CancellationToken)"/> and may be called once or multiple times.<br/>
     /// </summary>
     /// <param name="message">Unit message.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SaveAsync(UnitMessage.SaveAsync message, CancellationToken cancellationToken);
+    public Task SaveAsync(UnitMessage.Save message, CancellationToken cancellationToken);
 }

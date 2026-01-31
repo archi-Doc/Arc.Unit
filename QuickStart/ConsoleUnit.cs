@@ -151,7 +151,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log($"Data: {this.options.DataDirectory}");
     }
 
-    async Task IUnitExecutable.StartAsync(UnitMessage.StartAsync message, CancellationToken cancellationToken)
+    async Task IUnitExecutable.StartAsync(UnitMessage.Start message, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Unit started.");
     }
@@ -161,7 +161,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.logger.TryGet()?.Log("Unit stopped.");
     }
 
-    async Task IUnitExecutable.TerminateAsync(UnitMessage.TerminateAsync message, CancellationToken cancellationToken)
+    async Task IUnitExecutable.TerminateAsync(UnitMessage.Terminate message, CancellationToken cancellationToken)
     {
         this.logger.TryGet()?.Log("Unit terminated.");
     }

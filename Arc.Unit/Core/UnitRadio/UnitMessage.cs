@@ -8,13 +8,13 @@ public static class UnitMessage
 {// Create instance -> Prepare -> LoadAsync -> StartAsync -> Stop -> TerminateAsync, SaveAsync (after Prepare)
     public record Prepare();
 
-    public record StartAsync(ThreadCoreBase ParentCore);
+    public record Start(ThreadCoreBase ParentCore);
 
     public record Stop();
 
-    public record TerminateAsync();
+    public record Terminate();
 
-    public record LoadAsync(string DataPath);
+    public record Load(string DataPath);
 
-    public record SaveAsync(string DataPath);
+    public record Save(string DataPath);
 }
