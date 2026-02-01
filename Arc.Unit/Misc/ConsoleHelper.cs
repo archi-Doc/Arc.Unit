@@ -8,6 +8,33 @@ public static class ConsoleHelper
     public const string DefaultForegroundColor = "\u001b[39m\u001b[22m"; // reset to default foreground color
     public const string DefaultBackgroundColor = "\u001b[49m"; // reset to the background color
 
+    /// <summary>
+    /// Provides extension properties for <see cref="InputResultKind"/> to simplify result checks.
+    /// </summary>
+    /// <param name="inputResultKind">The <see cref="InputResultKind"/> value to evaluate.</param>
+    extension(InputResultKind inputResultKind)
+    {
+        /// <summary>
+        /// Gets a value indicating whether the result is positive (success or yes).
+        /// </summary>
+        public bool IsPositive => inputResultKind == InputResultKind.Success;
+
+        /// <summary>
+        /// Gets a value indicating whether the result is negative (no).
+        /// </summary>
+        public bool IsNegative => inputResultKind == InputResultKind.No;
+
+        /// <summary>
+        /// Gets a value indicating whether the input is canceled.
+        /// </summary>
+        public bool IsCanceled => inputResultKind == InputResultKind.Canceled;
+
+        /// <summary>
+        /// Gets a value indicating whether the input is terminated.
+        /// </summary>
+        public bool IsTerminated => inputResultKind == InputResultKind.Terminated;
+    }
+
     public static ReadOnlySpan<char> NewLineSpan => Environment.NewLine;
 
     public static ReadOnlySpan<char> EraseToEndOfLineSpan => "\u001b[K";
