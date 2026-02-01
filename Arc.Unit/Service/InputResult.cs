@@ -42,4 +42,14 @@ public readonly struct InputResult
     /// Gets a value indicating whether the input operation was successful.
     /// </summary>
     public bool IsSuccess => this.Kind == InputResultKind.Success;
+
+    /// <summary>
+    /// Gets a value indicating whether the input operation was canceled.
+    /// </summary>
+    public bool IsCanceled => this.Kind == InputResultKind.Canceled;
+
+    /// <summary>
+    /// Gets a value indicating whether the input operation was terminated.
+    /// </summary>
+    public bool IsTerminated => this.Kind == InputResultKind.Terminated;
 }
