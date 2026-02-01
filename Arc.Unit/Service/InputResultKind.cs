@@ -8,7 +8,7 @@ namespace Arc.Unit;
 public enum InputResultKind
 {
     /// <summary>
-    /// The input was completed successfully.
+    /// The input was completed successfully, or 'Yes' was returned.
     /// </summary>
     Success = 0,
 
@@ -21,4 +21,9 @@ public enum InputResultKind
     /// The application received a termination request (e.g., Ctrl+C).
     /// </summary>
     Terminated = 2,
+
+    /// <summary>
+    /// The input operation returned 'No' (e.g., the user explicitly chose 'No' in a confirmation prompt).
+    /// </summary>
+    No = 3,
 }
