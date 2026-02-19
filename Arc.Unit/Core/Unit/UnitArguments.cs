@@ -1,7 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
-using SimpleCommandLine;
 
 namespace Arc.Unit;
 
@@ -10,6 +9,14 @@ namespace Arc.Unit;
 /// </summary>
 public class UnitArguments
 {
+    private const char Separator = '|';
+    private const string SeparatorString = "|";
+    private const char OptionPrefix = '-';
+    private const char Quote = '\"';
+    private const char OpenBracket = '{'; // '['
+    private const char CloseBracket = '}'; // ']'
+    private const char SingleQuote = '\'';
+
     private static readonly StringComparison DefaultStringComparison = StringComparison.InvariantCultureIgnoreCase;
 
     #region FieldAndProperty
@@ -100,9 +107,9 @@ public class UnitArguments
         this.rawArguments = args;
         string? previousOption = null;
 
-        foreach (var x in args.FormatArguments())
+        foreach (var x in FormatArguments(args))
         {
-            if (x.IsOptionString())
+            if (IsOptionString(x))
             {// -option
                 if (previousOption != null)
                 {
@@ -152,5 +159,181 @@ public class UnitArguments
                 return value;
             }
         }
+    }
+
+    private static bool IsOptionString(string text) => text.StartsWith(OptionPrefix);
+
+    private static string[] FormatArguments(string arg)
+    {
+        var span = arg.AsSpan();
+        var list = new List<string>();
+
+        var start = 0;
+        var position = 0;
+        var nextPosition = 0;
+        var enclosed = new Stack<char>();
+        while (position < span.Length)
+        {
+            var currentChar = span[position];
+            var lastChar = position > 0 ? span[position - 1] : (char)0;
+            if (enclosed.Count == 0)
+            {
+                if (char.IsWhiteSpace(currentChar))
+                {// A B
+                    nextPosition = position + 1;
+                    goto AddString;
+                }
+                else if (currentChar == Separator)
+                {
+                    nextPosition = position;
+                    goto AddString;
+                }
+                else if (currentChar == Quote &&
+                    (position + 2) < span.Length &&
+                    span[position + 1] == Quote &&
+                    span[position + 2] == Quote)
+                {// """A B"""
+                    enclosed.Push('3');
+                    nextPosition = position + 3;
+                    goto AddString;
+                }
+                else if (currentChar == OpenBracket ||
+                    (currentChar == Quote && lastChar != '\\') ||
+                    (currentChar == SingleQuote && lastChar != '\\'))
+                {// { or " (not \") or '" (not \')
+                    enclosed.Push(currentChar);
+                    nextPosition = position + 1;
+                    goto AddString;
+                }
+                else if (currentChar == CloseBracket)
+                {// }
+                    nextPosition = position + 1;
+                    goto AddString;
+                }
+            }
+            else
+            {
+                var peek = enclosed.Peek();
+
+                if (currentChar == Quote &&
+                    (position + 2) < span.Length &&
+                    span[position + 1] == Quote &&
+                    span[position + 2] == Quote)
+                {// """
+                    var index = 3;
+                    while ((position + index) < span.Length &&
+                        span[position + index] == Quote)
+                    {
+                        index++;
+                    }
+
+                    if (enclosed.Peek() == '3')
+                    {// """abc"""
+                        enclosed.Pop();
+                        if (enclosed.Count == 0)
+                        {
+                            position += index;
+                            nextPosition = position;
+                            goto AddString;
+                        }
+                    }
+                    else
+                    {// { """A
+                        enclosed.Push(currentChar);
+                    }
+                }
+                else if (currentChar == Quote && lastChar != '\\')
+                {// " (not \")
+                    if (peek == Quote)
+                    {// "-arg {-test "A"} "
+                        enclosed.Pop();
+                        if (enclosed.Count == 0)
+                        {
+                            nextPosition = ++position;
+                            goto AddString;
+                        }
+                    }
+                    else if (peek == '3')
+                    {
+                    }
+                    else
+                    {
+                        enclosed.Push(currentChar);
+                    }
+                }
+                else if (currentChar == SingleQuote && lastChar != '\\')
+                {// ' (not \')
+                    if (peek == SingleQuote)
+                    {// '-arg {-test "A"} '
+                        enclosed.Pop();
+                        if (enclosed.Count == 0)
+                        {
+                            nextPosition = ++position;
+                            goto AddString;
+                        }
+                    }
+                    else if (peek == '3')
+                    {
+                    }
+                    else
+                    {
+                        enclosed.Push(currentChar);
+                    }
+                }
+                else if (currentChar == CloseBracket)
+                {// }
+                    if (peek == OpenBracket)
+                    {// {-test "A"}
+                        enclosed.Pop();
+                        if (enclosed.Count == 0)
+                        {
+                            nextPosition = ++position;
+                            goto AddString;
+                        }
+                    }
+                }
+                else if (currentChar == OpenBracket)
+                {
+                    if (peek == OpenBracket)
+                    {
+                        enclosed.Push(currentChar);
+                    }
+                }
+            }
+
+            position++;
+            continue;
+
+AddString:
+            if (start < position)
+            { // Add string
+                var s = span[start..position].ToString().Trim();
+                if (s.Length > 0)
+                {
+                    list.Add(s);
+                }
+            }
+
+            if (currentChar == Separator)
+            {
+                list.Add(SeparatorString);
+                position++;
+                nextPosition++;
+            }
+
+            start = position;
+            position = nextPosition;
+        }
+
+        if (start < position && position <= span.Length)
+        { // Add string
+            var s = span[start..position].ToString().Trim();
+            if (s.Length > 0)
+            {
+                list.Add(s);
+            }
+        }
+
+        return list.ToArray();
     }
 }
