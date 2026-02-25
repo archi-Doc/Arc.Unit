@@ -60,12 +60,19 @@ public partial class SimpleLogFormatter
 
         // Level
         this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
-        sb.Append(' ');
 
         // Source(EventId)
         // var position = sb.Length;
-        string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name; // DefaultLogText
-        this.WriteColoredMessage(sb, source, ConsoleHelper.DefaultColor, sourceColor);
+        // string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name;
+        if (param.LogSourceType == typeof(DefaultLog))
+        {
+        }
+        else
+        {
+            sb.Append(' ');
+            this.WriteColoredMessage(sb, param.LogSourceType.Name, ConsoleHelper.DefaultColor, sourceColor);
+        }
+
         if (param.EventId != 0 && this.options.EventIdFormat is not null)
         {
             sb.Append($"({param.EventId.ToString(this.options.EventIdFormat)})");
@@ -199,7 +206,7 @@ public partial class SimpleLogFormatter
             LogLevel.Debug => new ConsoleColorPair(ConsoleColor.Gray, ConsoleColor.Black),
             LogLevel.Information => new ConsoleColorPair(ConsoleColor.White, ConsoleColor.Black),
             LogLevel.Warning => new ConsoleColorPair(ConsoleColor.Yellow, ConsoleColor.Black),
-            LogLevel.Error => new ConsoleColorPair(ConsoleColor.White, ConsoleColor.DarkRed),
+            LogLevel.Error => new ConsoleColorPair(ConsoleColor.Red, ConsoleColor.Black),
             LogLevel.Fatal => new ConsoleColorPair(ConsoleColor.White, ConsoleColor.DarkRed),
             _ => new ConsoleColorPair(ConsoleHelper.DefaultColor, ConsoleHelper.DefaultColor),
         };

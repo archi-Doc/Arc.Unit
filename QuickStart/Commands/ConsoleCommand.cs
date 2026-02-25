@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Unit;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
 namespace QuickStart;
@@ -30,9 +31,13 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.logger.TryGet(LogLevel.Debug)?.Log("Start");
         this.consoleService.WriteLine("Console test");
 
+        this.logger.TryGet(LogLevel.Debug)?.Log("Debug");
+        this.logger.TryGet(LogLevel.Information)?.Log("Information");
+        this.logger.TryGet(LogLevel.Warning)?.Log("Warning");
         this.logger.TryGet(LogLevel.Error)?.Log("Log filter test: Error -> Fatal");
         this.logger.TryGet(LogLevel.Fatal)?.Log("Log filter test: Fatal -> Error");
 
+        this.unitContext.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>().TryGet()?.Log("---");
         this.logger.TryGet(LogLevel.Debug)?.Log("End");
     }
 }
