@@ -13,13 +13,13 @@ public class ConsoleService : IConsoleService
     {
     }
 
-    public void Write(string? message = null, ConsoleColor color = ConsoleColor.Black)
+    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
         if (string.IsNullOrEmpty(message))
         {
             return;
         }
-        else if (!this.EnableColor || color == ConsoleColor.Black)
+        else if (!this.EnableColor || color == ConsoleHelper.DefaultColor)
         {
             try
             {
@@ -62,9 +62,9 @@ public class ConsoleService : IConsoleService
         }
     }
 
-    public void WriteLine(string? message = null, ConsoleColor color = ConsoleColor.Black)
+    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleColor.Black)
+        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleHelper.DefaultColor)
         {
             try
             {
