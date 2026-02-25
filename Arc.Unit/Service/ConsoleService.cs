@@ -4,10 +4,10 @@ using System.Buffers;
 
 namespace Arc.Unit;
 
-internal class ConsoleService : IConsoleService
+public class ConsoleService : IConsoleService
 {
     private const int StackallocThreshold = 1024;
-    private const int ColorMargin = 16;
+    private const int BufferMargin = 16;
 
     public ConsoleService()
     {
@@ -32,7 +32,7 @@ internal class ConsoleService : IConsoleService
             return;
         }
 
-        var length = message.Length + ColorMargin;
+        var length = message.Length + BufferMargin;
         char[]? rent = null;
         Span<char> buffer = length <= StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
@@ -78,7 +78,7 @@ internal class ConsoleService : IConsoleService
             return;
         }
 
-        var length = message.Length + ColorMargin;
+        var length = message.Length + BufferMargin;
         char[]? rent = null;
         Span<char> buffer = length <= StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
