@@ -28,6 +28,17 @@ public partial class SimpleLogFormatter
         var logLevelColors = this.GetLogLevelConsoleColors(param.LogLevel);
         var logLevelString = this.GetLogLevelString(param.LogLevel);
 
+        // Colors
+        // var bracketColor = this.options.BracketColor;
+        var sourceColor = this.options.SourceColor;
+        var messageColor = this.options.MessageColor;
+        if (param.LogLevel <= LogLevel.Debug)
+        {
+            // bracketColor = ConsoleColor.Gray;
+            sourceColor = ConsoleColor.Gray;
+            messageColor = ConsoleColor.Gray;
+        }
+
         // Timestamp
         var timestampFormat = this.options.TimestampFormat;
         if (timestampFormat != null)
@@ -44,30 +55,27 @@ public partial class SimpleLogFormatter
             sb.Append(' ');
         }
 
-        this.WriteColoredMessage(sb, "[", ConsoleHelper.DefaultColor, ConsoleColor.DarkGray); // sb.Append('[');
+        // this.WriteColoredMessage(sb, "[", ConsoleHelper.DefaultColor, bracketColor);
+        sb.Append('[');
 
         // Level
         this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
+        sb.Append(' ');
 
         // Source(EventId)
         // var position = sb.Length;
         string source = param.LogSourceType == typeof(DefaultLog) ? string.Empty : param.LogSourceType.Name; // DefaultLogText
-        if (param.EventId == 0 || this.options.EventIdFormat == null)
+        this.WriteColoredMessage(sb, source, ConsoleHelper.DefaultColor, sourceColor);
+        if (param.EventId != 0 && this.options.EventIdFormat is not null)
         {
-            if (!string.IsNullOrEmpty(source))
-            {
-                sb.Append($" {source}");
-            }
-        }
-        else
-        {
-            sb.Append($" {source}({param.EventId.ToString(this.options.EventIdFormat)})");
+            sb.Append($"({param.EventId.ToString(this.options.EventIdFormat)})");
         }
 
-        this.WriteColoredMessage(sb, "] ", ConsoleHelper.DefaultColor, ConsoleColor.DarkGray); // sb.Append("] ");
+        sb.Append("] ");
+        // this.WriteColoredMessage(sb, "]", ConsoleHelper.DefaultColor, bracketColor);
+        // sb.Append(' ');
 
         // Message
-        var messageColor = param.LogLevel > LogLevel.Debug ? ConsoleColor.White : ConsoleColor.Gray;
         this.WriteColoredMessage(sb, param.Message, ConsoleHelper.DefaultColor, messageColor);
     }
 
