@@ -11,13 +11,17 @@ public interface IConsoleService
     /// Writes the specified message to the console without a newline.
     /// </summary>
     /// <param name="message">The message to write. If null, nothing is written.</param>
-    public void Write(string? message = default);
+    /// <param name="color">Specify the message text color.<br/>
+    /// The color may not be applied depending on the implementation.</param>
+    public void Write(string? message = default, ConsoleColor color = ConsoleColor.Black);
 
     /// <summary>
     /// Writes the specified message to the console followed by a newline.
     /// </summary>
     /// <param name="message">The message to write. If null, only a newline is written.</param>
-    public void WriteLine(string? message = default);
+    /// <param name="color">Specify the message text color.<br/>
+    /// The color may not be applied depending on the implementation.</param>
+    public void WriteLine(string? message = default, ConsoleColor color = ConsoleColor.Black);
 
     /// <summary>
     /// Reads a line of text from the console asynchronously.

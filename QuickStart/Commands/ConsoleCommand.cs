@@ -23,7 +23,7 @@ public class ConsoleCommand : ISimpleCommandAsync
 
     public async Task RunAsync(string[] args)
     {
-        this.consoleService.WriteLine($"Name: {this.unitOptions.UnitName}");
+        this.consoleService.WriteLine($"Name: {this.unitOptions.UnitName}", ConsoleColor.Red);
         this.consoleService.WriteLine($"Directory: {this.unitContext.Options.ProgramDirectory}");
 
         this.logger.TryGet()?.Log("Console command");

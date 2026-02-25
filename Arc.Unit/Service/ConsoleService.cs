@@ -1,32 +1,111 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Buffers;
+
 namespace Arc.Unit;
 
 internal class ConsoleService : IConsoleService
 {
+    private const int StackallocThreshold = 1024;
+    private const int ColorMargin = 16;
+
     public ConsoleService()
     {
     }
 
-    public void Write(string? message = null)
+    public void Write(string? message = null, ConsoleColor color = ConsoleColor.Black)
     {
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+        else if (color == ConsoleColor.Black)
+        {
+            try
+            {
+                Console.Out.Write(message);
+            }
+            catch
+            {
+            }
+
+            return;
+        }
+
+        var length = message.Length + ColorMargin;
+        char[]? rent = null;
+        Span<char> buffer = length <= StackallocThreshold ?
+            stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
+
+        var destination = buffer;
+        var source = ConsoleHelper.GetForegroundColorEscapeCode(color).AsSpan();
+        source.CopyTo(destination);
+        destination = destination.Slice(source.Length);
+        message.AsSpan().CopyTo(destination);
+        destination = destination.Slice(message.Length);
+        source = ConsoleHelper.ResetSpan;
+        source.CopyTo(destination);
+        destination = destination.Slice(source.Length);
+
         try
         {
-            Console.Out.Write(message);
+            Console.Out.Write(destination);
         }
         catch
         {
+        }
+        finally
+        {
+            if (rent is not null)
+            {
+                ArrayPool<char>.Shared.Return(rent);
+            }
         }
     }
 
-    public void WriteLine(string? message = null)
+    public void WriteLine(string? message = null, ConsoleColor color = ConsoleColor.Black)
     {
+        if (string.IsNullOrEmpty(message) || color == ConsoleColor.Black)
+        {
+            try
+            {
+                Console.Out.WriteLine(message);
+            }
+            catch
+            {
+            }
+
+            return;
+        }
+
+        var length = message.Length + ColorMargin;
+        char[]? rent = null;
+        Span<char> buffer = length <= StackallocThreshold ?
+            stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
+
+        var destination = buffer;
+        var source = ConsoleHelper.GetForegroundColorEscapeCode(color).AsSpan();
+        source.CopyTo(destination);
+        destination = destination.Slice(source.Length);
+        message.AsSpan().CopyTo(destination);
+        destination = destination.Slice(message.Length);
+        source = ConsoleHelper.ResetSpan;
+        source.CopyTo(destination);
+        destination = destination.Slice(source.Length);
+
         try
         {
-            Console.Out.WriteLine(message);
+            Console.Out.WriteLine(buffer);
         }
         catch
         {
+        }
+        finally
+        {
+            if (rent is not null)
+            {
+                ArrayPool<char>.Shared.Return(rent);
+            }
         }
     }
 
