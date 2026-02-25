@@ -61,6 +61,7 @@ public class UnitBuilder
     private List<Action<IUnitConfigurationContext>> configureActions = new();
     private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
     private List<UnitBuilder> unitBuilders = new();
+    private Func<IServiceCollection, IServiceProvider> serviceProviderFactory = services => ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);
 
     #endregion
 
@@ -162,6 +163,11 @@ public class UnitBuilder
         return this.builtUnit;
     }
 
+    public void SetServiceProviderFactory(Func<IServiceCollection, IServiceProvider> factory)
+    {
+        this.serviceProviderFactory = factory;
+    }
+
     internal virtual TUnit Build<TUnit>(string[] args)
         where TUnit : UnitProduct
     {
@@ -215,7 +221,7 @@ public class UnitBuilder
         }
 
         // Create a service provider
-        var serviceProvider = builderContext.Services.BuildServiceProvider();
+        var serviceProvider = this.serviceProviderFactory(builderContext.Services);
         builderContext.ServiceProvider = serviceProvider;
 
         // BuilderContext to UnitContext.
