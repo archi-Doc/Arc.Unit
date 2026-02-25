@@ -45,11 +45,10 @@ public class ConsoleService : IConsoleService
         destination = destination.Slice(message.Length);
         source = ConsoleHelper.ResetSpan;
         source.CopyTo(destination);
-        destination = destination.Slice(source.Length);
 
         try
         {
-            Console.Out.Write(destination);
+            Console.Out.Write(buffer);
         }
         catch
         {
@@ -91,7 +90,6 @@ public class ConsoleService : IConsoleService
         destination = destination.Slice(message.Length);
         source = ConsoleHelper.ResetSpan;
         source.CopyTo(destination);
-        destination = destination.Slice(source.Length);
 
         try
         {
