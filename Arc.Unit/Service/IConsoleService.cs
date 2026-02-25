@@ -41,4 +41,9 @@ public interface IConsoleService
     /// Gets a value indicating whether a key press is available to be read.
     /// </summary>
     public bool KeyAvailable { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether colored output is enabled for the console.
+    /// </summary>
+    public bool EnableColor { get; set; }
 }

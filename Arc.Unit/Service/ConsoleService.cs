@@ -19,7 +19,7 @@ internal class ConsoleService : IConsoleService
         {
             return;
         }
-        else if (color == ConsoleColor.Black)
+        else if (!this.EnableColor || color == ConsoleColor.Black)
         {
             try
             {
@@ -65,7 +65,7 @@ internal class ConsoleService : IConsoleService
 
     public void WriteLine(string? message = null, ConsoleColor color = ConsoleColor.Black)
     {
-        if (string.IsNullOrEmpty(message) || color == ConsoleColor.Black)
+        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleColor.Black)
         {
             try
             {
@@ -155,4 +155,6 @@ internal class ConsoleService : IConsoleService
             }
         }
     }
+
+    public bool EnableColor { get; set; } = true;
 }
