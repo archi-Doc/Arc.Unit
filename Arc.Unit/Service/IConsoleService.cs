@@ -11,13 +11,17 @@ public interface IConsoleService
     /// Writes the specified message to the console without a newline.
     /// </summary>
     /// <param name="message">The message to write. If null, nothing is written.</param>
-    public void Write(string? message = default);
+    /// <param name="color">Specify the message text color.<br/>
+    /// The color may not be applied depending on the implementation.</param>
+    public void Write(string? message = default, ConsoleColor color = ConsoleColor.Black);
 
     /// <summary>
     /// Writes the specified message to the console followed by a newline.
     /// </summary>
     /// <param name="message">The message to write. If null, only a newline is written.</param>
-    public void WriteLine(string? message = default);
+    /// <param name="color">Specify the message text color.<br/>
+    /// The color may not be applied depending on the implementation.</param>
+    public void WriteLine(string? message = default, ConsoleColor color = ConsoleColor.Black);
 
     /// <summary>
     /// Reads a line of text from the console asynchronously.
@@ -37,4 +41,9 @@ public interface IConsoleService
     /// Gets a value indicating whether a key press is available to be read.
     /// </summary>
     public bool KeyAvailable { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether colored output is enabled for the console.
+    /// </summary>
+    public bool EnableColor { get; set; }
 }
