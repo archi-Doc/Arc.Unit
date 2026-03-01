@@ -135,16 +135,16 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     void IUnitConfigurationContext.RegisterInstanceCreation<T>() => this.InstanceCreationSet.Add(typeof(T));
 
-    bool IUnitConfigurationContext.AddCommand(Type commandType)
+    bool IUnitConfigurationContext.AddCommand(Type commandType, ServiceLifetime lifetime)
     {
         var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup();
-        return group.AddCommand(commandType);
+        return group.AddCommand(commandType, lifetime);
     }
 
-    bool IUnitConfigurationContext.AddSubcommand(Type commandType)
+    bool IUnitConfigurationContext.AddSubcommand(Type commandType, ServiceLifetime lifetime)
     {
         var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetSubcommandGroup();
-        return group.AddCommand(commandType);
+        return group.AddCommand(commandType, lifetime);
     }
 
     #endregion

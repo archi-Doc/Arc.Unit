@@ -30,15 +30,17 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnit
     /// Adds a command type to the configuration context.
     /// </summary>
     /// <param name="commandType">The <see cref="Type"/> of the command to add.</param>
+    /// <param name="lifetime">The service lifetime for the command.</param>
     /// <returns><see langword="true"/> if the command was successfully added; otherwise, <see langword="false"/>.</returns>
-    bool AddCommand(Type commandType);
+    bool AddCommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
 
     /// <summary>
     /// Adds a subcommand type to the configuration context.
     /// </summary>
     /// <param name="commandType">The <see cref="Type"/> of the subcommand to add.</param>
+    /// <param name="lifetime">The service lifetime for the command.</param>
     /// <returns><see langword="true"/> if the subcommand was successfully added; otherwise, <see langword="false"/>.</returns>
-    bool AddSubcommand(Type commandType);
+    bool AddSubcommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
 
     /// <summary>
     /// Registers the specified type for instance creation.<br/>
