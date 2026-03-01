@@ -9,7 +9,7 @@ namespace Arc.Unit;
 
 /// <summary>
 /// Contextual information provided to <see cref="UnitBase"/>.<br/>
-/// In terms of DI, you should avoid using <see cref="UnitContext"/> if possible.
+/// <see cref="UnitContext"/> effectively shares singleton data, so avoid using it whenever possible.
 /// </summary>
 public sealed class UnitContext
 {

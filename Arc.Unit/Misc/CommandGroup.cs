@@ -1,5 +1,8 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace Arc.Unit;
 
 /// <summary>
@@ -20,8 +23,9 @@ public class CommandGroup
     /// Adds a command type to the <see cref="CommandGroup"/>.
     /// </summary>
     /// <param name="commandType">The command type.</param>
+    /// <param name="lifetime">The service lifetime for the command.</param>
     /// <returns><see langword="true"/>: Successfully added.</returns>
-    public bool AddCommand(Type commandType)
+    public bool AddCommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
         if (this.commandSet.Contains(commandType))
         {
@@ -29,7 +33,8 @@ public class CommandGroup
         }
         else
         {
-            this.context.TryAddSingleton(commandType);
+            // this.context.TryAddSingleton(commandType);
+            this.context.Services.TryAdd(ServiceDescriptor.Describe(commandType, commandType, lifetime));
             this.commandSet.Add(commandType);
             this.commandList.Add(commandType);
             return true;

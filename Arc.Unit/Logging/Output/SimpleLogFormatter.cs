@@ -34,9 +34,12 @@ public partial class SimpleLogFormatter
         var messageColor = this.options.MessageColor;
         if (param.LogLevel <= LogLevel.Debug)
         {
-            // bracketColor = ConsoleColor.Gray;
             sourceColor = ConsoleColor.Gray;
             messageColor = ConsoleColor.Gray;
+        }
+        else if (param.LogLevel >= LogLevel.Error)
+        {
+            messageColor = ConsoleColor.Red;
         }
 
         // Timestamp
