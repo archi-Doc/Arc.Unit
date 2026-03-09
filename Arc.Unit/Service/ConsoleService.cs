@@ -13,9 +13,9 @@ public class ConsoleService : IConsoleService
     {
     }
 
-    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void Write(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message.IsEmpty)
         {
             return;
         }
@@ -41,7 +41,7 @@ public class ConsoleService : IConsoleService
         var source = ConsoleHelper.GetForegroundColorEscapeCode(color).AsSpan();
         source.CopyTo(destination);
         destination = destination.Slice(source.Length);
-        message.AsSpan().CopyTo(destination);
+        message.CopyTo(destination);
         destination = destination.Slice(message.Length);
         source = ConsoleHelper.ResetSpan;
         source.CopyTo(destination);
@@ -62,9 +62,9 @@ public class ConsoleService : IConsoleService
         }
     }
 
-    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleHelper.DefaultColor)
+        if (message.IsEmpty || !this.EnableColor || color == ConsoleHelper.DefaultColor)
         {
             try
             {
@@ -86,7 +86,7 @@ public class ConsoleService : IConsoleService
         var source = ConsoleHelper.GetForegroundColorEscapeCode(color).AsSpan();
         source.CopyTo(destination);
         destination = destination.Slice(source.Length);
-        message.AsSpan().CopyTo(destination);
+        message.CopyTo(destination);
         destination = destination.Slice(message.Length);
         source = ConsoleHelper.ResetSpan;
         source.CopyTo(destination);
