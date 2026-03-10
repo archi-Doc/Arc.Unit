@@ -13,9 +13,12 @@ public class LogService : ILogService
 
     private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
 
-    public LogService(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
+    public LogUnit LogUnit { get; }
+
+    public LogService(UnitContext unitContext, LogUnit logUnit, IServiceProvider serviceProvider, IConsoleService consoleService)
     {
         this.loggerResolvers = unitContext.LoggerResolvers;
+        this.LogUnit = logUnit;
         this.serviceProvider = serviceProvider;
         this.consoleService = consoleService;
     }
