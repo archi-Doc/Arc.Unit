@@ -40,7 +40,7 @@ public class LogService : ILogService
                 if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
                 {
                     var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LogInstance(this, x.LogSourceType, x.LogLevel, logOutput, logFilter);
+                    return new LogWriter(this, x.LogSourceType, x.LogLevel, logOutput, logFilter);
                 }
             }
 

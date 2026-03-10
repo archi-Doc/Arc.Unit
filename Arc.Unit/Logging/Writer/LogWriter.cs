@@ -4,9 +4,9 @@ using System.Collections.Concurrent;
 
 namespace Arc.Unit;
 
-internal class LogInstance : ILogWriter
+internal class LogWriter : ILogWriter
 {
-    public LogInstance(ILogService logService, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
+    public LogWriter(ILogService logService, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
         this.logService = logService;
         this.OutputType = logOutput.GetType();
@@ -46,7 +46,7 @@ internal class LogInstance : ILogWriter
         LogEvent param = new(this.logService, this.logSourceType, this.logLevel, eventId, message);
         if (this.filterDelegate != null)
         {// Filter -> Log
-            if (this.filterDelegate(new(this.logService, this.logSourceType, this.logLevel, eventId, this)) is LogInstance loggerInstance)
+            if (this.filterDelegate(new(this.logService, this.logSourceType, this.logLevel, eventId, this)) is LogWriter loggerInstance)
             {
                 loggerInstance.logDelegate(new(this.logService, this.logSourceType, loggerInstance.logLevel, eventId, message));
             }
