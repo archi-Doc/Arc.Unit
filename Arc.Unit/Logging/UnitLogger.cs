@@ -70,6 +70,14 @@ public class UnitLogger
         private UnitLogger unitLogger;
     }
 
+    internal UnitContext UnitContext { get; }
+
+    private LogContext logContext;
+    private IServiceProvider serviceProvider;
+    private LoggerResolverDelegate[] loggerResolvers;
+    private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
+    private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
+
     public UnitLogger(UnitContext context)
     {
         this.UnitContext = context;
@@ -146,12 +154,4 @@ public class UnitLogger
             await x.Flush(true).ConfigureAwait(false);
         }
     }
-
-    internal UnitContext UnitContext { get; }
-
-    private LogContext logContext;
-    private IServiceProvider serviceProvider;
-    private LoggerResolverDelegate[] loggerResolvers;
-    private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
-    private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
 }
