@@ -116,7 +116,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.consoleUnit = consoleUnit;
         }
 
-        public ILogWriter? Filter(LogFilterParameter param)
+        public LogWriter? Filter(LogFilterParameter param)
         {// Log source/Event id/LogLevel -> Filter() -> ILog
             if (param.LogSourceType == typeof(ConsoleCommand))
             {

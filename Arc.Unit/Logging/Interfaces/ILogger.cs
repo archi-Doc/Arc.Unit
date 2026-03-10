@@ -9,11 +9,11 @@ namespace Arc.Unit;
 public interface ILogger
 {
     /// <summary>
-    /// Try to get <see cref="ILogWriter"/> instance from the log source and <see cref="LogLevel"/>.
+    /// Try to get <see cref="LogWriter"/> instance from the log source and <see cref="LogLevel"/>.
     /// </summary>
     /// <param name="logLevel">The log level.</param>
-    /// <returns><see cref="ILogWriter"/> instance.</returns>
-    public ILogWriter? TryGet(LogLevel logLevel = LogLevel.Information);
+    /// <returns><see cref="LogWriter"/> instance.</returns>
+    public LogWriter? TryGet(LogLevel logLevel = LogLevel.Information);
 }
 
 /// <summary>

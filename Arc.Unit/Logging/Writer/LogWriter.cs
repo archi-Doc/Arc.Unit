@@ -53,15 +53,15 @@ internal class LogBroker
     public ILogFilter.FilterDelegate? FilterDelegate { get; }
 }
 
-internal class LogWriter : ILogWriter
+public readonly record struct LogWriter // : ILogWriter
 {
-    public LogWriter(ILogService logService, LogBroker logBroker)
+    internal LogWriter(ILogService logService, LogBroker logBroker)
     {
         this.logService = logService;
         this.logBroker = logBroker;
     }
 
-    public void Log(string message, long eventId)
+    public void Log(string message, long eventId = default)
     {
         var broker = this.logBroker;
         LogEvent param = new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, message);

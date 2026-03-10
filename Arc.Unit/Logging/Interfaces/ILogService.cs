@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public interface ILogService
 {
-    ILogWriter? GetLogWriter<TLogOutput>(LogLevel logLevel = LogLevel.Information);
+    LogWriter? GetLogWriter<TLogOutput>(LogLevel logLevel = LogLevel.Information);
 
     ILogger<TLogSource> GetLogger<TLogSource>();
 

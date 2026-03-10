@@ -23,7 +23,7 @@ public class LogService : ILogService
     public ILogger<TLogSource> GetLogger<TLogSource>()
        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
 
-    public ILogWriter? GetLogWriter<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    public LogWriter? GetLogWriter<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         var broker = this.LogUnit.GetLogBroker<TLogSource>(logLevel);
         if (broker is null)

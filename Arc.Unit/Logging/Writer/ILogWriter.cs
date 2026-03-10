@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-/// <summary>
+/*/// <summary>
 /// Interface for log writing.<br/>
 /// Log levels and log output are fixed.
 /// </summary>
@@ -16,4 +16,4 @@ public interface ILogWriter
     public void Log(string message, long eventId = default);
 
     public Type OutputType { get; }
-}
+}*/
