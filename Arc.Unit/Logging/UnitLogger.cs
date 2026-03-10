@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
-public class UnitLogger
+public class UnitLogger : ILogContext
 {
     internal static long OffsetTicks { get; private set; }
 
@@ -47,45 +47,24 @@ public class UnitLogger
         });
     }
 
-    private class LogContext : ILogContext
-    {
-        public LogContext(UnitLogger unitLogger)
-        {
-            this.unitLogger = unitLogger;
-        }
-
-        ILogWriter? ILogContext.TryGet<TLogOutput>(LogLevel logLevel)
-        {
-            return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), logLevel), x =>
-            {
-                if (this.unitLogger.serviceProvider.GetService(x.LogSourceType) is ILogOutput logOutput)
-                {
-                    return new LogInstance(this, null!, x.LogLevel, logOutput, null);
-                }
-
-                return null;
-            });
-        }
-
-        IConsoleService ILogContext.ConsoleService => this.unitLogger.consoleService;
-
-        private UnitLogger unitLogger;
-    }
+    #region FieldAndProperty
 
     private readonly IConsoleService consoleService;
     private readonly LoggerResolverDelegate[] loggerResolvers;
 
-    private LogContext logContext;
     private IServiceProvider serviceProvider;
     private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
+
+    public IConsoleService ConsoleService => this.consoleService;
+
+    #endregion
 
     public UnitLogger(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
     {
         this.loggerResolvers = unitContext.LoggerResolvers;
         this.serviceProvider = serviceProvider;
         this.consoleService = consoleService;
-        this.logContext = new(this);
     }
 
     public ILogger<TLogSource> GetLogger<TLogSource>()
@@ -110,7 +89,7 @@ public class UnitLogger
                 if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
                 {
                     var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LogInstance(this.logContext, x.LogSourceType, x.LogLevel, logOutput, logFilter);
+                    return new LogInstance(this, x.LogSourceType, x.LogLevel, logOutput, logFilter);
                 }
             }
 
