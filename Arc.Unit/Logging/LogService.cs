@@ -31,6 +31,6 @@ public class LogService : ILogService
             return default;
         }
 
-        return new LogWriter(this, broker);
+        return new(this, broker);
     }
 }
