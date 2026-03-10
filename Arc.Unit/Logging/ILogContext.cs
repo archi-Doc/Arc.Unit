@@ -6,5 +6,7 @@ public interface ILogContext
 {
     ILogWriter? TryGet<TLogOutput>(LogLevel logLevel = LogLevel.Information);
 
+    ILogger<TLogSource> GetLogger<TLogSource>();
+
     IConsoleService ConsoleService { get; }
 }

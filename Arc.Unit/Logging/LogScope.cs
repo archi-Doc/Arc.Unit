@@ -22,6 +22,9 @@ public class LogScope : ILogContext
 
     public IConsoleService ConsoleService => this.consoleService;
 
+    public ILogger<TLogSource> GetLogger<TLogSource>()
+       => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
+
     public ILogWriter? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>

@@ -53,21 +53,13 @@ public class LogUnit
 
     #region FieldAndProperty
 
-    private IServiceProvider serviceProvider;
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logOutputsToBeFlushed = new();
 
     #endregion
 
-    public LogUnit(IServiceProvider serviceProvider)
+    public LogUnit()
     {
-        this.serviceProvider = serviceProvider;
     }
-
-    public ILogger<TLogSource> GetLogger<TLogSource>()
-        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
-
-    public ILogger GetLogger(Type logSource)
-        => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
 
     public bool TryRegisterFlush(BufferedLogOutput logOutput)
         => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);
