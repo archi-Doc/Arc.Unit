@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public static class ILogExtentions
+public static class LogExtentions
 {
     public static void Log(this ILogWriter logger, string message)
         => logger.Log(0, message);
