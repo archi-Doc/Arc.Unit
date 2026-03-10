@@ -40,7 +40,7 @@ public class ConsoleLogger : BufferedLogOutput
         }
     }
 
-    public ConsoleLogger(UnitCore core, LoggerUnit unitLogger, ConsoleLoggerOptions options)
+    public ConsoleLogger(UnitCore core, LogUnit unitLogger, ConsoleLoggerOptions options)
         : base(unitLogger)
     {
         // Console

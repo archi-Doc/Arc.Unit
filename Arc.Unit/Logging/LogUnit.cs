@@ -2,51 +2,11 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Arc.Unit;
 
-public class LoggerScope : ILogContext
-{
-    private readonly LoggerResolverDelegate[] loggerResolvers;
-    private readonly IServiceProvider serviceProvider;
-    private readonly IConsoleService consoleService;
-
-    private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
-
-    public LoggerScope(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
-    {
-        this.loggerResolvers = unitContext.LoggerResolvers;
-        this.serviceProvider = serviceProvider;
-        this.consoleService = consoleService;
-    }
-
-    public IConsoleService ConsoleService => this.consoleService;
-
-    public ILogWriter? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    {
-        return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
-        {
-            LoggerResolverContext context = new(x);
-            for (var i = 0; i < this.loggerResolvers.Length; i++)
-            {
-                this.loggerResolvers[i](context);
-            }
-
-            if (context.LogOutputType is not null)
-            {
-                if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
-                {
-                    var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LogInstance(this, x.LogSourceType, x.LogLevel, logOutput, logFilter);
-                }
-            }
-
-            return null;
-        });
-    }
-}
-
-public class LoggerUnit
+public class LogUnit
 {
     internal static long OffsetTicks { get; private set; }
 
@@ -58,8 +18,11 @@ public class LoggerUnit
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
-        context.TryAddSingleton<LoggerUnit>();
-        context.TryAddScoped<LoggerScope>();
+        context.TryAddSingleton<LogUnit>();
+        context.TryAddScoped<LogScope>();
+        context.Services.TryAddScoped(typeof(ILogContext), sp => sp.GetRequiredService<LogScope>());
+
+        // ILogger
         context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
         context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
@@ -91,11 +54,11 @@ public class LoggerUnit
     #region FieldAndProperty
 
     private IServiceProvider serviceProvider;
-    private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
+    private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logOutputsToBeFlushed = new();
 
     #endregion
 
-    public LoggerUnit(IServiceProvider serviceProvider)
+    public LogUnit(IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
     }
@@ -106,12 +69,12 @@ public class LoggerUnit
     public ILogger GetLogger(Type logSource)
         => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
 
-    public bool TryRegisterFlush(BufferedLogOutput logFlush)
-        => this.logsToFlush.TryAdd(logFlush, logFlush);
+    public bool TryRegisterFlush(BufferedLogOutput logOutput)
+        => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);
 
     public async Task Flush()
     {
-        var logs = this.logsToFlush.Keys.ToArray();
+        var logs = this.logOutputsToBeFlushed.Keys.ToArray();
         foreach (var x in logs)
         {
             await x.Flush(false).ConfigureAwait(false);
@@ -120,7 +83,7 @@ public class LoggerUnit
 
     public async Task FlushConsole()
     {
-        var logs = this.logsToFlush.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
+        var logs = this.logOutputsToBeFlushed.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
         foreach (var x in logs)
         {
             await x.Flush(false).ConfigureAwait(false);
@@ -129,7 +92,7 @@ public class LoggerUnit
 
     public async Task FlushAndTerminate()
     {
-        var logs = this.logsToFlush.Keys.ToArray();
+        var logs = this.logOutputsToBeFlushed.Keys.ToArray();
         foreach (var x in logs)
         {
             await x.Flush(true).ConfigureAwait(false);

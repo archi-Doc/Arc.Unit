@@ -126,8 +126,8 @@ public class Program
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
         var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
 
-        var unitLogger = unit.Context.ServiceProvider.GetRequiredService<LoggerUnit>();
-        var logger = unitLogger.GetLogger<TestClass>();
+        var logUnit = unit.Context.ServiceProvider.GetRequiredService<LogUnit>();
+        var logger = logUnit.GetLogger<TestClass>();
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
@@ -153,7 +153,7 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        await unitLogger.FlushAndTerminate();
+        await logUnit.FlushAndTerminate();
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
     }

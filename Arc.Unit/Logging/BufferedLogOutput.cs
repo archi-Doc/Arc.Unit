@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public abstract class BufferedLogOutput : ILogOutput
 {
-    public BufferedLogOutput(LoggerUnit loggerUnit)
+    public BufferedLogOutput(LogUnit loggerUnit)
     {
         loggerUnit.TryRegisterFlush(this);
     }

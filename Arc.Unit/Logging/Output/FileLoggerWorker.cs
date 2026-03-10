@@ -16,7 +16,7 @@ internal class FileLoggerWorker : TaskCore
     private const int MaxFlush = 10_000;
     private const int LimitLogThreshold = 10_000;
 
-    public FileLoggerWorker(UnitCore core, LoggerUnit unitLogger, FileLoggerOptions options)
+    public FileLoggerWorker(UnitCore core, LogUnit unitLogger, FileLoggerOptions options)
         : base(core, Process, false)
     {
         this.logger = unitLogger.GetLogger<FileLoggerWorker>();

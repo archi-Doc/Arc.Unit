@@ -16,7 +16,7 @@ public interface IFileLogger
 public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     where TOption : FileLoggerOptions
 {
-    public FileLogger(UnitCore core, LoggerUnit unitLogger, TOption options)
+    public FileLogger(UnitCore core, LogUnit unitLogger, TOption options)
         : base(unitLogger)
     {
         if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
