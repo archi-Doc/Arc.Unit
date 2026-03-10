@@ -5,7 +5,48 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
-public class LoggerUnit : ILogContext
+public class LoggerScope : ILogContext
+{
+    private readonly LoggerResolverDelegate[] loggerResolvers;
+    private readonly IServiceProvider serviceProvider;
+    private readonly IConsoleService consoleService;
+
+    private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
+
+    public LoggerScope(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
+    {
+        this.loggerResolvers = unitContext.LoggerResolvers;
+        this.serviceProvider = serviceProvider;
+        this.consoleService = consoleService;
+    }
+
+    public IConsoleService ConsoleService => this.consoleService;
+
+    public ILogWriter? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    {
+        return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
+        {
+            LoggerResolverContext context = new(x);
+            for (var i = 0; i < this.loggerResolvers.Length; i++)
+            {
+                this.loggerResolvers[i](context);
+            }
+
+            if (context.LogOutputType is not null)
+            {
+                if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
+                {
+                    var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
+                    return new LogInstance(this, x.LogSourceType, x.LogLevel, logOutput, logFilter);
+                }
+            }
+
+            return null;
+        });
+    }
+}
+
+public class LoggerUnit
 {
     internal static long OffsetTicks { get; private set; }
 
@@ -18,9 +59,9 @@ public class LoggerUnit : ILogContext
     {
         // Main
         context.TryAddSingleton<LoggerUnit>();
-        context.Services.Add(ServiceDescriptor.Singleton<ILogWriter>(x => x.GetService<LoggerUnit>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(LoggerFactory<>)));
+        context.TryAddScoped<LoggerScope>();
+        context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
+        context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
         // Empty logger
         context.TryAddSingleton<EmptyLogger>();
@@ -49,22 +90,14 @@ public class LoggerUnit : ILogContext
 
     #region FieldAndProperty
 
-    private readonly IConsoleService consoleService;
-    private readonly LoggerResolverDelegate[] loggerResolvers;
-
     private IServiceProvider serviceProvider;
-    private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
-
-    public IConsoleService ConsoleService => this.consoleService;
 
     #endregion
 
-    public LoggerUnit(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
+    public LoggerUnit(IServiceProvider serviceProvider)
     {
-        this.loggerResolvers = unitContext.LoggerResolvers;
         this.serviceProvider = serviceProvider;
-        this.consoleService = consoleService;
     }
 
     public ILogger<TLogSource> GetLogger<TLogSource>()
@@ -72,40 +105,6 @@ public class LoggerUnit : ILogContext
 
     public ILogger GetLogger(Type logSource)
         => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
-
-    public ILogWriter? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    {
-        return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
-        {
-            LoggerResolverContext context = new(x);
-            var resolvers = this.loggerResolvers;
-            for (var i = 0; i < resolvers.Length; i++)
-            {
-                resolvers[i](context);
-            }
-
-            if (context.LogOutputType != null)
-            {
-                if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
-                {
-                    var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LogInstance(this, x.LogSourceType, x.LogLevel, logOutput, logFilter);
-                }
-            }
-
-            return null;
-        });
-    }
-
-    public ILogWriter Get<TLogSource>(LogLevel logLevel = LogLevel.Information)
-    {
-        if (this.TryGet<TLogSource>(logLevel) is { } logger)
-        {
-            return logger;
-        }
-
-        throw new LoggerNotFoundException(typeof(TLogSource), logLevel);
-    }
 
     public bool TryRegisterFlush(BufferedLogOutput logFlush)
         => this.logsToFlush.TryAdd(logFlush, logFlush);

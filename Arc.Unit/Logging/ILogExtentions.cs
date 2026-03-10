@@ -6,7 +6,4 @@ public static class ILogExtentions
 {
     public static void Log(this ILogWriter logger, string message)
         => logger.Log(0, message);
-
-    public static void Log(this ILogWriter logger, string message, Exception? exception)
-        => logger.Log(0, message, exception);
 }

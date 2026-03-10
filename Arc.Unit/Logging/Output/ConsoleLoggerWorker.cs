@@ -39,7 +39,7 @@ internal class ConsoleLoggerWorker : TaskCore
         while (count < MaxFlush && this.queue.TryDequeue(out var work))
         {
             count++;
-            this.consoleLogger.ConsoleService.WriteLine(this.consoleLogger.Formatter.Format(work.Parameter));
+            work.Parameter.LogContext.ConsoleService.WriteLine(this.consoleLogger.Formatter.Format(work.Parameter));
 
             /*try
             {// Console.WriteLine() might cause unexpected exceptions after console window is closed.

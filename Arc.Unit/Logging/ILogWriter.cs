@@ -13,8 +13,7 @@ public interface ILogWriter
     /// </summary>
     /// <param name="eventId">The event id.</param>
     /// <param name="message">The message.</param>
-    /// <param name="exception">The exception.</param>
-    public void Log(long eventId, string message, Exception? exception = null);
+    public void Log(long eventId, string message);
 
     public Type OutputType { get; }
 }
