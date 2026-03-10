@@ -29,7 +29,7 @@ public class LogScope : ILogService
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
-            LoggerResolverContext context = new(x);
+            var context = new LoggerResolverContext(x);
             for (var i = 0; i < this.loggerResolvers.Length; i++)
             {
                 this.loggerResolvers[i](context);

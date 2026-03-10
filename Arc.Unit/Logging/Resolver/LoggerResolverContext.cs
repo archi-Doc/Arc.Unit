@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public sealed class LoggerResolverContext
 {
-    public LoggerResolverContext(LogSourceLevelPair pair)
+    internal LoggerResolverContext(LogSourceLevelPair pair)
     {
         this.LogSourceType = pair.LogSourceType;
         this.LogLevel = pair.LogLevel;
