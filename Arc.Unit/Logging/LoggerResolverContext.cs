@@ -1,8 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Arc.Unit;
 
 public sealed class LoggerResolverContext
@@ -12,12 +9,6 @@ public sealed class LoggerResolverContext
         this.LogSourceType = pair.LogSourceType;
         this.LogLevel = pair.LogLevel;
     }
-
-    /*public LoggerResolverContext(Type logSourceType, LogLevel logLevel)
-    {
-        this.LogSourceType = logSourceType;
-        this.LogLevel = logLevel;
-    }*/
 
     public void SetOutput<TLogOutput>()
         where TLogOutput : ILogOutput
@@ -107,17 +98,6 @@ public sealed class LoggerResolverContext
         this.LogOutputType = null;
         this.LogFilterType = null;
     }
-
-    /*public void GetOptions<TOptions>(out TOptions options)
-        where TOptions : class
-        => options = this.unitLogger.ServiceProvider.GetRequiredService<TOptions>();
-
-    public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
-        where TOptions : class
-    {
-        options = this.unitLogger.UnitContext.ServiceProvider.GetService<TOptions>();
-        return options != null;
-    }*/
 
     public Type LogSourceType { get; }
 
