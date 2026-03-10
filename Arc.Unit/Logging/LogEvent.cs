@@ -11,7 +11,7 @@ public readonly struct LogEvent : IEquatable<LogEvent>
         this.EventId = eventId;
         this.Message = message;
         this.Exception = exception;
-        this.DateTime = DateTimeOffset.UtcNow.AddTicks(UnitLogger.OffsetTicks);
+        this.DateTime = DateTimeOffset.UtcNow.AddTicks(LoggerUnit.OffsetTicks);
     }
 
     public readonly Type LogSourceType;

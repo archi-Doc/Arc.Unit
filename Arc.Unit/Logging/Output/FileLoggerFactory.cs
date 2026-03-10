@@ -7,7 +7,7 @@ namespace Arc.Unit;
 internal class FileLoggerFactory<TOption> : FileLogger<TOption>
     where TOption : FileLoggerOptions
 {
-    public FileLoggerFactory(UnitCore core, UnitLogger unitLogger, TOption options)
+    public FileLoggerFactory(UnitCore core, LoggerUnit unitLogger, TOption options)
         : base(core, unitLogger, options)
     {
     }

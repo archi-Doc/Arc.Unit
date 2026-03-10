@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
-public class UnitLogger : ILogContext
+public class LoggerUnit : ILogContext
 {
     internal static long OffsetTicks { get; private set; }
 
@@ -17,8 +17,8 @@ public class UnitLogger : ILogContext
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
-        context.TryAddSingleton<UnitLogger>();
-        context.Services.Add(ServiceDescriptor.Singleton<ILogWriter>(x => x.GetService<UnitLogger>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
+        context.TryAddSingleton<LoggerUnit>();
+        context.Services.Add(ServiceDescriptor.Singleton<ILogWriter>(x => x.GetService<LoggerUnit>()?.Get<DefaultLog>() ?? throw new LoggerNotFoundException(typeof(DefaultLog), LogLevel.Information)));
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
         context.Services.Add(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
@@ -60,7 +60,7 @@ public class UnitLogger : ILogContext
 
     #endregion
 
-    public UnitLogger(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
+    public LoggerUnit(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
     {
         this.loggerResolvers = unitContext.LoggerResolvers;
         this.serviceProvider = serviceProvider;
