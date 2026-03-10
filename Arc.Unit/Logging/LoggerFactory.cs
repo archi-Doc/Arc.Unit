@@ -4,13 +4,13 @@ namespace Arc.Unit;
 
 internal class LoggerFactory<TLogSource> : ILogger<TLogSource>
 {
-    public LoggerFactory(UnitLogger logger)
+    public LoggerFactory(UnitLogger unitLogger)
     {
-        this.logger = logger;
+        this.unitLogger = unitLogger;
     }
 
     public ILogWriter? TryGet(LogLevel logLevel = LogLevel.Information)
-        => this.logger.TryGet<TLogSource>(logLevel);
+        => this.unitLogger.TryGet<TLogSource>(logLevel);
 
-    private readonly UnitLogger logger;
+    private readonly UnitLogger unitLogger;
 }
