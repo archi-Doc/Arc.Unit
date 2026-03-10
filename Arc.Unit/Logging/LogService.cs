@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
-public class LogScope : ILogService
+public class LogService : ILogService
 {
     private readonly LoggerResolverDelegate[] loggerResolvers;
     private readonly IServiceProvider serviceProvider;
@@ -13,7 +13,7 @@ public class LogScope : ILogService
 
     private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
 
-    public LogScope(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
+    public LogService(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
     {
         this.loggerResolvers = unitContext.LoggerResolvers;
         this.serviceProvider = serviceProvider;

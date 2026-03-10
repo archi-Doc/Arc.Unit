@@ -6,9 +6,9 @@ namespace Arc.Unit;
 
 internal class LogInstance : ILogWriter
 {
-    public LogInstance(ILogService context, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
+    public LogInstance(ILogService logService, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
-        this.context = context;
+        this.logService = logService;
         this.OutputType = logOutput.GetType();
         this.logSourceType = logSourceType;
         this.logLevel = logLevel;
@@ -43,12 +43,12 @@ internal class LogInstance : ILogWriter
 
     public void Log(string message, long eventId)
     {
-        LogEvent param = new(this.context, this.logSourceType, this.logLevel, eventId, message);
+        LogEvent param = new(this.logService, this.logSourceType, this.logLevel, eventId, message);
         if (this.filterDelegate != null)
         {// Filter -> Log
-            if (this.filterDelegate(new(this.context, this.logSourceType, this.logLevel, eventId, this)) is LogInstance loggerInstance)
+            if (this.filterDelegate(new(this.logService, this.logSourceType, this.logLevel, eventId, this)) is LogInstance loggerInstance)
             {
-                loggerInstance.logDelegate(new(this.context, this.logSourceType, loggerInstance.logLevel, eventId, message));
+                loggerInstance.logDelegate(new(this.logService, this.logSourceType, loggerInstance.logLevel, eventId, message));
             }
         }
         else
@@ -61,7 +61,7 @@ internal class LogInstance : ILogWriter
 
     public Type OutputType { get; }
 
-    private ILogService context;
+    private ILogService logService;
     private Type logSourceType;
     private LogLevel logLevel;
     private ILogOutput.OutputDelegate logDelegate;

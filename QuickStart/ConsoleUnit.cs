@@ -123,11 +123,11 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 // return null; // No log
                 if (param.LogLevel == LogLevel.Error)
                 {
-                    return param.Context.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+                    return param.LogService.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
                 }
                 else if (param.LogLevel == LogLevel.Fatal)
                 {
-                    return param.Context.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
+                    return param.LogService.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
                 }
             }
 
