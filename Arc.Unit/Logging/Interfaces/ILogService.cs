@@ -2,9 +2,9 @@
 
 namespace Arc.Unit;
 
-public interface ILogContext
+public interface ILogService
 {
-    ILogWriter? TryGet<TLogOutput>(LogLevel logLevel = LogLevel.Information);
+    ILogWriter? GetLogWriter<TLogOutput>(LogLevel logLevel = LogLevel.Information);
 
     ILogger<TLogSource> GetLogger<TLogSource>();
 

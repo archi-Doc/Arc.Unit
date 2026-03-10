@@ -10,7 +10,7 @@ internal class LoggerFactory<TLogSource> : ILogger<TLogSource>
     }
 
     public ILogWriter? TryGet(LogLevel logLevel = LogLevel.Information)
-        => this.loggerScope.TryGet<TLogSource>(logLevel);
+        => this.loggerScope.GetLogWriter<TLogSource>(logLevel);
 
     private readonly LogScope loggerScope;
 }

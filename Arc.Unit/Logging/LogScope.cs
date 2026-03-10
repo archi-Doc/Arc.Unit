@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
-public class LogScope : ILogContext
+public class LogScope : ILogService
 {
     private readonly LoggerResolverDelegate[] loggerResolvers;
     private readonly IServiceProvider serviceProvider;
@@ -25,7 +25,7 @@ public class LogScope : ILogContext
     public ILogger<TLogSource> GetLogger<TLogSource>()
        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
 
-    public ILogWriter? TryGet<TLogSource>(LogLevel logLevel = LogLevel.Information)
+    public ILogWriter? GetLogWriter<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {

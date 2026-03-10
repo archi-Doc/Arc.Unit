@@ -127,7 +127,7 @@ public class Program
         var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
 
         var logUnit = unit.Context.ServiceProvider.GetRequiredService<LogUnit>();
-        var logContext = unit.Context.ServiceProvider.GetRequiredService<ILogContext>();
+        var logContext = unit.Context.ServiceProvider.GetRequiredService<ILogService>();
         var logger = logContext.GetLogger<TestClass>();
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();

@@ -6,7 +6,7 @@ namespace Arc.Unit;
 
 internal class LogInstance : ILogWriter
 {
-    public LogInstance(ILogContext context, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
+    public LogInstance(ILogService context, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
         this.context = context;
         this.OutputType = logOutput.GetType();
@@ -61,7 +61,7 @@ internal class LogInstance : ILogWriter
 
     public Type OutputType { get; }
 
-    private ILogContext context;
+    private ILogService context;
     private Type logSourceType;
     private LogLevel logLevel;
     private ILogOutput.OutputDelegate logDelegate;
