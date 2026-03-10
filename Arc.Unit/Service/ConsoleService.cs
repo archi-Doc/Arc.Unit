@@ -13,9 +13,9 @@ public class ConsoleService : IConsoleService
     {
     }
 
-    public void Write(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void Write(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (message.IsEmpty)
+        if (string.IsNullOrEmpty(message))
         {
             return;
         }
@@ -62,9 +62,9 @@ public class ConsoleService : IConsoleService
         }
     }
 
-    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (message.IsEmpty || !this.EnableColor || color == ConsoleHelper.DefaultColor)
+        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleHelper.DefaultColor)
         {
             try
             {
