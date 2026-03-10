@@ -54,7 +54,7 @@ public class UnitLogger
             this.unitLogger = unitLogger;
         }
 
-        public ILogWriter? TryGet<TLogOutput>(LogLevel logLevel)
+        ILogWriter? ILogContext.TryGet<TLogOutput>(LogLevel logLevel)
         {
             return this.unitLogger.sourceLevelToLogger.GetOrAdd(new(typeof(TLogOutput), logLevel), x =>
             {
@@ -67,23 +67,26 @@ public class UnitLogger
             });
         }
 
+        IConsoleService ILogContext.ConsoleService => this.unitLogger.ConsoleService;
+
         private UnitLogger unitLogger;
     }
 
     internal UnitContext UnitContext { get; }
 
+    internal IConsoleService ConsoleService { get; }
+
     private LogContext logContext;
     private IServiceProvider serviceProvider;
-    private LoggerResolverDelegate[] loggerResolvers;
     private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
 
-    public UnitLogger(UnitContext context)
+    public UnitLogger(UnitContext context, IConsoleService consoleService)
     {
         this.UnitContext = context;
+        this.ConsoleService = consoleService;
         this.logContext = new(this);
         this.serviceProvider = context.ServiceProvider;
-        this.loggerResolvers = (LoggerResolverDelegate[])context.LoggerResolvers.Clone();
     }
 
     public ILogger<TLogSource> GetLogger<TLogSource>()
@@ -97,9 +100,10 @@ public class UnitLogger
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
             LoggerResolverContext context = new(this, x);
-            for (var i = 0; i < this.loggerResolvers.Length; i++)
+            var resolvers = this.UnitContext.LoggerResolvers;
+            for (var i = 0; i < resolvers.Length; i++)
             {
-                this.loggerResolvers[i](context);
+                resolvers[i](context);
             }
 
             if (context.LogOutputType != null)
