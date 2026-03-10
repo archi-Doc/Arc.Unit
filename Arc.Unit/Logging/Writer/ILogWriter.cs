@@ -11,9 +11,9 @@ public interface ILogWriter
     /// <summary>
     /// Send a log to the log output.
     /// </summary>
-    /// <param name="eventId">The event id.</param>
     /// <param name="message">The message.</param>
-    public void Log(long eventId, string message);
+    /// <param name="eventId">The event id.</param>
+    public void Log(string message, long eventId = default);
 
     public Type OutputType { get; }
 }
