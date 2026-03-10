@@ -67,26 +67,25 @@ public class UnitLogger
             });
         }
 
-        IConsoleService ILogContext.ConsoleService => this.unitLogger.ConsoleService;
+        IConsoleService ILogContext.ConsoleService => this.unitLogger.consoleService;
 
         private UnitLogger unitLogger;
     }
 
-    internal UnitContext UnitContext { get; }
-
-    internal IConsoleService ConsoleService { get; }
+    private readonly IConsoleService consoleService;
+    private readonly LoggerResolverDelegate[] loggerResolvers;
 
     private LogContext logContext;
     private IServiceProvider serviceProvider;
     private ConcurrentDictionary<LogSourceLevelPair, ILogWriter?> sourceLevelToLogger = new();
     private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logsToFlush = new();
 
-    public UnitLogger(UnitContext context, IConsoleService consoleService)
+    public UnitLogger(UnitContext unitContext, IServiceProvider serviceProvider, IConsoleService consoleService)
     {
-        this.UnitContext = context;
-        this.ConsoleService = consoleService;
+        this.loggerResolvers = unitContext.LoggerResolvers;
+        this.serviceProvider = serviceProvider;
+        this.consoleService = consoleService;
         this.logContext = new(this);
-        this.serviceProvider = context.ServiceProvider;
     }
 
     public ILogger<TLogSource> GetLogger<TLogSource>()
@@ -99,8 +98,8 @@ public class UnitLogger
     {
         return this.sourceLevelToLogger.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
         {
-            LoggerResolverContext context = new(this, x);
-            var resolvers = this.UnitContext.LoggerResolvers;
+            LoggerResolverContext context = new(x);
+            var resolvers = this.loggerResolvers;
             for (var i = 0; i < resolvers.Length; i++)
             {
                 resolvers[i](context);

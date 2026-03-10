@@ -7,9 +7,8 @@ namespace Arc.Unit;
 
 public sealed class LoggerResolverContext
 {
-    public LoggerResolverContext(UnitLogger unitLogger, LogSourceLevelPair pair)
+    public LoggerResolverContext(LogSourceLevelPair pair)
     {
-        this.unitLogger = unitLogger;
         this.LogSourceType = pair.LogSourceType;
         this.LogLevel = pair.LogLevel;
     }
@@ -109,16 +108,16 @@ public sealed class LoggerResolverContext
         this.LogFilterType = null;
     }
 
-    public void GetOptions<TOptions>(out TOptions options)
+    /*public void GetOptions<TOptions>(out TOptions options)
         where TOptions : class
-        => options = this.unitLogger.UnitContext.ServiceProvider.GetRequiredService<TOptions>();
+        => options = this.unitLogger.ServiceProvider.GetRequiredService<TOptions>();
 
     public bool TryGetOptions<TOptions>([MaybeNullWhen(false)] out TOptions options)
         where TOptions : class
     {
         options = this.unitLogger.UnitContext.ServiceProvider.GetService<TOptions>();
         return options != null;
-    }
+    }*/
 
     public Type LogSourceType { get; }
 
@@ -127,6 +126,4 @@ public sealed class LoggerResolverContext
     public Type? LogOutputType { get; private set; }
 
     public Type? LogFilterType { get; private set; }
-
-    private UnitLogger unitLogger;
 }
