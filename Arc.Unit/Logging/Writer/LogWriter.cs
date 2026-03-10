@@ -4,16 +4,15 @@ using System.Collections.Concurrent;
 
 namespace Arc.Unit;
 
-internal class LogWriter : ILogWriter
+internal class LogBroker
 {
-    public LogWriter(ILogService logService, Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
+    public LogBroker(Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
-        this.logService = logService;
         this.OutputType = logOutput.GetType();
-        this.logSourceType = logSourceType;
-        this.logLevel = logLevel;
+        this.LogSourceType = logSourceType;
+        this.LogLevel = logLevel;
 
-        this.logDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(logOutput, static x =>
+        this.LogDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(logOutput, static x =>
         {
             var type = x.GetType();
             var method = type.GetMethod(nameof(ILogOutput.Output));
@@ -25,9 +24,9 @@ internal class LogWriter : ILogWriter
             return Delegate.CreateDelegate(typeof(ILogOutput.OutputDelegate), x, method);
         });
 
-        if (logFilter != null)
+        if (logFilter is not null)
         {
-            this.filterDelegate = (ILogFilter.FilterDelegate)delegateCache.GetOrAdd(logFilter, static x =>
+            this.FilterDelegate = (ILogFilter.FilterDelegate)delegateCache.GetOrAdd(logFilter, static x =>
             {
                 var type = x.GetType();
                 var method = type.GetMethod(nameof(ILogFilter.Filter));
@@ -41,29 +40,46 @@ internal class LogWriter : ILogWriter
         }
     }
 
-    public void Log(string message, long eventId)
-    {
-        LogEvent param = new(this.logService, this.logSourceType, this.logLevel, eventId, message);
-        if (this.filterDelegate != null)
-        {// Filter -> Log
-            if (this.filterDelegate(new(this.logService, this.logSourceType, this.logLevel, eventId, this)) is LogWriter loggerInstance)
-            {
-                loggerInstance.logDelegate(new(this.logService, this.logSourceType, loggerInstance.logLevel, eventId, message));
-            }
-        }
-        else
-        {// Log
-            this.logDelegate(param);
-        }
-    }
-
     private static ConcurrentDictionary<object, Delegate> delegateCache = new();
 
     public Type OutputType { get; }
 
-    private ILogService logService;
-    private Type logSourceType;
-    private LogLevel logLevel;
-    private ILogOutput.OutputDelegate logDelegate;
-    private ILogFilter.FilterDelegate? filterDelegate;
+    public Type LogSourceType { get; }
+
+    public LogLevel LogLevel { get; }
+
+    public ILogOutput.OutputDelegate LogDelegate { get; }
+
+    public ILogFilter.FilterDelegate? FilterDelegate { get; }
+}
+
+internal class LogWriter : ILogWriter
+{
+    public LogWriter(ILogService logService, LogBroker logBroker)
+    {
+        this.logService = logService;
+        this.logBroker = logBroker;
+    }
+
+    public void Log(string message, long eventId)
+    {
+        var broker = this.logBroker;
+        LogEvent param = new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, message);
+        if (broker.FilterDelegate is not null)
+        {// Filter -> Log
+            if (broker.FilterDelegate(new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, this)) is LogWriter loggerInstance)
+            {
+                loggerInstance.logBroker.LogDelegate(new(this.logService, broker.LogSourceType, loggerInstance.logBroker.LogLevel, eventId, message));
+            }
+        }
+        else
+        {// Log
+            broker.LogDelegate(param);
+        }
+    }
+
+    private readonly ILogService logService;
+    private readonly LogBroker logBroker;
+
+    public Type OutputType => this.logBroker.OutputType;
 }

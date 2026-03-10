@@ -18,9 +18,9 @@ public class LogUnit
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
-        context.TryAddSingleton<LogUnit>();
-        context.TryAddScoped<LogService>();
-        context.Services.TryAddScoped(typeof(ILogService), sp => sp.GetRequiredService<LogService>());
+        context.AddSingleton<LogUnit>();
+        context.AddScoped<LogService>();
+        context.Services.AddScoped(typeof(ILogService), sp => sp.GetRequiredService<LogService>());
 
         // ILogger
         context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
@@ -53,12 +53,17 @@ public class LogUnit
 
     #region FieldAndProperty
 
-    private ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logOutputsToBeFlushed = new();
+    private readonly IServiceProvider serviceProvider;
+    private readonly LoggerResolverDelegate[] loggerResolvers;
+    private readonly ConcurrentDictionary<LogSourceLevelPair, LogBroker?> brokers = new();
+    private readonly ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logOutputsToBeFlushed = new();
 
     #endregion
 
-    public LogUnit()
+    public LogUnit(UnitContext unitContext, IServiceProvider serviceProvider)
     {
+        this.serviceProvider = serviceProvider;
+        this.loggerResolvers = unitContext.LoggerResolvers;
     }
 
     public bool TryRegisterFlush(BufferedLogOutput logOutput)
@@ -89,5 +94,28 @@ public class LogUnit
         {
             await x.Flush(true).ConfigureAwait(false);
         }
+    }
+
+    internal LogBroker? GetLogBroker<TLogSource>(LogLevel logLevel)
+    {
+        return this.brokers.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
+        {
+            var context = new LoggerResolverContext(x);
+            for (var i = 0; i < this.loggerResolvers.Length; i++)
+            {
+                this.loggerResolvers[i](context);
+            }
+
+            if (context.LogOutputType is not null)
+            {
+                if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
+                {
+                    var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
+                    return new LogBroker(x.LogSourceType, x.LogLevel, logOutput, logFilter);
+                }
+            }
+
+            return default;
+        });
     }
 }
