@@ -146,7 +146,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Unit prepared.");
+        this.logger.TryGet()?.Log("Unit prepared.", new InvalidCastException());
         this.logger.TryGet()?.Log($"Program: {this.options.ProgramDirectory}");
         this.logger.TryGet()?.Log($"Data: {this.options.DataDirectory}");
     }
