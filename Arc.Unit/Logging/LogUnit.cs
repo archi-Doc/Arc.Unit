@@ -19,8 +19,7 @@ public class LogUnit
     {
         // Main
         context.AddSingleton<LogUnit>();
-        context.AddScoped<LogService>();
-        context.Services.AddScoped(typeof(ILogService), sp => sp.GetRequiredService<LogService>());
+        context.AddScoped<ILogService, LogService>();
 
         // ILogger
         context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
