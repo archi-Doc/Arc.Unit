@@ -29,7 +29,7 @@ public interface IConsoleService
     /// <param name="message">The message to write. If empty, only a newline is written.</param>
     /// <param name="color">Specify the message text color.<br/>
     /// The color may not be applied depending on the implementation.</param>
-    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor);
+    public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor);
 
     /// <summary>
     /// Reads a line of text from the console asynchronously.
