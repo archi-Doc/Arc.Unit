@@ -6,16 +6,15 @@ namespace Arc.Unit;
 
 public class ConsoleService : IConsoleService
 {
-    private const int StackallocThreshold = 1024;
     private const int BufferMargin = 16;
 
     public ConsoleService()
     {
     }
 
-    public void Write(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void Write(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (message.IsEmpty)
+        if (string.IsNullOrEmpty(message))
         {
             return;
         }
@@ -34,7 +33,7 @@ public class ConsoleService : IConsoleService
 
         var length = message.Length + BufferMargin;
         char[]? rent = null;
-        Span<char> buffer = length <= StackallocThreshold ?
+        Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
 
         var destination = buffer;
@@ -62,9 +61,9 @@ public class ConsoleService : IConsoleService
         }
     }
 
-    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
+    public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (message.IsEmpty || !this.EnableColor || color == ConsoleHelper.DefaultColor)
+        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleHelper.DefaultColor)
         {
             try
             {
@@ -79,7 +78,7 @@ public class ConsoleService : IConsoleService
 
         var length = message.Length + BufferMargin;
         char[]? rent = null;
-        Span<char> buffer = length <= StackallocThreshold ?
+        Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
 
         var destination = buffer;

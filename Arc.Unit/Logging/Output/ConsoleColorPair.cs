@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-public readonly struct ConsoleColorPair
+public readonly record struct ConsoleColorPair
 {
     public ConsoleColorPair(ConsoleColor foreground, ConsoleColor background)
     {

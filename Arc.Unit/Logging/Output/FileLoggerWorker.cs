@@ -2,11 +2,7 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Text;
 using Arc.Threading;
-using Microsoft.Win32.SafeHandles;
 using Utf8StringInterpolation;
 
 namespace Arc.Unit;
@@ -16,10 +12,24 @@ internal class FileLoggerWorker : TaskCore
     private const int MaxFlush = 10_000;
     private const int LimitLogThreshold = 10_000;
 
-    public FileLoggerWorker(UnitCore core, UnitLogger unitLogger, FileLoggerOptions options)
+    // private ILogger<FileLoggerWorker>? logger;
+    private string basePath;
+    private string baseFile;
+    private string baseExtension;
+    private SimpleLogFormatter formatter;
+    private ConcurrentQueue<FileLoggerWork> queue = new();
+    private SemaphoreSlim semaphore = new(1, 1);
+    private DateTime limitLogTime;
+    private int limitLogCount = 0;
+    private long maxCapacity;
+    private bool clearLogsAtStartup;
+
+    public int Count => this.queue.Count;
+
+    public FileLoggerWorker(UnitCore core, FileLoggerOptions options)
         : base(core, Process, false)
     {
-        this.logger = unitLogger.GetLogger<FileLoggerWorker>();
+        // this.logger = logContext.GetLogger<FileLoggerWorker>();
         this.formatter = new(options.Formatter);
         this.clearLogsAtStartup = options.ClearLogsAtStartup;
 
@@ -178,7 +188,7 @@ internal class FileLoggerWorker : TaskCore
             try
             {
                 File.Delete(x.Key);
-                this.logger?.TryGet()?.Log($"Deleted: {x.Key}");
+                // this.logger?.TryGet()?.Log($"Deleted: {x.Key}");
             }
             catch
             {
@@ -187,20 +197,6 @@ internal class FileLoggerWorker : TaskCore
             capacity -= x.Value;
         }
     }
-
-    public int Count => this.queue.Count;
-
-    private ILogger<FileLoggerWorker>? logger;
-    private string basePath;
-    private string baseFile;
-    private string baseExtension;
-    private SimpleLogFormatter formatter;
-    private ConcurrentQueue<FileLoggerWork> queue = new();
-    private SemaphoreSlim semaphore = new(1, 1);
-    private DateTime limitLogTime;
-    private int limitLogCount = 0;
-    private long maxCapacity;
-    private bool clearLogsAtStartup;
 }
 
 internal class FileLoggerWork

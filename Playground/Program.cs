@@ -120,21 +120,21 @@ public class Program
 
         var simpleConsole = SimpleConsole.GetOrCreate();
         var logger2 = unit.Context.ServiceProvider.GetRequiredService<ILogger<ITestInterface>>();
-        logger2.TryGet(LogLevel.Information)?.Log("tttttttttttttttttttttttttttttttttttttttttttttttttttttt");
-        var st2 = await simpleConsole.ReadLine();
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
         var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
 
-        var unitLogger = unit.Context.ServiceProvider.GetRequiredService<UnitLogger>();
-        var logger = unitLogger.GetLogger<TestClass>();
+        var logUnit = unit.Context.ServiceProvider.GetRequiredService<LogUnit>();
+        var logService = unit.Context.ServiceProvider.GetRequiredService<ILogService>();
+        var logger = logService.GetLogger<TestClass>();
+        logger.TryGet(LogLevel.Debug)?.Log($"Debug{ThrowException()}");
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
 
         Parallel.For(0, 5, x =>
         {
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 3; i++)
             {
                 logger.TryGet()?.Log($"{x} - {i}");
             }
@@ -153,8 +153,13 @@ public class Program
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        await unitLogger.FlushAndTerminate();
+        await logUnit.FlushAndTerminate();
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
+
+        string ThrowException()
+        {
+            throw new Exception();
+        }
     }
 }

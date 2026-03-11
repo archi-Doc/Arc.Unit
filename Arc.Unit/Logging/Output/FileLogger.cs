@@ -16,15 +16,15 @@ public interface IFileLogger
 public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     where TOption : FileLoggerOptions
 {
-    public FileLogger(UnitCore core, UnitLogger unitLogger, TOption options)
-        : base(unitLogger)
+    public FileLogger(UnitCore core, LogUnit logUnit, TOption options)
+        : base(logUnit)
     {
         if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
         {
             options = options with { Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path), };
         }
 
-        this.worker = new(core, unitLogger, options);
+        this.worker = new(core, options);
         this.options = options;
         this.worker.Start();
     }

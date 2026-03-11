@@ -116,18 +116,18 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.consoleUnit = consoleUnit;
         }
 
-        public ILogWriter? Filter(LogFilterParameter param)
+        public LogWriter? Filter(LogFilterParameter param)
         {// Log source/Event id/LogLevel -> Filter() -> ILog
             if (param.LogSourceType == typeof(ConsoleCommand))
             {
                 // return null; // No log
                 if (param.LogLevel == LogLevel.Error)
                 {
-                    return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+                    return param.LogService.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
                 }
                 else if (param.LogLevel == LogLevel.Fatal)
                 {
-                    return param.Context.TryGet<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
+                    return param.LogService.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
                 }
             }
 

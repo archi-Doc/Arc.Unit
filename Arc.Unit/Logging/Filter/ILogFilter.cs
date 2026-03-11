@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 public interface ILogFilter
 {
-    internal delegate ILogWriter? FilterDelegate(LogFilterParameter param);
+    internal delegate LogWriter? FilterDelegate(LogFilterParameter param);
 
-    public ILogWriter? Filter(LogFilterParameter param);
+    public LogWriter? Filter(LogFilterParameter param);
 }
