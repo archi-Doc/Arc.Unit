@@ -6,7 +6,6 @@ namespace Arc.Unit;
 
 public class ConsoleService : IConsoleService
 {
-    private const int StackallocThreshold = 1024;
     private const int BufferMargin = 16;
 
     public ConsoleService()
@@ -34,7 +33,7 @@ public class ConsoleService : IConsoleService
 
         var length = message.Length + BufferMargin;
         char[]? rent = null;
-        Span<char> buffer = length <= StackallocThreshold ?
+        Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
 
         var destination = buffer;
@@ -79,7 +78,7 @@ public class ConsoleService : IConsoleService
 
         var length = message.Length + BufferMargin;
         char[]? rent = null;
-        Span<char> buffer = length <= StackallocThreshold ?
+        Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
 
         var destination = buffer;

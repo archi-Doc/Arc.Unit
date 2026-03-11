@@ -24,7 +24,7 @@
     <PackageReference Include="Arc.Collections" Version="1.32.1" />
     <PackageReference Include="Arc.CrossChannel" Version="2.9.1" />
     <PackageReference Include="Arc.Threading" Version="0.36.1" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.4" />
     <PackageReference Include="NewStyleCop.Analyzers" Version="1.2.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
