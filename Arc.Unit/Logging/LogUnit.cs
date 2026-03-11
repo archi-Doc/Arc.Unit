@@ -58,42 +58,35 @@ public class LogUnit
 
     #endregion
 
-    public LogUnit(UnitContext unitContext, IServiceProvider serviceProvider)
+    public LogUnit(UnitContext unitContext)
     {
-        this.serviceProvider = serviceProvider;
+        this.serviceProvider = unitContext.ServiceProvider;
         this.loggerResolvers = unitContext.LoggerResolvers;
     }
 
-    public ILogService Default => field ??= this.serviceProvider.GetRequiredService<ILogService>();
+    public ILogService RootLogService => field ??= this.serviceProvider.GetRequiredService<ILogService>();
 
-    public bool TryRegisterFlush(BufferedLogOutput logOutput)
+    public bool RegisterFlush(BufferedLogOutput logOutput)
         => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);
 
     public async Task Flush()
     {
-        var logs = this.logOutputsToBeFlushed.Keys.ToArray();
-        foreach (var x in logs)
-        {
-            await x.Flush(false).ConfigureAwait(false);
-        }
+        var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(false));
+        await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
 
     public async Task FlushConsole()
     {
-        var logs = this.logOutputsToBeFlushed.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
-        foreach (var x in logs)
-        {
-            await x.Flush(false).ConfigureAwait(false);
-        }
+        var flushTasks = this.logOutputsToBeFlushed.Keys
+            .Where(x => x is ConsoleLogger)
+            .Select(x => x.Flush(false));
+        await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
 
     public async Task FlushAndTerminate()
     {
-        var logs = this.logOutputsToBeFlushed.Keys.ToArray();
-        foreach (var x in logs)
-        {
-            await x.Flush(true).ConfigureAwait(false);
-        }
+        var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(true));
+        await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
 
     internal LogBroker? GetLogBroker<TLogSource>(LogLevel logLevel)

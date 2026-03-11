@@ -6,7 +6,7 @@ public abstract class BufferedLogOutput : ILogOutput
 {
     public BufferedLogOutput(LogUnit loggerUnit)
     {
-        loggerUnit.TryRegisterFlush(this);
+        loggerUnit.RegisterFlush(this);
     }
 
     /// <summary>

@@ -132,8 +132,8 @@ public class Program
         var logger3 = logService.GetLogger(typeof(TestClass));
         var b = logger3.Equals(logger);
         logger.TryGet(LogLevel.Information)?.Log(b.ToString());
-        var d = logUnit.Default;
-        logUnit.Default.GetLogger<TestClass>().TryGet()?.Log("A");
+        var d = logUnit.RootLogService;
+        logUnit.RootLogService.GetLogger<TestClass>().TryGet()?.Log("A");
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
@@ -153,7 +153,7 @@ public class Program
         var array = memoryLogger.ToArray();
         var st = Encoding.UTF8.GetString(array);
 
-        await Task.Delay(300);
+        // await Task.Delay(300);
 
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
