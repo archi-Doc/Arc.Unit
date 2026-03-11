@@ -132,6 +132,8 @@ public class Program
         var logger3 = logService.GetLogger(typeof(TestClass));
         var b = logger3.Equals(logger);
         logger.TryGet(LogLevel.Information)?.Log(b.ToString());
+        var d = logUnit.Default;
+        logUnit.Default.GetLogger<TestClass>().TryGet()?.Log("A");
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
