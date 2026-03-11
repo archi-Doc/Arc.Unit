@@ -127,13 +127,13 @@ public class Program
         var logUnit = unit.Context.ServiceProvider.GetRequiredService<LogUnit>();
         var logService = unit.Context.ServiceProvider.GetRequiredService<ILogService>();
         var logger = logService.GetLogger<TestClass>();
-        logger.TryGet(LogLevel.Debug)?.Log($"Debug{ThrowException()}");
-        logger.TryGet(LogLevel.Information)?.Log($"Info");
+        logger.GetWriter(LogLevel.Debug)?.Write($"Debug{ThrowException()}");
+        logger.GetWriter(LogLevel.Information)?.Write($"Info");
         var logger3 = logService.GetLogger(typeof(TestClass));
         var b = logger3.Equals(logger);
-        logger.TryGet(LogLevel.Information)?.Log(b.ToString());
+        logger.GetWriter(LogLevel.Information)?.Write(b.ToString());
         var d = logUnit.RootLogService;
-        logUnit.RootLogService.GetLogger<TestClass>().TryGet()?.Log("A");
+        logUnit.RootLogService.GetLogger<TestClass>().GetWriter()?.Write("A");
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
@@ -142,7 +142,7 @@ public class Program
         {
             for (var i = 0; i < 3; i++)
             {
-                logger.TryGet()?.Log($"{x} - {i}");
+                logger.GetWriter()?.Write($"{x} - {i}");
             }
         });
 

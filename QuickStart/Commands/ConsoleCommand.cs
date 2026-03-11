@@ -27,17 +27,17 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.consoleService.WriteLine($"Name: {this.unitOptions.UnitName}", ConsoleColor.Red);
         this.consoleService.WriteLine($"Directory: {this.unitContext.Options.ProgramDirectory}");
 
-        this.logger.TryGet()?.Log("Console command");
-        this.logger.TryGet(LogLevel.Debug)?.Log("Start");
+        this.logger.GetWriter()?.Write("Console command");
+        this.logger.GetWriter(LogLevel.Debug)?.Write("Start");
         this.consoleService.WriteLine("Console test");
 
-        this.logger.TryGet(LogLevel.Debug)?.Log("Debug");
-        this.logger.TryGet(LogLevel.Information)?.Log("Information");
-        this.logger.TryGet(LogLevel.Warning)?.Log("Warning");
-        this.logger.TryGet(LogLevel.Error)?.Log("Log filter test: Error -> Fatal");
-        this.logger.TryGet(LogLevel.Fatal)?.Log("Log filter test: Fatal -> Error");
+        this.logger.GetWriter(LogLevel.Debug)?.Write("Debug");
+        this.logger.GetWriter(LogLevel.Information)?.Write("Information");
+        this.logger.GetWriter(LogLevel.Warning)?.Write("Warning");
+        this.logger.GetWriter(LogLevel.Error)?.Write("Log filter test: Error -> Fatal");
+        this.logger.GetWriter(LogLevel.Fatal)?.Write("Log filter test: Fatal -> Error");
 
-        this.unitContext.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>().TryGet()?.Log("---");
-        this.logger.TryGet(LogLevel.Debug)?.Log("End");
+        this.unitContext.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>().GetWriter()?.Write("---");
+        this.logger.GetWriter(LogLevel.Debug)?.Write("End");
     }
 }

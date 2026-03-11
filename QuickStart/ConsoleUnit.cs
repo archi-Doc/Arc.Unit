@@ -123,11 +123,11 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 // return null; // No log
                 if (param.LogLevel == LogLevel.Error)
                 {
-                    return param.LogService.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+                    return param.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
                 }
                 else if (param.LogLevel == LogLevel.Fatal)
                 {
-                    return param.LogService.GetLogWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
+                    return param.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
                 }
             }
 
@@ -146,24 +146,24 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
     async Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Unit prepared.");
-        this.logger.TryGet()?.Log($"Program: {this.options.ProgramDirectory}");
-        this.logger.TryGet()?.Log($"Data: {this.options.DataDirectory}");
+        this.logger.GetWriter()?.Write("Unit prepared.");
+        this.logger.GetWriter()?.Write($"Program: {this.options.ProgramDirectory}");
+        this.logger.GetWriter()?.Write($"Data: {this.options.DataDirectory}");
     }
 
     async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Unit started.");
+        this.logger.GetWriter()?.Write("Unit started.");
     }
 
     async Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Unit stopped.");
+        this.logger.GetWriter()?.Write("Unit stopped.");
     }
 
     async Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
     {
-        this.logger.TryGet()?.Log("Unit terminated.");
+        this.logger.GetWriter()?.Write("Unit terminated.");
     }
 
     private ILogger<ConsoleUnit> logger;

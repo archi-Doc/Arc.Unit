@@ -31,7 +31,7 @@ public readonly record struct LogWriter
     /// When a filter delegate is configured, the filter may return a different <see cref="LogWriter"/>
     /// instance that controls the final log level and delegate used for output.
     /// </remarks>
-    public void Log(string message, long eventId = default)
+    public void Write(string message, long eventId = default)
     {
         var broker = this.logBroker;
         LogEvent param = new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, message);

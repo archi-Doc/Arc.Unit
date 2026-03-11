@@ -13,7 +13,7 @@ public interface ILogger
     /// </summary>
     /// <param name="logLevel">The log level.</param>
     /// <returns><see cref="LogWriter"/> instance.</returns>
-    public LogWriter? TryGet(LogLevel logLevel = LogLevel.Information);
+    public LogWriter? GetWriter(LogLevel logLevel = LogLevel.Information);
 }
 
 /// <summary>
