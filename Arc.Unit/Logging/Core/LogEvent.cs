@@ -4,9 +4,9 @@ namespace Arc.Unit;
 
 public readonly struct LogEvent : IEquatable<LogEvent>
 {
-    public LogEvent(ILogService logContext, Type logSourceType, LogLevel logLevel, long eventId, string message)
+    public LogEvent(ILogService logService, Type logSourceType, LogLevel logLevel, long eventId, string message)
     {
-        this.LogContext = logContext;
+        this.LogService = logService;
         this.LogSourceType = logSourceType;
         this.LogLevel = logLevel;
         this.EventId = eventId;
@@ -14,7 +14,7 @@ public readonly struct LogEvent : IEquatable<LogEvent>
         this.DateTime = DateTimeOffset.UtcNow.AddTicks(LogUnit.OffsetTicks);
     }
 
-    public readonly ILogService LogContext;
+    public readonly ILogService LogService;
 
     public readonly Type LogSourceType;
 
