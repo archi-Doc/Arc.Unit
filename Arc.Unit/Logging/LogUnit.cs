@@ -2,19 +2,32 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Central logging composition root and runtime broker cache for the unit system.
+/// </summary>
 public class LogUnit
 {
+    /// <summary>
+    /// Gets the global log timestamp offset in ticks.
+    /// </summary>
     internal static long OffsetTicks { get; private set; }
 
+    /// <summary>
+    /// Sets a global timestamp offset applied by the logging pipeline.
+    /// </summary>
+    /// <param name="timeSpan">The offset to apply to log time values.</param>
     public static void SetTimeOffset(TimeSpan timeSpan)
     {
         OffsetTicks = timeSpan.Ticks; // (long)(timeSpan.TotalSeconds * Stopwatch.Frequency);
     }
 
+    /// <summary>
+    /// Registers core logging services, logger outputs, options, and the default resolver.
+    /// </summary>
+    /// <param name="context">The unit configuration context used to register services.</param>
     public static void Configure(IUnitConfigurationContext context)
     {
         // Main
@@ -59,42 +72,71 @@ public class LogUnit
 
     #endregion
 
-    public LogUnit(UnitContext unitContext, IServiceProvider serviceProvider)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LogUnit"/> class.
+    /// </summary>
+    /// <param name="unitContext">The runtime unit context containing services and resolvers.</param>
+    public LogUnit(UnitContext unitContext)
     {
-        this.serviceProvider = serviceProvider;
+        this.serviceProvider = unitContext.ServiceProvider;
         this.loggerResolvers = unitContext.LoggerResolvers;
     }
 
-    public bool TryRegisterFlush(BufferedLogOutput logOutput)
+    /// <summary>
+    /// Gets the root <see cref="ILogService"/> from dependency injection.
+    /// </summary>
+    public ILogService RootLogService => field ??= this.serviceProvider.GetRequiredService<ILogService>();
+
+    /// <summary>
+    /// Registers a buffered output so it participates in future flush operations.
+    /// </summary>
+    /// <param name="logOutput">The buffered log output instance.</param>
+    /// <returns>
+    /// <see langword="true"/> if the output was newly registered; otherwise <see langword="false"/>.
+    /// </returns>
+    public bool RegisterFlush(BufferedLogOutput logOutput)
         => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);
 
+    /// <summary>
+    /// Flushes all registered buffered outputs without termination.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous flush operation.</returns>
     public async Task Flush()
     {
-        var logs = this.logOutputsToBeFlushed.Keys.ToArray();
-        foreach (var x in logs)
-        {
-            await x.Flush(false).ConfigureAwait(false);
-        }
+        var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(false));
+        await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Flushes only registered console outputs without termination.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous flush operation.</returns>
     public async Task FlushConsole()
     {
-        var logs = this.logOutputsToBeFlushed.Keys.Where(x => x.GetType() == typeof(ConsoleLogger)).ToArray();
-        foreach (var x in logs)
-        {
-            await x.Flush(false).ConfigureAwait(false);
-        }
+        var flushTasks = this.logOutputsToBeFlushed.Keys
+            .Where(x => x is ConsoleLogger)
+            .Select(x => x.Flush(false));
+        await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Flushes all registered buffered outputs and requests termination semantics.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous flush and termination operation.</returns>
     public async Task FlushAndTerminate()
     {
-        var logs = this.logOutputsToBeFlushed.Keys.ToArray();
-        foreach (var x in logs)
-        {
-            await x.Flush(true).ConfigureAwait(false);
-        }
+        var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(true));
+        await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.
+    /// </summary>
+    /// <typeparam name="TLogSource">The log source marker type.</typeparam>
+    /// <param name="logLevel">The minimum level represented by the broker key.</param>
+    /// <returns>
+    /// A resolved <see cref="LogBroker"/> when an output can be resolved; otherwise <see langword="null"/>.
+    /// </returns>
     internal LogBroker? GetLogBroker<TLogSource>(LogLevel logLevel)
     {
         return this.brokers.GetOrAdd(new(typeof(TLogSource), logLevel), x =>

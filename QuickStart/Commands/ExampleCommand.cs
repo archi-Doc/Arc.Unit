@@ -15,7 +15,7 @@ public class ExampleCommand : ISimpleCommandAsync<ExampleCommandOptions>
 
     public async Task RunAsync(ExampleCommandOptions option, string[] args)
     {
-        this.logger.TryGet(LogLevel.Debug)?.Log($"Example command: {option.String}");
+        this.logger.GetWriter(LogLevel.Debug)?.Write($"Example command: {option.String}");
     }
 
     private readonly ILogger logger;

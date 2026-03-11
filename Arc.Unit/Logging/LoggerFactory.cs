@@ -9,8 +9,8 @@ internal class LoggerFactory<TLogSource> : ILogger<TLogSource>
         this.logService = logService;
     }
 
-    public LogWriter? TryGet(LogLevel logLevel = LogLevel.Information)
-        => this.logService.GetLogWriter<TLogSource>(logLevel);
+    public LogWriter? GetWriter(LogLevel logLevel = LogLevel.Information)
+        => this.logService.GetWriter<TLogSource>(logLevel);
 
     private readonly ILogService logService;
 }
