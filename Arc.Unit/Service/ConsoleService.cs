@@ -31,6 +31,8 @@ public class ConsoleService : IConsoleService
             return;
         }
 
+        this.WriteLine();
+
         var length = message.Length + BufferMargin;
         char[]? rent = null;
         Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
@@ -62,8 +64,11 @@ public class ConsoleService : IConsoleService
     }
 
     public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
+        => this.WriteLine(message.AsSpan(), color);
+
+    public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (string.IsNullOrEmpty(message) || !this.EnableColor || color == ConsoleHelper.DefaultColor)
+        if (message.IsEmpty || !this.EnableColor || color == ConsoleHelper.DefaultColor)
         {
             try
             {

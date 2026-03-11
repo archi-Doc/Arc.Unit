@@ -24,6 +24,14 @@ public interface IConsoleService
     public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor);
 
     /// <summary>
+    /// Writes the specified message to the console followed by a newline.
+    /// </summary>
+    /// <param name="message">The message to write. If empty, only a newline is written.</param>
+    /// <param name="color">Specify the message text color.<br/>
+    /// The color may not be applied depending on the implementation.</param>
+    public void WriteLine(ReadOnlySpan<char> message = default, ConsoleColor color = ConsoleHelper.DefaultColor);
+
+    /// <summary>
     /// Reads a line of text from the console asynchronously.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
