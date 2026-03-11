@@ -23,6 +23,9 @@ internal class LogService : ILogService
     public ILogger<TLogSource> GetLogger<TLogSource>()
        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
 
+    public ILogger GetLogger(Type logSource)
+       => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
+
     public LogWriter? GetLogWriter<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {
         var broker = this.LogUnit.GetLogBroker<TLogSource>(logLevel);

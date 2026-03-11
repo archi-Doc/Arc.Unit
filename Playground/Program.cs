@@ -128,6 +128,10 @@ public class Program
         var logService = unit.Context.ServiceProvider.GetRequiredService<ILogService>();
         var logger = logService.GetLogger<TestClass>();
         logger.TryGet(LogLevel.Debug)?.Log($"Debug{ThrowException()}");
+        logger.TryGet(LogLevel.Information)?.Log($"Info");
+        var logger3 = logService.GetLogger(typeof(TestClass));
+        var b = logger3.Equals(logger);
+        logger.TryGet(LogLevel.Information)?.Log(b.ToString());
 
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();

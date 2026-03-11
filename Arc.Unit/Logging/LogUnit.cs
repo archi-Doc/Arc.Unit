@@ -2,7 +2,6 @@
 
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Arc.Unit;
 
@@ -64,6 +63,8 @@ public class LogUnit
         this.serviceProvider = serviceProvider;
         this.loggerResolvers = unitContext.LoggerResolvers;
     }
+
+    public ILogService Default => field ??= this.serviceProvider.GetRequiredService<ILogService>();
 
     public bool TryRegisterFlush(BufferedLogOutput logOutput)
         => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);

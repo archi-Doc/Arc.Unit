@@ -8,5 +8,7 @@ public interface ILogService
 
     ILogger<TLogSource> GetLogger<TLogSource>();
 
+    ILogger GetLogger(Type logSource);
+
     IConsoleService ConsoleService { get; }
 }
