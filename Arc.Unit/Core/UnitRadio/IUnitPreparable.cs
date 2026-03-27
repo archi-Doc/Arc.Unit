@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// <summary>
 /// An interface for the preparation process of unit objects.
 /// </summary>
-[RadioServiceInterface]
+[RadioService]
 public interface IUnitPreparable : IRadioService
 {
     /// <summary>

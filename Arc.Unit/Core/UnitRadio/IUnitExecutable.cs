@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// <summary>
 /// An interface for the execution process of unit objects.
 /// </summary>
-[RadioServiceInterface]
+[RadioService]
 public interface IUnitExecutable : IRadioService
 {
     /// <summary>

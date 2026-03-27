@@ -212,7 +212,7 @@ public class UnitBuilder
         builderContext.TryAddSingleton<UnitOptions>();
         builderContext.TryAddSingleton<TUnit>();
         builderContext.TryAddSingleton<IConsoleService, ConsoleService>();
-        builderContext.TryAddSingleton<RadioClass>();
+        builderContext.Services.AddCrossChannel(true); // builderContext.TryAddSingleton<RadioClass>();
 
         // Options instances
         foreach (var x in builderContext.OptionTypeToInstance)
