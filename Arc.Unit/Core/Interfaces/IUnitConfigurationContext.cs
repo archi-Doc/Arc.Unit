@@ -47,5 +47,5 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnit
     /// Instances are created by calling <see cref="UnitContext.CreateInstances()"/>.
     /// </summary>
     /// <typeparam name="T">The type to be instantiated and registered for creation.</typeparam>
-    void RegisterInstanceCreation<T>();
+    void RegisterDefaultInstantiableType<T>();
 }
