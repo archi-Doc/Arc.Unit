@@ -29,7 +29,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             this.Configure(context =>
             {
-                context.AddSingleton<ConsoleUnit>();
+                context.AddSingletonUnit<ConsoleUnit>();
                 context.RegisterDefaultInstantiableType<ConsoleUnit>();
 
                 // Command

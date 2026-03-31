@@ -31,12 +31,12 @@ public class Program
                 context.AddCommand(typeof(ExampleCommand));
             });
 
-        var product = builder.Build();
-        await product.RunAsync(new(args));
+        var unit = builder.Build();
+        await unit.RunAsync(new(args));
 
         ThreadCore.Root.Terminate();
         await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
-        if (product.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
+        if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
         {
             await unitLogger.FlushAndTerminate();
         }
