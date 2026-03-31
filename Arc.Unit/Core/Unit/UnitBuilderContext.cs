@@ -133,7 +133,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     void IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
-    void IUnitConfigurationContext.RegisterInstanceCreation<T>() => this.InstanceCreationSet.Add(typeof(T));
+    void IUnitConfigurationContext.RegisterDefaultInstantiableType<T>() => this.InstanceCreationSet.Add(typeof(T));
 
     bool IUnitConfigurationContext.AddCommand(Type commandType, ServiceLifetime lifetime)
     {

@@ -44,7 +44,7 @@ public sealed class UnitContext
     /// Gets an array of <see cref="Type"/> which is registered in the creation list.<br/>
     /// Note that instances are actually created by calling <see cref="UnitContext.CreateInstances()"/>.
     /// </summary>
-    public Type[] InstanceCreationTypes { get; private set; } = default!;
+    public Type[] InstanceCreationTypes { get; private set; } = [];
 
     /// <summary>
     /// Gets an array of command <see cref="Type"/>.
@@ -118,13 +118,13 @@ public sealed class UnitContext
     }
 
     /// <summary>
-    /// Create instances registered by <see cref="IUnitConfigurationContext.RegisterInstanceCreation{T}()"/>.
+    /// Create instances registered by <see cref="IUnitConfigurationContext.RegisterDefaultInstantiableType{T}()"/>.
     /// </summary>
     public void CreateInstances()
     {
         foreach (var x in this.InstanceCreationTypes)
         {
-            this.ServiceProvider.GetService(x);
+            _ = this.ServiceProvider.GetService(x);
         }
     }
 

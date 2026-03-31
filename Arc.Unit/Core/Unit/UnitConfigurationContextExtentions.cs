@@ -7,6 +7,13 @@ namespace Arc.Unit;
 
 public static class UnitConfigurationContextExtentions
 {
+    public static void AddSingletonUnit<TUnit>(this IUnitConfigurationContext context)
+        where TUnit : UnitBase
+    {
+        context.Services.AddSingleton<TUnit>();
+        context.RegisterDefaultInstantiableType<TUnit>();
+    }
+
     public static void AddSingleton<TService>(this IUnitConfigurationContext context)
         where TService : class => context.Services.AddSingleton<TService>();
 
