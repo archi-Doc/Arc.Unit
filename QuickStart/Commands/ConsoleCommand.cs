@@ -7,7 +7,7 @@ using SimpleCommandLine;
 namespace QuickStart;
 
 [SimpleCommand("console", Default = true)]
-public class ConsoleCommand : ISimpleCommandAsync
+public class ConsoleCommand : ISimpleCommand
 {
     private readonly UnitContext unitContext;
     private readonly UnitOptions unitOptions;
@@ -22,7 +22,7 @@ public class ConsoleCommand : ISimpleCommandAsync
         this.consoleService = consoleService;
     }
 
-    public async Task RunAsync(string[] args)
+    public async Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.consoleService.WriteLine($"Name: {this.unitOptions.UnitName}", ConsoleColor.Red);
         this.consoleService.WriteLine($"Directory: {this.unitContext.Options.ProgramDirectory}");
