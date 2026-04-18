@@ -6,14 +6,14 @@ using SimpleCommandLine;
 namespace QuickStart;
 
 [SimpleCommand("example")]
-public class ExampleCommand : ISimpleCommandAsync<ExampleCommandOptions>
+public class ExampleCommand : ISimpleCommand<ExampleCommandOptions>
 {
     public ExampleCommand(ILogger<ExampleCommand> logger)
     {
         this.logger = logger;
     }
 
-    public async Task RunAsync(ExampleCommandOptions option, string[] args)
+    public async Task Execute(ExampleCommandOptions option, string[] args, CancellationToken cancellationToken)
     {
         this.logger.GetWriter(LogLevel.Debug)?.Write($"Example command: {option.String}");
     }

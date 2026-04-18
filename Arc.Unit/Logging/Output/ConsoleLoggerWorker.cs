@@ -64,7 +64,7 @@ internal class ConsoleLoggerWorker : TaskCore
     private ConcurrentQueue<ConsoleLoggerWork> queue = new();
 }
 
-internal class ConsoleLoggerWork : ThreadWork
+internal class ConsoleLoggerWork
 {
     public ConsoleLoggerWork(LogEvent parameter)
     {
