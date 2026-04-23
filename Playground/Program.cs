@@ -158,7 +158,7 @@ public class Program
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
         ThreadCore.Root.Terminate();
-        await ThreadCore.Root.WaitForTerminationAsync(-1); // Wait for the termination infinitely.
+        await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
         await logUnit.FlushAndTerminate();
 
         ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
