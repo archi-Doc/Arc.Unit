@@ -52,4 +52,16 @@ public readonly struct InputResult
     /// Gets a value indicating whether the input operation was terminated.
     /// </summary>
     public bool IsTerminated => this.Kind == InputResultKind.Terminated;
+
+    public override string ToString()
+    {
+        if (this.IsSuccess)
+        {
+            return this.Text;
+        }
+        else
+        {
+            return this.Kind.ToString();
+        }
+    }
 }
