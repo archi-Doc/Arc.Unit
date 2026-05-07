@@ -19,9 +19,6 @@ public class LogUnit
     /// </summary>
     internal static long OffsetTicks { get; private set; }
 
-    internal static ExecutionGroup GetGroup(ExecutionRoot root)
-        => root.GetOrAddGroup(GroupIndependent, GroupName);
-
     /// <summary>
     /// Sets a global timestamp offset applied by the logging pipeline.
     /// </summary>
@@ -135,6 +132,9 @@ public class LogUnit
         var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(true));
         await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
+
+    internal static ExecutionGroup GetGroup(ExecutionRoot root)
+        => root.IndependentGroup.GetOrAddGroup(GroupIndependent, GroupName);
 
     /// <summary>
     /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.

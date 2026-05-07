@@ -49,7 +49,7 @@ public class ConsoleLogger : BufferedLogOutput
         this.Formatter = new(options.FormatterOptions);
         if (options.EnableBuffering)
         {
-            this.worker = new(root.Base, this);
+            this.worker = new(root, this);
         }
 
         this.options = options;

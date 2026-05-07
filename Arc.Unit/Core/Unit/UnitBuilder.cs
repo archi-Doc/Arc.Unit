@@ -207,7 +207,7 @@ public class UnitBuilder
         }
 
         // Register other services
-        builderContext.TryAddSingleton<UnitCore>();
+        builderContext.TryAddSingleton<ExecutionRoot>();
         builderContext.TryAddSingleton<UnitContext>();
         builderContext.TryAddSingleton<UnitOptions>();
         builderContext.TryAddSingleton<TUnit>();

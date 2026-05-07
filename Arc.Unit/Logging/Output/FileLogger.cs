@@ -26,7 +26,7 @@ public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
 
         this.worker = new(root, options);
         this.options = options;
-        this.worker.Start();
+        this.worker.SendSignal(ExecutionSignal.Start);
     }
 
     public string GetCurrentPath()

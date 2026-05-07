@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Text;
+using Arc;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,18 +45,20 @@ public class TestClassFactory<T> : ITestInterface<T>
 
 public class Program
 {
+    private static ExecutionRoot? root;
+
     public static async Task Main(string[] args)
     {
-        AppDomain.CurrentDomain.ProcessExit += (s, e) =>
-        {// Console window closing or process terminated.
-            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
-            ThreadCore.Root.TerminationEvent.WaitOne(2_000); // Wait until the termination process is complete (#1).
-        };
+        AppCloseHandler.Set(() =>
+        {// Closing the console window or terminating the process.
+            root?.RequestTermination(); // Send a termination signal to the root.
+            root?.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+        });
 
         Console.CancelKeyPress += (s, e) =>
-        {// Ctrl+C pressed
+        {// Ctrl+C pressed.
             e.Cancel = true;
-            ThreadCore.Root.Terminate(); // Send a termination signal to the root.
+            root?.RequestTermination(); // Send a termination signal to the root.
         };
 
         var builder = new UnitBuilder()
@@ -117,6 +120,7 @@ public class Program
         builder.AddBuilder(builder2);
 
         var unit = builder.Build("-datadirectory 'a'");
+        root = unit.Context.Root;
 
         var simpleConsole = SimpleConsole.GetOrCreate();
         var logger2 = unit.Context.ServiceProvider.GetRequiredService<ILogger<ITestInterface>>();
@@ -157,11 +161,9 @@ public class Program
 
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
-        ThreadCore.Root.Terminate();
-        await ThreadCore.Root.WaitForTermination(); // Wait for the termination infinitely.
+        root.RequestTermination();
+        await root.WaitForTermination(); // Wait for the termination infinitely.
         await logUnit.FlushAndTerminate();
-
-        ThreadCore.Root.TerminationEvent.Set(); // The termination process is complete (#1).
 
         string ThrowException()
         {
