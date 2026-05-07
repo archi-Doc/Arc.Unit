@@ -1,9 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System;
 using System.Collections.Concurrent;
-using System.IO;
-using System.Text;
 using Arc.Threading;
 
 namespace Arc.Unit;
@@ -13,13 +10,13 @@ internal class ConsoleLoggerWorker : TaskCore
     private const int MaxFlush = 1_000;
     private const int BufferingTimeInMilliseconds = 40;
 
-    public ConsoleLoggerWorker(UnitCore core, ConsoleLogger consoleLogger)
-        : base(core, Process)
+    public ConsoleLoggerWorker(ExecutionRoot root, ConsoleLogger consoleLogger)
+        : base(LogUnit.GetGroup(root), Process)
     {
         this.consoleLogger = consoleLogger;
     }
 
-    public static async Task Process(object? obj)
+    public static async Task Process(TaskCore obj)
     {
         var worker = (ConsoleLoggerWorker)obj!;
         while (await worker.Delay(BufferingTimeInMilliseconds))
@@ -52,7 +49,7 @@ internal class ConsoleLoggerWorker : TaskCore
 
         if (terminate)
         {
-            this.Terminate();
+            this.RequestTermination();
         }
 
         return count;

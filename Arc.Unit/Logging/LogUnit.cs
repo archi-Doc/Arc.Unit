@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
@@ -10,6 +11,9 @@ namespace Arc.Unit;
 /// </summary>
 public class LogUnit
 {
+    public const bool GroupIndependence = true;
+    public const string GroupName = "Logger";
+
     /// <summary>
     /// Gets the global log timestamp offset in ticks.
     /// </summary>
@@ -128,6 +132,9 @@ public class LogUnit
         var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(true));
         await Task.WhenAll(flushTasks).ConfigureAwait(false);
     }
+
+    internal static ExecutionGroup GetGroup(ExecutionRoot root)
+        => root.IndependentGroup.GetOrAddGroup(GroupIndependence, GroupName);
 
     /// <summary>
     /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.

@@ -16,7 +16,7 @@ public interface IFileLogger
 public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     where TOption : FileLoggerOptions
 {
-    public FileLogger(UnitCore core, LogUnit logUnit, TOption options)
+    public FileLogger(ExecutionRoot root, LogUnit logUnit, TOption options)
         : base(logUnit)
     {
         if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
@@ -24,9 +24,9 @@ public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
             options = options with { Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path), };
         }
 
-        this.worker = new(core, options);
+        this.worker = new(root, options);
         this.options = options;
-        this.worker.Start();
+        this.worker.SendSignal(ExecutionSignal.Start);
     }
 
     public string GetCurrentPath()
