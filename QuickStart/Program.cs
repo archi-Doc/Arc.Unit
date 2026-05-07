@@ -44,6 +44,6 @@ public class Program
             await unitLogger.FlushAndTerminate();
         }
 
-        await root.WaitForTermination(); // Wait for the termination infinitely.
+        await root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
     }
 }

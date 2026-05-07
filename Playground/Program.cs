@@ -140,7 +140,7 @@ public class Program
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
 
-        Parallel.For(0, 5, x =>
+        Parallel.For(0, 5, async x =>
         {
             for (var i = 0; i < 3; i++)
             {
@@ -155,17 +155,32 @@ public class Program
         var array = memoryLogger.ToArray();
         var st = Encoding.UTF8.GetString(array);
 
-        // await Task.Delay(300);
+        try
+        {
+            await Task.Delay(600, root.CancellationToken);
+            Console.WriteLine("...");
+            await Task.Delay(600, root.CancellationToken);
+            Console.WriteLine("...");
+            await Task.Delay(600, root.CancellationToken);
+            Console.WriteLine("...");
+        }
+        catch (OperationCanceledException)
+        {
+        }
 
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
-        logger.GetWriter(LogLevel.Fatal)?.Write($"Fin");
+        root.RequestTermination();
+        if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
+        {
+            await unitLogger.FlushAndTerminate();
+        }
+
+        await root.WaitForTermination(); // Wait for the termination infinitely.
 
         root.RequestTermination();
-        await root.WaitForTermination(2_000, default, TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
         await logUnit.FlushAndTerminate();
-
-        Console.WriteLine("Terminated");
+        await root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
 
         string ThrowException()
         {
