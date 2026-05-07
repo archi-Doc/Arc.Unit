@@ -27,7 +27,7 @@ internal class FileLoggerWorker : TaskCore
     public int Count => this.queue.Count;
 
     public FileLoggerWorker(ExecutionRoot root, FileLoggerOptions options)
-        : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DisposeOnCompletion)
+        : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DelayedStart)
     {
         // this.logger = logContext.GetLogger<FileLoggerWorker>();
         this.formatter = new(options.Formatter);

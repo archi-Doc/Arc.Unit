@@ -11,8 +11,8 @@ namespace Arc.Unit;
 /// </summary>
 public class LogUnit
 {
-    private const bool GroupIndependent = true;
-    private const string GroupName = "Logger";
+    public const bool GroupIndependence = true;
+    public const string GroupName = "Logger";
 
     /// <summary>
     /// Gets the global log timestamp offset in ticks.
@@ -134,7 +134,7 @@ public class LogUnit
     }
 
     internal static ExecutionGroup GetGroup(ExecutionRoot root)
-        => root.IndependentGroup.GetOrAddGroup(GroupIndependent, GroupName);
+        => root.IndependentGroup.GetOrAddGroup(GroupIndependence, GroupName);
 
     /// <summary>
     /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.

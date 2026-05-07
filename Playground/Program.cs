@@ -5,7 +5,6 @@ using Arc;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
-using SimplePrompt;
 
 namespace Sandbox;
 
@@ -122,7 +121,6 @@ public class Program
         var unit = builder.Build("-datadirectory 'a'");
         root = unit.Context.Root;
 
-        var simpleConsole = SimpleConsole.GetOrCreate();
         var logger2 = unit.Context.ServiceProvider.GetRequiredService<ILogger<ITestInterface>>();
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
@@ -161,9 +159,13 @@ public class Program
 
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
+        logger.GetWriter(LogLevel.Fatal)?.Write($"Fin");
+
         root.RequestTermination();
-        await root.WaitForTermination(); // Wait for the termination infinitely.
+        await root.WaitForTermination(2_000, default, TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
         await logUnit.FlushAndTerminate();
+
+        Console.WriteLine("Terminated");
 
         string ThrowException()
         {

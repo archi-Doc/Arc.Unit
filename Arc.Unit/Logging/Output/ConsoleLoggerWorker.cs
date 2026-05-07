@@ -19,7 +19,7 @@ internal class ConsoleLoggerWorker : TaskCore
         this.consoleLogger = consoleLogger;
     }
 
-    public static async Task Process(object? obj)
+    public static async Task Process(TaskCore obj)
     {
         var worker = (ConsoleLoggerWorker)obj!;
         while (await worker.Delay(BufferingTimeInMilliseconds))
