@@ -40,7 +40,7 @@ public class ConsoleLogger : BufferedLogOutput
         }
     }
 
-    public ConsoleLogger(UnitCore core, LogUnit unitLogger, ConsoleLoggerOptions options)
+    public ConsoleLogger(ExecutionRoot root, LogUnit unitLogger, ConsoleLoggerOptions options)
         : base(unitLogger)
     {
         // Console
@@ -49,7 +49,7 @@ public class ConsoleLogger : BufferedLogOutput
         this.Formatter = new(options.FormatterOptions);
         if (options.EnableBuffering)
         {
-            this.worker = new(core, this);
+            this.worker = new(root.Base, this);
         }
 
         this.options = options;

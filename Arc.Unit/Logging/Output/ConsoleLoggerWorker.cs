@@ -13,8 +13,8 @@ internal class ConsoleLoggerWorker : TaskCore
     private const int MaxFlush = 1_000;
     private const int BufferingTimeInMilliseconds = 40;
 
-    public ConsoleLoggerWorker(UnitCore core, ConsoleLogger consoleLogger)
-        : base(core, Process)
+    public ConsoleLoggerWorker(ExecutionGroup parent, ConsoleLogger consoleLogger)
+        : base(parent, Process)
     {
         this.consoleLogger = consoleLogger;
     }
@@ -52,7 +52,7 @@ internal class ConsoleLoggerWorker : TaskCore
 
         if (terminate)
         {
-            this.Terminate();
+            this.RequestTermination();
         }
 
         return count;

@@ -26,9 +26,9 @@ public sealed class UnitContext
     public IServiceProvider ServiceProvider { get; private set; } = default!;
 
     /// <summary>
-    /// Gets the <see cref="UnitCore"/> associated with this context.
+    /// Gets the <see cref="ExecutionRoot"/> associated with this context.
     /// </summary>
-    public UnitCore Core { get; private set; } = default!;
+    public ExecutionRoot Root { get; private set; } = default!;
 
     /// <summary>
     /// Gets the <see cref="UnitOptions"/> associated with this context.
@@ -158,7 +158,7 @@ public sealed class UnitContext
         this.Radio = serviceProvider.GetRequiredService<RadioClass>();
         this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
 
-        this.Core = serviceProvider.GetRequiredService<UnitCore>();
+        this.Root = serviceProvider.GetRequiredService<ExecutionRoot>();
         var options = serviceProvider.GetRequiredService<UnitOptions>();
         options.CopyFrom(builderContext);
         this.Options = options;
