@@ -26,8 +26,8 @@ internal class FileLoggerWorker : TaskCore
 
     public int Count => this.queue.Count;
 
-    public FileLoggerWorker(UnitCore core, FileLoggerOptions options)
-        : base(core, Process, false)
+    public FileLoggerWorker(ExecutionRoot root, FileLoggerOptions options)
+        : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DisposeOnCompletion)
     {
         // this.logger = logContext.GetLogger<FileLoggerWorker>();
         this.formatter = new(options.Formatter);
@@ -61,7 +61,7 @@ internal class FileLoggerWorker : TaskCore
             worker.LimitLogs(true);
         }
 
-        while (worker.Sleep(1_000))
+        while (await worker.Delay(1_000))
         {
             await worker.Flush(false).ConfigureAwait(false);
         }
@@ -101,7 +101,7 @@ internal class FileLoggerWorker : TaskCore
 
             if (terminate)
             {
-                this.Terminate();
+                this.RequestTermination();
             }
             else
             {// Limit log capacity

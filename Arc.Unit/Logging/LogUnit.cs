@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using Arc.Threading;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
@@ -10,10 +11,16 @@ namespace Arc.Unit;
 /// </summary>
 public class LogUnit
 {
+    private const bool GroupIndependent = true;
+    private const string GroupName = "Logger";
+
     /// <summary>
     /// Gets the global log timestamp offset in ticks.
     /// </summary>
     internal static long OffsetTicks { get; private set; }
+
+    internal static ExecutionGroup GetGroup(ExecutionRoot root)
+        => root.GetOrAddGroup(GroupIndependent, GroupName);
 
     /// <summary>
     /// Sets a global timestamp offset applied by the logging pipeline.
