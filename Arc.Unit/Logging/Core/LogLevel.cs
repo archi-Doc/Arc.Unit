@@ -5,7 +5,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Specifies the meaning and relative importance of log events.
 /// </summary>
-public enum LogLevel
+public enum LogLevel : byte
 {
     /// <summary>
     /// For debugging. Events that aren't necessarily observable from the outside.

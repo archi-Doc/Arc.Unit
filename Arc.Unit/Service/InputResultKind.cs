@@ -5,7 +5,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Represents the result kind of an input operation, indicating whether the operation completed successfully, was canceled, or was terminated.
 /// </summary>
-public enum InputResultKind
+public enum InputResultKind : byte
 {
     /// <summary>
     /// The input was completed successfully, or 'Yes' was returned.
