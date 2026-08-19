@@ -13,8 +13,11 @@ public class ConsoleService : IConsoleService
     }
 
     public void Write(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
+        => this.Write(message.AsSpan(), color);
+
+    public void Write(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
-        if (string.IsNullOrEmpty(message))
+        if (message.IsEmpty)
         {
             return;
         }
