@@ -22,6 +22,10 @@ public sealed class EmptyConsole : IConsoleService
     {
     }
 
+    public void Write(ReadOnlySpan<char> message, ConsoleColor color = (ConsoleColor)(-1))
+    {
+    }
+
     public void WriteLine(string? message = null, ConsoleColor color = (ConsoleColor)(-1))
     {
     }
