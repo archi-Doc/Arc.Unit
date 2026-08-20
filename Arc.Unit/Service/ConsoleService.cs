@@ -38,7 +38,7 @@ public class ConsoleService : IConsoleService
 
         var length = message.Length + BufferMargin;
         char[]? rent = null;
-        Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
+        Span<char> buffer = length <= BaseHelper.StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
 
         var destination = buffer;
@@ -86,7 +86,7 @@ public class ConsoleService : IConsoleService
 
         var length = message.Length + BufferMargin;
         char[]? rent = null;
-        Span<char> buffer = length <= BaseConstants.StackallocThreshold ?
+        Span<char> buffer = length <= BaseHelper.StackallocThreshold ?
             stackalloc char[length] : (rent = ArrayPool<char>.Shared.Rent(length));
 
         var destination = buffer;
