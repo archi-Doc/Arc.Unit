@@ -6,7 +6,7 @@ using SimpleCommandLine;
 
 namespace QuickStart;
 
-[SimpleCommand("console", Default = true)]
+[SimpleCommand("console", IsDefault = true)]
 public class ConsoleCommand : ISimpleCommand
 {
     private readonly UnitContext unitContext;
