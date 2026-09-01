@@ -17,7 +17,7 @@ public interface IUnitSerializable : IRadioService
     /// </summary>
     /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous load operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task Load(UnitContext unitContext, CancellationToken cancellationToken);
 
     /// <summary>
@@ -26,6 +26,6 @@ public interface IUnitSerializable : IRadioService
     /// </summary>
     /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous load operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task Save(UnitContext unitContext, CancellationToken cancellationToken);
 }

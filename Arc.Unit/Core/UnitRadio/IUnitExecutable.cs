@@ -16,7 +16,7 @@ public interface IUnitExecutable : IRadioService
     /// </summary>
     /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous load operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task Start(UnitContext unitContext, CancellationToken cancellationToken);
 
     /// <summary>
@@ -25,7 +25,7 @@ public interface IUnitExecutable : IRadioService
     /// </summary>
     /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous load operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task Stop(UnitContext unitContext, CancellationToken cancellationToken);
 
     /// <summary>
@@ -34,6 +34,6 @@ public interface IUnitExecutable : IRadioService
     /// </summary>
     /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
-    /// <returns>A <see cref="Task"/> representing the asynchronous load operation.</returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public Task Terminate(UnitContext unitContext, CancellationToken cancellationToken);
 }

@@ -9,15 +9,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Arc.Unit;
 
 /// <summary>
-/// Builder class of unit, for customizing dependencies.<br/>
+/// Builder class of unit which creates the specified type of product.<br/>
 /// <b>Unit = Builder + Product(Instance) + Function</b>
 /// </summary>
-/// <typeparam name="TProduct">The type of product.</typeparam>
+/// <typeparam name="TProduct">The type of product created by <see cref="Build(string?)"/>.</typeparam>
 public class UnitBuilder<TProduct> : UnitBuilder
     where TProduct : UnitProduct
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="UnitBuilder{TUnit}"/> class.
+    /// Initializes a new instance of the <see cref="UnitBuilder{TProduct}"/> class.
     /// </summary>
     public UnitBuilder()
     {
@@ -38,20 +38,22 @@ public class UnitBuilder<TProduct> : UnitBuilder
         => (UnitBuilder<TProduct>)base.PreConfigure(@delegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> configureDelegate)
-        => (UnitBuilder<TProduct>)base.Configure(configureDelegate);
+    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> @delegate)
+        => (UnitBuilder<TProduct>)base.Configure(@delegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
-        => (UnitBuilder<TProduct>)base.PostConfigure(configureDelegate);
+    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
+        => (UnitBuilder<TProduct>)base.PostConfigure(@delegate);
 
     /// <inheritdoc/>
-    public override TProduct GetBuiltUnit() => (TProduct)base.GetBuiltUnit();
+    public override TProduct GetBuiltProduct() => (TProduct)base.GetBuiltProduct();
 }
 
 /// <summary>
-/// Builder class of unit, for customizing behaviors.<br/>
-/// Unit is an independent unit of function and dependency.<br/>
+/// Builder class of unit, which registers dependencies and builds a <see cref="UnitProduct"/>.<br/>
+/// Add configuration delegates with <see cref="PreConfigure(Action{IUnitPreConfigurationContext})"/>,
+/// <see cref="Configure(Action{IUnitConfigurationContext})"/> and <see cref="PostConfigure(Action{IUnitPostConfigurationContext})"/>,
+/// combine other builders with <see cref="AddBuilder(UnitBuilder)"/>, and call <see cref="Build(string?)"/> once.
 /// </summary>
 public class UnitBuilder
 {
@@ -76,20 +78,25 @@ public class UnitBuilder
     {
     }
 
+    /// <summary>
+    /// Gets or sets a configuration delegate of a derived builder, which is executed after the configuration delegates of this builder.
+    /// </summary>
     protected Action<IUnitConfigurationContext>? CustomConfiguration { get; set; }
 
     /// <summary>
-    /// Runs the given actions and build a unit.
+    /// Runs the registered delegates and builds a unit (can be called only once).
     /// </summary>
-    /// <param name="args">Command-line arguments.</param>
+    /// <param name="args">Command-line arguments (an argument which contains whitespace is enclosed in quotation marks).</param>
     /// <returns><see cref="UnitProduct"/>.</returns>
+    /// <exception cref="InvalidOperationException">The unit has already been built.</exception>
     public virtual UnitProduct Build(string[] args) => this.Build<UnitProduct>(args);
 
     /// <summary>
-    /// Runs the given actions and build a unit.
+    /// Runs the registered delegates and builds a unit (can be called only once).
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
     /// <returns><see cref="UnitProduct"/>.</returns>
+    /// <exception cref="InvalidOperationException">The unit has already been built.</exception>
     public virtual UnitProduct Build(string? args = null) => this.Build<UnitProduct>(args);
 
     /// <summary>
@@ -143,7 +150,12 @@ public class UnitBuilder
         return this;
     }
 
-    public virtual UnitProduct GetBuiltUnit()
+    /// <summary>
+    /// Gets the product which was created by <see cref="Build(string?)"/>.
+    /// </summary>
+    /// <returns><see cref="UnitProduct"/>.</returns>
+    /// <exception cref="InvalidOperationException">The unit has not been built yet.</exception>
+    public virtual UnitProduct GetBuiltProduct()
     {
         if (this.builtUnit == null)
         {
@@ -153,6 +165,11 @@ public class UnitBuilder
         return this.builtUnit;
     }
 
+    /// <summary>
+    /// Sets the factory which creates an <see cref="IServiceProvider"/> from the <see cref="IServiceCollection"/><br/>
+    /// (the default factory calls <see cref="ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(IServiceCollection)"/>).
+    /// </summary>
+    /// <param name="factory">The service provider factory.</param>
     public void SetServiceProviderFactory(Func<IServiceCollection, IServiceProvider> factory)
     {
         this.serviceProviderFactory = factory;

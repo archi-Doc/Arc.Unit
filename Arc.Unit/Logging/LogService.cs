@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// The default <see cref="ILogService"/> implementation (registered as a scoped service).
+/// </summary>
 internal sealed class LogService : ILogService
 {
     private readonly IServiceProvider serviceProvider;

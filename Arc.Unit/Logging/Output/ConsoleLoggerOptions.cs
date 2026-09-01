@@ -2,10 +2,19 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Options of <see cref="ConsoleLogger"/>.
+/// </summary>
 public record class ConsoleLoggerOptions
 {
+    /// <summary>
+    /// The default value of <see cref="MaxQueue"/>.
+    /// </summary>
     public const int DefaultMaxQueue = 1_000;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConsoleLoggerOptions"/> class.
+    /// </summary>
     public ConsoleLoggerOptions()
     {
         this.FormatterOptions = new(true);
@@ -23,7 +32,8 @@ public record class ConsoleLoggerOptions
     public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
-    /// Gets the maximum number of queued log (0 for unlimited).
+    /// Gets the maximum number of queued log (0 for unlimited).<br/>
+    /// This is used only when <see cref="EnableBuffering"/> is <see langword="true"/>.
     /// </summary>
     public int MaxQueue { get; init; } = DefaultMaxQueue;
 }

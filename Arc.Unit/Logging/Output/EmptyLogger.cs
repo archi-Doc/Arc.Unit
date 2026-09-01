@@ -2,13 +2,20 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// <see cref="ILogOutput"/> which discards all logs.
+/// </summary>
 public class EmptyLogger : ILogOutput
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EmptyLogger"/> class.
+    /// </summary>
     public EmptyLogger()
     {
     }
 
-    public void Output(LogEvent param)
+    /// <inheritdoc/>
+    public void Output(LogEvent logEvent)
     {
     }
 }

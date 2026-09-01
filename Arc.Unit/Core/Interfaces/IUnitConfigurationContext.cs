@@ -43,9 +43,9 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnit
     bool AddSubcommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
 
     /// <summary>
-    /// Registers the specified type for instance creation.<br/>
-    /// Instances are created by calling <see cref="UnitContext.CreateInstances()"/>.
+    /// Registers the specified type so that an instance is created by <see cref="UnitContext.CreateInstances()"/>.<br/>
+    /// The type must also be registered in <see cref="Services"/> (<see cref="UnitConfigurationContextExtensions.AddSingletonUnit{TUnit}(IUnitConfigurationContext)"/> does both).
     /// </summary>
-    /// <typeparam name="T">The type to be instantiated and registered for creation.</typeparam>
-    void RegisterDefaultInstantiableType<T>();
+    /// <typeparam name="T">The type to be instantiated.</typeparam>
+    void RegisterInstanceCreation<T>();
 }

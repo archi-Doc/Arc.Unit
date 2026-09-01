@@ -2,6 +2,10 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Represents a logger bound to a specific log source type.<br/>
+/// Obtain a <see cref="LogWriter"/> with <see cref="GetWriter(LogLevel)"/>, and write a log (<c>logger.GetWriter()?.Write("message")</c>).
+/// </summary>
 public interface ILogger
 {
     /// <summary>

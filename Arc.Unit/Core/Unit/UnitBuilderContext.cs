@@ -2,7 +2,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
@@ -12,7 +11,7 @@ namespace Arc.Unit;
 /// </summary>
 internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigurationContext, IUnitPostConfigurationContext
 {
-    public const string RootDirectoryOptionName = "ProgramDirectory";
+    public const string ProgramDirectoryOptionName = "ProgramDirectory";
     public const string DataDirectoryOptionName = "DataDirectory";
 
     /// <summary>
@@ -117,9 +116,9 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     void IUnitPreConfigurationContext.SetOptions<TOptions>(TOptions options)
     {
         var baseOptions = ((IUnitPreConfigurationContext)this).GetOptions<TOptions>();
-        if (baseOptions != options)
-        {
-            GhostCopy.Copy(ref options, ref baseOptions);
+        if (!ReferenceEquals(baseOptions, options))
+        {// The registered instance cannot be replaced, so the values are copied into it.
+            OptionsCopy.Copy(options, baseOptions);
         }
     }
 
@@ -131,7 +130,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     void IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
-    void IUnitConfigurationContext.RegisterDefaultInstantiableType<T>() => this.InstanceCreationSet.Add(typeof(T));
+    void IUnitConfigurationContext.RegisterInstanceCreation<T>() => this.InstanceCreationSet.Add(typeof(T));
 
     bool IUnitConfigurationContext.AddCommand(Type commandType, ServiceLifetime lifetime)
     {
@@ -170,7 +169,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     [MemberNotNull(nameof(ProgramDirectory), nameof(DataDirectory))]
     internal void SetDirectory()
     {
-        if (this.Arguments.TryGetOptionValue(RootDirectoryOptionName, out var value))
+        if (this.Arguments.TryGetOptionValue(ProgramDirectoryOptionName, out var value))
         {// Root Directory
             if (Path.IsPathRooted(value))
             {

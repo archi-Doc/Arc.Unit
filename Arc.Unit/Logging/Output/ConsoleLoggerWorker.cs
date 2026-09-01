@@ -5,6 +5,9 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Background worker which writes the buffered logs of <see cref="ConsoleLogger"/> to the console.
+/// </summary>
 internal sealed class ConsoleLoggerWorker : TaskCore
 {
     private const int MaxFlush = 1_000;

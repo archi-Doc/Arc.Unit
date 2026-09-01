@@ -13,7 +13,7 @@ public class CommandGroup
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandGroup"/> class.
     /// </summary>
-    /// <param name="context"><see cref="UnitBuilderContext"/>.</param>
+    /// <param name="context">The configuration context which the commands are registered to.</param>
     public CommandGroup(IUnitConfigurationContext context)
     {
         this.context = context;

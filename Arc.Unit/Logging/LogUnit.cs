@@ -11,7 +11,14 @@ namespace Arc.Unit;
 /// </summary>
 public class LogUnit
 {
-    public const bool GroupIndependence = true;
+    /// <summary>
+    /// A value indicating whether the execution group of the log workers is independent of the parent (so that logs are written during termination).
+    /// </summary>
+    public const bool IsGroupIndependent = true;
+
+    /// <summary>
+    /// The name of the execution group which owns the log workers.
+    /// </summary>
     public const string GroupName = "Logger";
 
     /// <summary>
@@ -98,7 +105,10 @@ public class LogUnit
     /// <returns>
     /// <see langword="true"/> if the output was newly registered; otherwise <see langword="false"/>.
     /// </returns>
-    public bool RegisterFlush(BufferedLogOutput logOutput)
+    /// <remarks>
+    /// This is called by the constructor of <see cref="BufferedLogOutput"/>, so it is usually not necessary to call it directly.
+    /// </remarks>
+    public bool RegisterFlushTarget(BufferedLogOutput logOutput)
         => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);
 
     /// <summary>
@@ -134,7 +144,7 @@ public class LogUnit
     }
 
     internal static ExecutionGroup GetGroup(ExecutionRoot root)
-        => root.IndependentGroup.GetOrAddGroup(GroupIndependence, GroupName);
+        => root.IndependentGroup.GetOrAddGroup(IsGroupIndependent, GroupName);
 
     /// <summary>
     /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.

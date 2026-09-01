@@ -2,6 +2,9 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// A pair of log source type and <see cref="LogLevel"/>, used as the key of the log broker cache.
+/// </summary>
 internal readonly struct LogSourceLevelPair : IEquatable<LogSourceLevelPair>
 {
     public LogSourceLevelPair(Type logSourceType, LogLevel logLevel)

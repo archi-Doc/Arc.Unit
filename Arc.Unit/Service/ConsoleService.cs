@@ -4,15 +4,24 @@ using System.Buffers;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// The default <see cref="IConsoleService"/> which reads from and writes to <see cref="Console"/>.<br/>
+/// Exceptions are ignored, since console operations may fail after the console window is closed.
+/// </summary>
 public class ConsoleService : IConsoleService
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConsoleService"/> class.
+    /// </summary>
     public ConsoleService()
     {
     }
 
+    /// <inheritdoc/>
     public void Write(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.Write(message.AsSpan(), color);
 
+    /// <inheritdoc/>
     public void Write(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
         if (message.IsEmpty)
@@ -28,9 +37,11 @@ public class ConsoleService : IConsoleService
         WriteColored(message, color, false);
     }
 
+    /// <inheritdoc/>
     public void WriteLine(string? message = default, ConsoleColor color = ConsoleHelper.DefaultColor)
         => this.WriteLine(message.AsSpan(), color);
 
+    /// <inheritdoc/>
     public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
         if (message.IsEmpty || !this.EnableColor || color == ConsoleHelper.DefaultColor)
@@ -42,6 +53,7 @@ public class ConsoleService : IConsoleService
         WriteColored(message, color, true);
     }
 
+    /// <inheritdoc/>
     public async Task<InputResult> ReadLine(CancellationToken cancellationToken)
     {
         try
@@ -62,6 +74,7 @@ public class ConsoleService : IConsoleService
         }
     }
 
+    /// <inheritdoc/>
     public ConsoleKeyInfo ReadKey(bool intercept)
     {
         try
@@ -74,6 +87,7 @@ public class ConsoleService : IConsoleService
         }
     }
 
+    /// <inheritdoc/>
     public bool KeyAvailable
     {
         get
@@ -89,6 +103,7 @@ public class ConsoleService : IConsoleService
         }
     }
 
+    /// <inheritdoc/>
     public bool EnableColor { get; set; } = true;
 
     /// <summary>

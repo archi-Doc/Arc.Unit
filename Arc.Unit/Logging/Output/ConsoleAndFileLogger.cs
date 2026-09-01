@@ -2,18 +2,27 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// <see cref="ILogOutput"/> which writes logs to both <see cref="ConsoleLogger"/> and <see cref="FileLogger{TOption}"/>.
+/// </summary>
 public class ConsoleAndFileLogger : ILogOutput
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConsoleAndFileLogger"/> class.
+    /// </summary>
+    /// <param name="consoleLogger"><see cref="ConsoleLogger"/>.</param>
+    /// <param name="fileLogger"><see cref="FileLogger{TOption}"/> of <see cref="FileLoggerOptions"/>.</param>
     public ConsoleAndFileLogger(ConsoleLogger consoleLogger, FileLogger<FileLoggerOptions> fileLogger)
     {
         this.consoleLogger = consoleLogger;
         this.fileLogger = fileLogger;
     }
 
-    public void Output(LogEvent param)
+    /// <inheritdoc/>
+    public void Output(LogEvent logEvent)
     {
-        this.consoleLogger.Output(param);
-        this.fileLogger.Output(param);
+        this.consoleLogger.Output(logEvent);
+        this.fileLogger.Output(logEvent);
     }
 
     private readonly ConsoleLogger consoleLogger;

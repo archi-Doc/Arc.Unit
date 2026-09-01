@@ -2,11 +2,25 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Provides console escape sequences (ANSI/VT100) and color conversion helpers.
+/// </summary>
 public static class ConsoleHelper
 {
+    /// <summary>
+    /// Represents the default console color (the color is not changed).
+    /// </summary>
     public const ConsoleColor DefaultColor = (ConsoleColor)(-1);
-    public const string DefaultForegroundColor = "\u001b[39m\u001b[22m"; // reset to default foreground color
-    public const string DefaultBackgroundColor = "\u001b[49m"; // reset to the background color
+
+    /// <summary>
+    /// The escape sequence which resets the foreground color to the default.
+    /// </summary>
+    public const string DefaultForegroundColorEscapeCode = "\u001b[39m\u001b[22m"; // reset to default foreground color
+
+    /// <summary>
+    /// The escape sequence which resets the background color to the default.
+    /// </summary>
+    public const string DefaultBackgroundColorEscapeCode = "\u001b[49m"; // reset to the background color
 
     /// <summary>
     /// Provides extension properties for <see cref="InputResultKind"/> to simplify result checks.
@@ -35,30 +49,71 @@ public static class ConsoleHelper
         public bool IsTerminated => inputResultKind == InputResultKind.Terminated;
     }
 
+    /// <summary>
+    /// Gets the line terminator of the current environment.
+    /// </summary>
     public static ReadOnlySpan<char> NewLineSpan => Environment.NewLine;
 
+    /// <summary>
+    /// Gets the escape sequence which erases from the cursor to the end of the line.
+    /// </summary>
     public static ReadOnlySpan<char> EraseToEndOfLineSpan => "\u001b[K";
 
+    /// <summary>
+    /// Gets the escape sequence which erases to the end of the line, followed by a line terminator.
+    /// </summary>
     public static ReadOnlySpan<char> EraseToEndOfLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "\u001b[K\r\n" : "\u001b[K\n";
 
+    /// <summary>
+    /// Gets the escape sequence which erases the entire line.
+    /// </summary>
     public static ReadOnlySpan<char> EraseEntireLineSpan => "\u001b[2K";
 
+    /// <summary>
+    /// Gets the escape sequence which erases the entire line, followed by a line terminator.
+    /// </summary>
     public static ReadOnlySpan<char> EraseEntireLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "\u001b[2K\r\n" : "\u001b[2K\n";
 
+    /// <summary>
+    /// Gets the escape sequence which resets all the display attributes.
+    /// </summary>
     public static ReadOnlySpan<char> ResetSpan => "\u001b[0m";
 
+    /// <summary>
+    /// Gets the escape sequence which saves the cursor position.
+    /// </summary>
     public static ReadOnlySpan<char> SaveCursorSpan => "\u001b[s";
 
+    /// <summary>
+    /// Gets the escape sequence which restores the saved cursor position.
+    /// </summary>
     public static ReadOnlySpan<char> RestoreCursorSpan => "\u001b[u";
 
+    /// <summary>
+    /// Gets the escape sequence which hides the cursor.
+    /// </summary>
     public static ReadOnlySpan<char> HideCursorSpan => "\u001b[?25l";
 
+    /// <summary>
+    /// Gets the escape sequence which shows the cursor.
+    /// </summary>
     public static ReadOnlySpan<char> ShowCursorSpan => "\u001b[?25h";
 
+    /// <summary>
+    /// Gets the prefix of the cursor position sequence (row and column follow).
+    /// </summary>
     public static ReadOnlySpan<char> SetCursorSpan => "\u001b["; // "\e[n;mH
 
-    public static ReadOnlySpan<char> ResetCursor => "\u001b[0;0H";
+    /// <summary>
+    /// Gets the escape sequence which moves the cursor to the upper left corner.
+    /// </summary>
+    public static ReadOnlySpan<char> ResetCursorSpan => "\u001b[0;0H";
 
+    /// <summary>
+    /// Gets the escape sequence which sets the specified foreground color.
+    /// </summary>
+    /// <param name="color">The foreground color.</param>
+    /// <returns>The escape sequence (<see cref="DefaultForegroundColorEscapeCode"/> if the color is not supported).</returns>
     public static string GetForegroundColorEscapeCode(ConsoleColor color)
     {
         return color switch
@@ -79,10 +134,15 @@ public static class ConsoleHelper
             ConsoleColor.Magenta => "\u001b[1m\u001b[35m",
             ConsoleColor.Cyan => "\u001b[1m\u001b[36m",
             ConsoleColor.White => "\u001b[1m\u001b[37m",
-            _ => DefaultForegroundColor,
+            _ => DefaultForegroundColorEscapeCode,
         };
     }
 
+    /// <summary>
+    /// Gets the escape sequence which sets the specified background color.
+    /// </summary>
+    /// <param name="color">The background color.</param>
+    /// <returns>The escape sequence (<see cref="DefaultBackgroundColorEscapeCode"/> if the color is not supported).</returns>
     public static string GetBackgroundColorEscapeCode(ConsoleColor color)
     {
         return color switch
@@ -95,13 +155,20 @@ public static class ConsoleHelper
             ConsoleColor.DarkMagenta => "\u001b[45m",
             ConsoleColor.DarkCyan => "\u001b[46m",
             ConsoleColor.Gray => "\u001b[47m",
-            _ => DefaultBackgroundColor,
+            _ => DefaultBackgroundColorEscapeCode,
         };
     }
 
-    public static bool TryGetForegroundColor(int number, bool isBright, out ConsoleColor? color)
+    /// <summary>
+    /// Converts an SGR parameter (30-37, 39) into a foreground <see cref="ConsoleColor"/>.
+    /// </summary>
+    /// <param name="code">The SGR parameter of the escape sequence.</param>
+    /// <param name="isBright"><see langword="true"/> if the bright (bold) attribute is set.</param>
+    /// <param name="color">When this method returns, contains the color, or <see langword="null"/> for the default color.</param>
+    /// <returns><see langword="true"/> if <paramref name="code"/> is a foreground color parameter.</returns>
+    public static bool TryGetForegroundColor(int code, bool isBright, out ConsoleColor? color)
     {
-        color = number switch
+        color = code switch
         {
             30 => ConsoleColor.Black,
             31 => isBright ? ConsoleColor.Red : ConsoleColor.DarkRed,
@@ -114,12 +181,18 @@ public static class ConsoleHelper
             _ => null,
         };
 
-        return color != null || number == 39;
+        return color != null || code == 39;
     }
 
-    public static bool TryGetBackgroundColor(int number, out ConsoleColor? color)
+    /// <summary>
+    /// Converts an SGR parameter (40-47, 49) into a background <see cref="ConsoleColor"/>.
+    /// </summary>
+    /// <param name="code">The SGR parameter of the escape sequence.</param>
+    /// <param name="color">When this method returns, contains the color, or <see langword="null"/> for the default color.</param>
+    /// <returns><see langword="true"/> if <paramref name="code"/> is a background color parameter.</returns>
+    public static bool TryGetBackgroundColor(int code, out ConsoleColor? color)
     {
-        color = number switch
+        color = code switch
         {
             40 => ConsoleColor.Black,
             41 => ConsoleColor.DarkRed,
@@ -132,6 +205,6 @@ public static class ConsoleHelper
             _ => null,
         };
 
-        return color != null || number == 49;
+        return color != null || code == 49;
     }
 }

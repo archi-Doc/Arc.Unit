@@ -7,6 +7,10 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// <see cref="ILogOutput"/> which writes logs to the console via <see cref="IConsoleService"/>.<br/>
+/// Logs are written immediately, or buffered and written by a background worker when <see cref="ConsoleLoggerOptions.EnableBuffering"/> is set.
+/// </summary>
 public class ConsoleLogger : BufferedLogOutput
 {
 #pragma warning disable SA1310 // Field names should not contain underscore
@@ -18,8 +22,14 @@ public class ConsoleLogger : BufferedLogOutput
     private readonly ConsoleLoggerOptions options;
     private readonly ConsoleLoggerWorker? worker;
 
-    public ConsoleLogger(ExecutionRoot root, LogUnit unitLogger, ConsoleLoggerOptions options)
-        : base(unitLogger)
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
+    /// </summary>
+    /// <param name="root"><see cref="ExecutionRoot"/> which owns the background worker.</param>
+    /// <param name="logUnit"><see cref="LogUnit"/>.</param>
+    /// <param name="options"><see cref="ConsoleLoggerOptions"/>.</param>
+    public ConsoleLogger(ExecutionRoot root, LogUnit logUnit, ConsoleLoggerOptions options)
+        : base(logUnit)
     {
         // Console
         EnableVirtualTerminalProcessing();
@@ -33,22 +43,24 @@ public class ConsoleLogger : BufferedLogOutput
         this.options = options;
     }
 
-    public override void Output(LogEvent param)
+    /// <inheritdoc/>
+    public override void Output(LogEvent logEvent)
     {
         var worker = this.worker;
         if (worker is null)
         {
             // Console output might cause unexpected exceptions after the console window is closed (IConsoleService handles them).
-            this.Formatter.FormatAndWriteLine(param.LogService.ConsoleService, param);
+            this.Formatter.FormatAndWriteLine(logEvent.LogService.ConsoleService, logEvent);
             return;
         }
 
         if (this.options.MaxQueue <= 0 || worker.Count < this.options.MaxQueue)
         {
-            worker.Add(param);
+            worker.Add(logEvent);
         }
     }
 
+    /// <inheritdoc/>
     public override Task<int> Flush(bool terminate) => this.worker?.Flush(terminate) ?? Task.FromResult(0);
 
     internal SimpleLogFormatter Formatter { get; init; }

@@ -20,5 +20,5 @@ public enum UnitState : byte
     /// <summary>
     /// The object has been disposed and cannot be reused.
     /// </summary>
-    Rip,
+    Disposed,
 }

@@ -7,6 +7,9 @@ using Utf8StringInterpolation;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Background worker which writes the buffered logs of <see cref="FileLogger{TOption}"/> to a file, and limits the log capacity.
+/// </summary>
 internal sealed class FileLoggerWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
@@ -29,7 +32,7 @@ internal sealed class FileLoggerWorker : TaskCore
     public FileLoggerWorker(ExecutionRoot root, FileLoggerOptions options)
         : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DelayedStart)
     {
-        this.formatter = new(options.Formatter);
+        this.formatter = new(options.FormatterOptions);
         this.clearLogsAtStartup = options.ClearLogsAtStartup;
 
         this.maxCapacity = (long)options.MaxLogCapacity * 1_000_000;
