@@ -8,7 +8,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Provides convenience extension methods for registering services into an <see cref="IUnitConfigurationContext"/>.
 /// </summary>
-public static class UnitConfigurationContextExtentions
+public static class UnitConfigurationContextExtensions
 {
     /// <summary>
     /// Registers a <see cref="UnitBase"/>-derived unit type as a singleton service and registers it for default instance creation.
@@ -17,14 +17,14 @@ public static class UnitConfigurationContextExtentions
     /// <param name="context">The current unit configuration context.</param>
     /// <remarks>
     /// In addition to calling <see cref="ServiceCollectionServiceExtensions.AddSingleton{TService}(IServiceCollection)"/>,
-    /// this method calls <see cref="IUnitConfigurationContext.RegisterDefaultInstantiableType{T}()"/> so the unit can be
+    /// this method calls <see cref="IUnitConfigurationContext.RegisterInstanceCreation{T}()"/> so the unit can be
     /// created when <c>UnitContext.CreateInstances()</c> is invoked.
     /// </remarks>
     public static void AddSingletonUnit<TUnit>(this IUnitConfigurationContext context)
         where TUnit : UnitBase
     {
         context.Services.AddSingleton<TUnit>();
-        context.RegisterDefaultInstantiableType<TUnit>();
+        context.RegisterInstanceCreation<TUnit>();
     }
 
     /// <summary>

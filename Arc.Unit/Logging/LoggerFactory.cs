@@ -2,7 +2,11 @@
 
 namespace Arc.Unit;
 
-internal class LoggerFactory<TLogSource> : ILogger<TLogSource>
+/// <summary>
+/// The default <see cref="ILogger{TLogSource}"/> implementation which delegates to <see cref="ILogService"/>.
+/// </summary>
+/// <typeparam name="TLogSource">The log source type.</typeparam>
+internal sealed class LoggerFactory<TLogSource> : ILogger<TLogSource>
 {
     public LoggerFactory(ILogService logService)
     {

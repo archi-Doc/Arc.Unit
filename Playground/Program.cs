@@ -119,7 +119,7 @@ public class Program
         builder.AddBuilder(builder2);
 
         var unit = builder.Build("-datadirectory 'a'");
-        root = unit.Context.Root;
+        root = unit.Context.ExecutionRoot;
 
         var logger2 = unit.Context.ServiceProvider.GetRequiredService<ILogger<ITestInterface>>();
 
@@ -152,7 +152,7 @@ public class Program
         ff = PathHelper.RunningInContainer;
 
         var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
-        var array = memoryLogger.ToArray();
+        var array = memoryLogger.ToUtf8Array();
         var st = Encoding.UTF8.GetString(array);
 
         try

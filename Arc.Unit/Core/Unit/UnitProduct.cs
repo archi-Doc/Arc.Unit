@@ -17,5 +17,8 @@ public class UnitProduct
         this.Context = context;
     }
 
+    /// <summary>
+    /// Gets the <see cref="UnitContext"/> shared by the units of this product.
+    /// </summary>
     public UnitContext Context { get; }
 }

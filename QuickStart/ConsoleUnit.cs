@@ -30,7 +30,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingletonUnit<ConsoleUnit>();
-                context.RegisterDefaultInstantiableType<ConsoleUnit>();
+                context.RegisterInstanceCreation<ConsoleUnit>();
 
                 // Command
                 context.AddCommand(typeof(ConsoleCommand));
@@ -116,22 +116,22 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.consoleUnit = consoleUnit;
         }
 
-        public LogWriter? Filter(LogFilterParameter param)
+        public LogWriter? Filter(LogFilterParameter parameter)
         {// Log source/Event id/LogLevel -> Filter() -> ILog
-            if (param.LogSourceType == typeof(ConsoleCommand))
+            if (parameter.LogSourceType == typeof(ConsoleCommand))
             {
                 // return null; // No log
-                if (param.LogLevel == LogLevel.Error)
+                if (parameter.LogLevel == LogLevel.Error)
                 {
-                    return param.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+                    return parameter.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
                 }
-                else if (param.LogLevel == LogLevel.Fatal)
+                else if (parameter.LogLevel == LogLevel.Fatal)
                 {
-                    return param.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
+                    return parameter.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
                 }
             }
 
-            return param.OriginalLogger;
+            return parameter.OriginalWriter;
         }
 
         private ConsoleUnit consoleUnit;

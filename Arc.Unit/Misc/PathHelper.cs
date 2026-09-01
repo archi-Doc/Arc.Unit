@@ -4,8 +4,19 @@ using System.Runtime.CompilerServices;
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Provides helper methods for file and directory paths.<br/>
+/// The methods prefixed with "Try" do not throw an exception when the operation fails.
+/// </summary>
 public static class PathHelper
 {
+    /// <summary>
+    /// Appends the specified bytes to the file (no exception will be thrown, except for the argument validation).
+    /// </summary>
+    /// <param name="path">The file path.</param>
+    /// <param name="bytes">The bytes to append.</param>
+    /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
+    /// <returns><see langword="true"/>; The bytes are successfully appended.</returns>
     public static async Task<bool> TryAppendAllBytes(string path, byte[] bytes, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
@@ -50,6 +61,11 @@ public static class PathHelper
         }
     }
 
+    /// <summary>
+    /// Creates the specified directory, including any parent directories (no exception will be thrown).
+    /// </summary>
+    /// <param name="directory">Directory path.</param>
+    /// <returns>The created directory, or <see langword="null"/> if the operation failed.</returns>
     public static DirectoryInfo? TryCreateDirectory(string directory)
     {
         try
@@ -144,20 +160,20 @@ public static class PathHelper
         }
     }
 
-    public static bool RunningInContainer
+    /// <summary>
+    /// Gets a value indicating whether the process is running in a container.
+    /// </summary>
+    public static bool RunningInContainer => runningInContainer ??= GetRunningInContainer();
+
+    private static bool? runningInContainer;
+
+    private static bool GetRunningInContainer()
     {
-        get
+        if (string.Equals(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), "true", StringComparison.OrdinalIgnoreCase))
         {
-            if (!containerChecked)
-            {
-                inContainer = File.Exists("/.dockerenv");
-                containerChecked = true;
-            }
-
-            return inContainer;
+            return true;
         }
-    }
 
-    private static bool containerChecked;
-    private static bool inContainer;
+        return File.Exists("/.dockerenv");
+    }
 }

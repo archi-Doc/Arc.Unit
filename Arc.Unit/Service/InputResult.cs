@@ -8,7 +8,7 @@ namespace Arc.Unit;
 public readonly struct InputResult
 {
     /// <summary>
-    /// Gets the kind of result, indicating whether the input was successful, canceled, or terminated.
+    /// The kind of result, indicating whether the input was successful, canceled, terminated, or 'No'.
     /// </summary>
     public readonly InputResultKind Kind;
 
@@ -44,6 +44,11 @@ public readonly struct InputResult
     public bool IsSuccess => this.Kind == InputResultKind.Success;
 
     /// <summary>
+    /// Gets a value indicating whether the input operation returned 'No'.
+    /// </summary>
+    public bool IsNo => this.Kind == InputResultKind.No;
+
+    /// <summary>
     /// Gets a value indicating whether the input operation was canceled.
     /// </summary>
     public bool IsCanceled => this.Kind == InputResultKind.Canceled;
@@ -53,6 +58,7 @@ public readonly struct InputResult
     /// </summary>
     public bool IsTerminated => this.Kind == InputResultKind.Terminated;
 
+    /// <inheritdoc/>
     public override string ToString()
     {
         if (this.IsSuccess)

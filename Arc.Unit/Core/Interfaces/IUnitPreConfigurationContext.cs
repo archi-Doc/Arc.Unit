@@ -8,17 +8,19 @@ namespace Arc.Unit;
 public interface IUnitPreConfigurationContext
 {
     /// <summary>
-    /// Gets or sets the name of the unit being configured.
+    /// Gets or sets the name of the unit (the default value is the entry assembly name).
     /// </summary>
     string UnitName { get; set; }
 
     /// <summary>
-    /// Gets or sets the directory path where the program is located.
+    /// Gets or sets the directory path where the program is located.<br/>
+    /// The default value is the current directory, and it can be changed with the "-ProgramDirectory" command-line option.
     /// </summary>
     string ProgramDirectory { get; set; }
 
     /// <summary>
-    /// Gets or sets the directory path used for data storage.
+    /// Gets or sets the directory path used for data storage.<br/>
+    /// The default value is empty, and it can be set with the "-DataDirectory" command-line option.
     /// </summary>
     string DataDirectory { get; set; }
 

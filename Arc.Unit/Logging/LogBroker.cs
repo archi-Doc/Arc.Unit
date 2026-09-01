@@ -1,10 +1,11 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
-
 namespace Arc.Unit;
 
-internal class LogBroker
+/// <summary>
+/// Holds the resolved output (and optional filter) for a pair of log source type and <see cref="LogLevel"/>.
+/// </summary>
+internal sealed class LogBroker
 {
     public LogBroker(Type logSourceType, LogLevel logLevel, ILogOutput logOutput, ILogFilter? logFilter)
     {
@@ -12,35 +13,10 @@ internal class LogBroker
         this.LogSourceType = logSourceType;
         this.LogLevel = logLevel;
 
-        this.LogDelegate = (ILogOutput.OutputDelegate)delegateCache.GetOrAdd(logOutput, static x =>
-        {
-            var type = x.GetType();
-            var method = type.GetMethod(nameof(ILogOutput.Output));
-            if (method == null)
-            {
-                throw new ArgumentException();
-            }
-
-            return Delegate.CreateDelegate(typeof(ILogOutput.OutputDelegate), x, method);
-        });
-
-        if (logFilter is not null)
-        {
-            this.FilterDelegate = (ILogFilter.FilterDelegate)delegateCache.GetOrAdd(logFilter, static x =>
-            {
-                var type = x.GetType();
-                var method = type.GetMethod(nameof(ILogFilter.Filter));
-                if (method == null)
-                {
-                    throw new ArgumentException();
-                }
-
-                return Delegate.CreateDelegate(typeof(ILogFilter.FilterDelegate), x, method);
-            });
-        }
+        // Delegates are created once per broker, and brokers are cached by LogUnit.
+        this.LogDelegate = logOutput.Output;
+        this.FilterDelegate = logFilter is null ? null : logFilter.Filter;
     }
-
-    private static ConcurrentDictionary<object, Delegate> delegateCache = new();
 
     public Type OutputType { get; }
 

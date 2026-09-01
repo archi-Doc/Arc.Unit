@@ -1,0 +1,45 @@
+﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+
+using System.Collections.Concurrent;
+using System.Reflection;
+
+namespace Arc.Unit;
+
+/// <summary>
+/// Copies the contents of an options instance to another instance of the same type.
+/// </summary>
+/// <remarks>
+/// Options instances are registered in the DI container during the build process, and therefore they cannot be replaced afterwards.<br/>
+/// Instead, the values of the new instance (usually created with a <see langword="with"/> expression) are copied into the registered instance.
+/// </remarks>
+internal static class OptionsCopy
+{
+    private const BindingFlags DeclaredInstanceFields =
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+
+    private static readonly ConcurrentDictionary<Type, FieldInfo[]> TypeToFields = new();
+
+    /// <summary>
+    /// Copies all the instance fields (including the private and inherited fields) from one instance to another.
+    /// </summary>
+    /// <param name="from">The source instance.</param>
+    /// <param name="to">The destination instance.</param>
+    internal static void Copy(object from, object to)
+    {
+        var fields = TypeToFields.GetOrAdd(from.GetType(), static type =>
+        {
+            var list = new List<FieldInfo>();
+            for (var t = type; t is not null && t != typeof(object); t = t.BaseType)
+            {
+                list.AddRange(t.GetFields(DeclaredInstanceFields));
+            }
+
+            return list.ToArray();
+        });
+
+        for (var i = 0; i < fields.Length; i++)
+        {
+            fields[i].SetValue(to, fields[i].GetValue(from));
+        }
+    }
+}

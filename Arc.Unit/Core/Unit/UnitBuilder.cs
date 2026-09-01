@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Text;
 using Arc.Threading;
 using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,15 +9,15 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Arc.Unit;
 
 /// <summary>
-/// Builder class of unit, for customizing dependencies.<br/>
+/// Builder class of unit which creates the specified type of product.<br/>
 /// <b>Unit = Builder + Product(Instance) + Function</b>
 /// </summary>
-/// <typeparam name="TProduct">The type of product.</typeparam>
+/// <typeparam name="TProduct">The type of product created by <see cref="Build(string?)"/>.</typeparam>
 public class UnitBuilder<TProduct> : UnitBuilder
     where TProduct : UnitProduct
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="UnitBuilder{TUnit}"/> class.
+    /// Initializes a new instance of the <see cref="UnitBuilder{TProduct}"/> class.
     /// </summary>
     public UnitBuilder()
     {
@@ -37,31 +38,36 @@ public class UnitBuilder<TProduct> : UnitBuilder
         => (UnitBuilder<TProduct>)base.PreConfigure(@delegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> configureDelegate)
-        => (UnitBuilder<TProduct>)base.Configure(configureDelegate);
+    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> @delegate)
+        => (UnitBuilder<TProduct>)base.Configure(@delegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
-        => (UnitBuilder<TProduct>)base.PostConfigure(configureDelegate);
+    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
+        => (UnitBuilder<TProduct>)base.PostConfigure(@delegate);
 
     /// <inheritdoc/>
-    public override TProduct GetBuiltUnit() => (TProduct)base.GetBuiltUnit();
+    public override TProduct GetBuiltProduct() => (TProduct)base.GetBuiltProduct();
 }
 
 /// <summary>
-/// Builder class of unit, for customizing behaviors.<br/>
-/// Unit is an independent unit of function and dependency.<br/>
+/// Builder class of unit, which registers dependencies and builds a <see cref="UnitProduct"/>.<br/>
+/// Add configuration delegates with <see cref="PreConfigure(Action{IUnitPreConfigurationContext})"/>,
+/// <see cref="Configure(Action{IUnitConfigurationContext})"/> and <see cref="PostConfigure(Action{IUnitPostConfigurationContext})"/>,
+/// combine other builders with <see cref="AddBuilder(UnitBuilder)"/>, and call <see cref="Build(string?)"/> once.
 /// </summary>
 public class UnitBuilder
 {
     #region FieldAndProperty
 
+    private static readonly Func<IServiceCollection, IServiceProvider> DefaultServiceProviderFactory =
+        static services => ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);
+
+    private readonly List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
+    private readonly List<Action<IUnitConfigurationContext>> configureActions = new();
+    private readonly List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
+    private readonly List<UnitBuilder> unitBuilders = new();
     private UnitProduct? builtUnit;
-    private List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
-    private List<Action<IUnitConfigurationContext>> configureActions = new();
-    private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
-    private List<UnitBuilder> unitBuilders = new();
-    private Func<IServiceCollection, IServiceProvider> serviceProviderFactory = services => ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);
+    private Func<IServiceCollection, IServiceProvider> serviceProviderFactory = DefaultServiceProviderFactory;
 
     #endregion
 
@@ -72,20 +78,25 @@ public class UnitBuilder
     {
     }
 
+    /// <summary>
+    /// Gets or sets a configuration delegate of a derived builder, which is executed after the configuration delegates of this builder.
+    /// </summary>
     protected Action<IUnitConfigurationContext>? CustomConfiguration { get; set; }
 
     /// <summary>
-    /// Runs the given actions and build a unit.
+    /// Runs the registered delegates and builds a unit (can be called only once).
     /// </summary>
-    /// <param name="args">Command-line arguments.</param>
+    /// <param name="args">Command-line arguments (an argument which contains whitespace is enclosed in quotation marks).</param>
     /// <returns><see cref="UnitProduct"/>.</returns>
+    /// <exception cref="InvalidOperationException">The unit has already been built.</exception>
     public virtual UnitProduct Build(string[] args) => this.Build<UnitProduct>(args);
 
     /// <summary>
-    /// Runs the given actions and build a unit.
+    /// Runs the registered delegates and builds a unit (can be called only once).
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
     /// <returns><see cref="UnitProduct"/>.</returns>
+    /// <exception cref="InvalidOperationException">The unit has already been built.</exception>
     public virtual UnitProduct Build(string? args = null) => this.Build<UnitProduct>(args);
 
     /// <summary>
@@ -140,20 +151,11 @@ public class UnitBuilder
     }
 
     /// <summary>
-    /// Adds a delegate to the builder for setting up the option.<br/>
-    /// This can be called multiple times and the results will be additive.
+    /// Gets the product which was created by <see cref="Build(string?)"/>.
     /// </summary>
-    /// <typeparam name="TOptions">The type of options class.</typeparam>
-    /// <param name="delegate">The delegate for setting up the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
-        where TOptions : class
-    {
-        var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
-        return this;
-    }
-
-    public virtual UnitProduct GetBuiltUnit()
+    /// <returns><see cref="UnitProduct"/>.</returns>
+    /// <exception cref="InvalidOperationException">The unit has not been built yet.</exception>
+    public virtual UnitProduct GetBuiltProduct()
     {
         if (this.builtUnit == null)
         {
@@ -163,6 +165,11 @@ public class UnitBuilder
         return this.builtUnit;
     }
 
+    /// <summary>
+    /// Sets the factory which creates an <see cref="IServiceProvider"/> from the <see cref="IServiceCollection"/><br/>
+    /// (the default factory calls <see cref="ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(IServiceCollection)"/>).
+    /// </summary>
+    /// <param name="factory">The service provider factory.</param>
     public void SetServiceProviderFactory(Func<IServiceCollection, IServiceProvider> factory)
     {
         this.serviceProviderFactory = factory;
@@ -170,10 +177,7 @@ public class UnitBuilder
 
     internal virtual TUnit Build<TUnit>(string[] args)
         where TUnit : UnitProduct
-    {
-        var s = args == null ? null : string.Join(' ', args);
-        return this.Build<TUnit>(s);
-    }
+        => this.Build<TUnit>(JoinArguments(args));
 
     internal virtual TUnit Build<TUnit>(string? args)
         where TUnit : UnitProduct
@@ -187,14 +191,14 @@ public class UnitBuilder
         var builderContext = new UnitBuilderContext(args);
 
         // Pre-configuration
-        builderContext.ProcessedBuilderTypes.Clear();
+        builderContext.ProcessedBuilders.Clear();
         this.PreConfigureInternal(builderContext);
 
         // Configuration: UnitLogger
         LogUnit.Configure(builderContext);
 
         // Configuration
-        builderContext.ProcessedBuilderTypes.Clear();
+        builderContext.ProcessedBuilders.Clear();
         this.ConfigureInternal(builderContext);
 
         // Custom configuration
@@ -229,7 +233,7 @@ public class UnitBuilder
         unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
 
         // Post-configuration
-        builderContext.ProcessedBuilderTypes.Clear();
+        builderContext.ProcessedBuilders.Clear();
         this.PostConfigureInternal(builderContext);
 
         var unit = serviceProvider.GetRequiredService<TUnit>();
@@ -237,9 +241,75 @@ public class UnitBuilder
         return unit;
     }
 
+    /// <summary>
+    /// Joins command-line arguments into a single string.<br/>
+    /// An argument which contains whitespace is enclosed in quotation marks, so that it is not split during parsing.
+    /// </summary>
+    /// <param name="args">Command-line arguments.</param>
+    /// <returns>The joined arguments.</returns>
+    private static string? JoinArguments(string[]? args)
+    {
+        if (args is null || args.Length == 0)
+        {
+            return null;
+        }
+
+        var sb = new StringBuilder();
+        foreach (var x in args)
+        {
+            if (sb.Length > 0)
+            {
+                sb.Append(' ');
+            }
+
+            if (RequiresQuotation(x))
+            {
+                sb.Append('\"').Append(x).Append('\"');
+            }
+            else
+            {
+                sb.Append(x);
+            }
+        }
+
+        return sb.ToString();
+
+        static bool RequiresQuotation(string arg)
+        {
+            var containsWhitespace = false;
+            foreach (var c in arg)
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    containsWhitespace = true;
+                    break;
+                }
+            }
+
+            if (!containsWhitespace)
+            {// No whitespace: no need to be enclosed.
+                return false;
+            }
+
+            if (arg.Length >= 2)
+            {// Already enclosed: "A B" 'A B' {A B}
+                var first = arg[0];
+                var last = arg[arg.Length - 1];
+                if ((first == '\"' && last == '\"') ||
+                    (first == '\'' && last == '\'') ||
+                    (first == '{' && last == '}'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     private void PreConfigureInternal(UnitBuilderContext context)
     {// Pre-configuration
-        if (!context.ProcessedBuilderTypes.Add(this))
+        if (!context.ProcessedBuilders.Add(this))
         {// Already processed.
             return;
         }
@@ -259,7 +329,7 @@ public class UnitBuilder
 
     private void ConfigureInternal(UnitBuilderContext context)
     {// Configuration
-        if (!context.ProcessedBuilderTypes.Add(this))
+        if (!context.ProcessedBuilders.Add(this))
         {// Already processed.
             return;
         }
@@ -268,10 +338,6 @@ public class UnitBuilder
         foreach (var x in this.unitBuilders)
         {
             x.ConfigureInternal(context);
-            if (x.CustomConfiguration is { } customConfiguration)
-            {
-                customConfiguration(context);
-            }
         }
 
         // Actions
@@ -279,11 +345,14 @@ public class UnitBuilder
         {
             x(context);
         }
+
+        // Custom configuration
+        this.CustomConfiguration?.Invoke(context);
     }
 
     private void PostConfigureInternal(UnitBuilderContext context)
     {// Post-configuration
-        if (!context.ProcessedBuilderTypes.Add(this))
+        if (!context.ProcessedBuilders.Add(this))
         {// Already processed.
             return;
         }

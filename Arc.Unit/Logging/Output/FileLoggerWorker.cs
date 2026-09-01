@@ -7,33 +7,35 @@ using Utf8StringInterpolation;
 
 namespace Arc.Unit;
 
-internal class FileLoggerWorker : TaskCore
+/// <summary>
+/// Background worker which writes the buffered logs of <see cref="FileLogger{TOption}"/> to a file, and limits the log capacity.
+/// </summary>
+internal sealed class FileLoggerWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
     private const int LimitLogThreshold = 10_000;
+    private const int IntervalInMilliseconds = 1_000;
 
-    // private ILogger<FileLoggerWorker>? logger;
-    private string basePath;
-    private string baseFile;
-    private string baseExtension;
-    private SimpleLogFormatter formatter;
-    private ConcurrentQueue<FileLoggerWork> queue = new();
-    private SemaphoreSlim semaphore = new(1, 1);
+    private readonly SimpleLogFormatter formatter;
+    private readonly ConcurrentQueue<LogEvent> queue = new();
+    private readonly SemaphoreSlim semaphore = new(1, 1);
+    private readonly string basePath;
+    private readonly string baseFile;
+    private readonly string baseExtension;
+    private readonly long maxCapacity;
+    private readonly bool clearLogsAtStartup;
     private DateTime limitLogTime;
-    private int limitLogCount = 0;
-    private long maxCapacity;
-    private bool clearLogsAtStartup;
+    private int limitLogCount;
 
     public int Count => this.queue.Count;
 
     public FileLoggerWorker(ExecutionRoot root, FileLoggerOptions options)
         : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DelayedStart)
     {
-        // this.logger = logContext.GetLogger<FileLoggerWorker>();
-        this.formatter = new(options.Formatter);
+        this.formatter = new(options.FormatterOptions);
         this.clearLogsAtStartup = options.ClearLogsAtStartup;
 
-        this.maxCapacity = options.MaxLogCapacity * 1_000_000;
+        this.maxCapacity = (long)options.MaxLogCapacity * 1_000_000;
         var fullPath = options.Path;
         var fileName = Path.GetFileName(fullPath);
         var idx = fileName.LastIndexOf('.'); // "TestLog.txt" -> 7
@@ -61,17 +63,17 @@ internal class FileLoggerWorker : TaskCore
             worker.LimitLogs(true);
         }
 
-        while (await worker.Delay(1_000))
+        while (await worker.Delay(IntervalInMilliseconds))
         {
             await worker.Flush(false).ConfigureAwait(false);
         }
 
-        await worker.Flush(false);
+        await worker.Flush(true).ConfigureAwait(false); // Flush the remaining logs.
     }
 
-    public void Add(FileLoggerWork work)
+    public void Add(LogEvent logEvent)
     {
-        this.queue.Enqueue(work);
+        this.queue.Enqueue(logEvent);
     }
 
     public async Task<int> Flush(bool terminate)
@@ -79,24 +81,26 @@ internal class FileLoggerWorker : TaskCore
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            (var count, var bytes) = GetUtf8();
-            if (bytes.Length > 0)
+            var total = 0;
+            while (true)
             {
-                var path = this.GetCurrentPath();
-                if (Path.GetDirectoryName(path) is { } directory)
+                (var count, var bytes) = this.DequeueUtf8();
+                total += count;
+                if (bytes.Length > 0)
                 {
-                    PathHelper.TryCreateDirectory(directory);
+                    var path = this.GetCurrentPath();
+                    if (Path.GetDirectoryName(path) is { } directory)
+                    {
+                        PathHelper.TryCreateDirectory(directory);
+                    }
+
+                    await PathHelper.TryAppendAllBytes(path, bytes).ConfigureAwait(false);
                 }
 
-                await PathHelper.TryAppendAllBytes(path, bytes);
-
-                /*try
-                {
-                    await File.AppendAllTextAsync(path, sb.ToString()).ConfigureAwait(false);
+                if (!terminate || count < MaxFlush)
+                {// Flush all the queued logs on termination.
+                    break;
                 }
-                catch
-                {
-                }*/
             }
 
             if (terminate)
@@ -105,7 +109,7 @@ internal class FileLoggerWorker : TaskCore
             }
             else
             {// Limit log capacity
-                this.limitLogCount += count;
+                this.limitLogCount += total;
                 var now = DateTime.UtcNow;
                 if (now - this.limitLogTime > TimeSpan.FromMinutes(10) ||
                     this.limitLogCount >= LimitLogThreshold)
@@ -117,25 +121,11 @@ internal class FileLoggerWorker : TaskCore
                 }
             }
 
-            return count;
+            return total;
         }
         finally
         {
             this.semaphore.Release();
-        }
-
-        (int Count, byte[] Bytes) GetUtf8()
-        {
-            using var buffer = Utf8String.CreateWriter(out var writer);
-            var count = 0;
-            while (count < MaxFlush && this.queue.TryDequeue(out var work))
-            {
-                count++;
-                this.formatter.FormatUtf8(ref writer, work.Parameter);
-            }
-
-            writer.Flush();
-            return (count, buffer.ToArray());
         }
     }
 
@@ -177,34 +167,38 @@ internal class FileLoggerWorker : TaskCore
             return;
         }
 
-        // this.logger?.TryGet()?.Log($"Limit logs {capacity}/{this.maxCapacity} {directory}");
         foreach (var x in pathToSize)
-        {
+        {// Delete the old logs (the file name contains the date, so the dictionary is sorted in chronological order).
             if (!removeAll && capacity < this.maxCapacity)
             {
                 break;
             }
 
-            try
-            {
-                File.Delete(x.Key);
-                // this.logger?.TryGet()?.Log($"Deleted: {x.Key}");
-            }
-            catch
-            {
-            }
-
+            PathHelper.TryDeleteFile(x.Key);
             capacity -= x.Value;
         }
     }
-}
 
-internal class FileLoggerWork
-{
-    public FileLoggerWork(LogEvent parameter)
+    /// <summary>
+    /// Dequeues the log events and converts them into a UTF-8 byte array.
+    /// </summary>
+    /// <returns>The number of dequeued logs and the UTF-8 byte array.</returns>
+    private (int Count, byte[] Bytes) DequeueUtf8()
     {
-        this.Parameter = parameter;
-    }
+        using var buffer = Utf8String.CreateWriter(out var writer);
+        var count = 0;
+        while (count < MaxFlush && this.queue.TryDequeue(out var logEvent))
+        {
+            count++;
+            this.formatter.FormatUtf8(ref writer, logEvent);
+        }
 
-    public LogEvent Parameter { get; }
+        if (count == 0)
+        {
+            return (0, Array.Empty<byte>());
+        }
+
+        writer.Flush();
+        return (count, buffer.ToArray());
+    }
 }

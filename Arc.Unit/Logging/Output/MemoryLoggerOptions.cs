@@ -2,13 +2,22 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// Options of <see cref="MemoryLogger"/>.
+/// </summary>
 public record class MemoryLoggerOptions
 {
-    public const long DefaultMaxMemoryUsage = 100_000_000; // 100 MB
+    /// <summary>
+    /// The default value of <see cref="MaxMemoryUsage"/> (100 MB).
+    /// </summary>
+    public const long DefaultMaxMemoryUsage = 100_000_000;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MemoryLoggerOptions"/> class.
+    /// </summary>
     public MemoryLoggerOptions()
     {
-        this.Formatter = new SimpleLogFormatterOptions(false) with
+        this.FormatterOptions = new SimpleLogFormatterOptions(false) with
         {
             TimestampFormat = "yyyy-MM-dd HH:mm:ss.ffffff K",
         };
@@ -17,7 +26,7 @@ public record class MemoryLoggerOptions
     /// <summary>
     /// Gets <see cref="SimpleLogFormatterOptions"/>.
     /// </summary>
-    public SimpleLogFormatterOptions Formatter { get; init; }
+    public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
     /// Gets the maximum memory usage in bytes (0 for unlimited, default value is <see cref="DefaultMaxMemoryUsage"/>).

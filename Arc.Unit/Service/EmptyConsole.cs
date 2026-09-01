@@ -2,35 +2,46 @@
 
 namespace Arc.Unit;
 
+/// <summary>
+/// <see cref="IConsoleService"/> which discards all output and returns an empty input.
+/// </summary>
 public sealed class EmptyConsole : IConsoleService
 {
+    /// <inheritdoc/>
     public bool KeyAvailable => false;
 
+    /// <inheritdoc/>
     public bool EnableColor { get; set; }
 
+    /// <inheritdoc/>
     public ConsoleKeyInfo ReadKey(bool intercept)
     {
         return default;
     }
 
+    /// <inheritdoc/>
     public Task<InputResult> ReadLine(CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new InputResult(InputResultKind.Success));
     }
 
-    public void Write(string? message = null, ConsoleColor color = (ConsoleColor)(-1))
+    /// <inheritdoc/>
+    public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
     }
 
-    public void Write(ReadOnlySpan<char> message, ConsoleColor color = (ConsoleColor)(-1))
+    /// <inheritdoc/>
+    public void Write(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
     }
 
-    public void WriteLine(string? message = null, ConsoleColor color = (ConsoleColor)(-1))
+    /// <inheritdoc/>
+    public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
     }
 
-    public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = (ConsoleColor)(-1))
+    /// <inheritdoc/>
+    public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor)
     {
     }
 }

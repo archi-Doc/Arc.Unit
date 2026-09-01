@@ -21,7 +21,6 @@ public class UnitBuilderToServiceProviderFactory : IServiceProviderFactory<UnitB
     /// <inheritdoc/>
     public UnitBuilder CreateBuilder(IServiceCollection services)
     {
-        this.builder ??= new UnitBuilder();
         this.builder.Configure(context =>
         {
             foreach (var x in services)
@@ -40,5 +39,5 @@ public class UnitBuilderToServiceProviderFactory : IServiceProviderFactory<UnitB
         return unit.Context.ServiceProvider;
     }
 
-    private UnitBuilder? builder;
+    private readonly UnitBuilder builder;
 }

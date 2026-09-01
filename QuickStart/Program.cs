@@ -35,7 +35,7 @@ public class Program
             });
 
         var unit = builder.Build();
-        root = unit.Context.Root;
+        root = unit.Context.ExecutionRoot;
         await unit.RunAsync(new(args));
 
         root.RequestTermination();
