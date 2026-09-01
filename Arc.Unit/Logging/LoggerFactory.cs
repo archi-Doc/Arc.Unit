@@ -2,7 +2,7 @@
 
 namespace Arc.Unit;
 
-internal class LoggerFactory<TLogSource> : ILogger<TLogSource>
+internal sealed class LoggerFactory<TLogSource> : ILogger<TLogSource>
 {
     public LoggerFactory(ILogService logService)
     {

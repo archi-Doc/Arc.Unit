@@ -39,12 +39,12 @@ public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     {
         if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
         {
-            this.worker.Add(new(param));
+            this.worker.Add(param);
         }
     }
 
     public override Task<int> Flush(bool terminate) => this.worker.Flush(terminate);
 
-    private FileLoggerWorker worker;
-    private TOption options;
+    private readonly FileLoggerWorker worker;
+    private readonly TOption options;
 }

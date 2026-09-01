@@ -26,6 +26,9 @@ public readonly struct LogEvent : IEquatable<LogEvent>
 
     public readonly DateTimeOffset DateTime;
 
+    public override bool Equals(object? obj)
+        => obj is LogEvent other && this.Equals(other);
+
     public bool Equals(LogEvent other)
         => this.LogSourceType == other.LogSourceType &&
         this.LogLevel == other.LogLevel &&

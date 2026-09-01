@@ -5,10 +5,13 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
-internal class ConsoleLoggerWorker : TaskCore
+internal sealed class ConsoleLoggerWorker : TaskCore
 {
     private const int MaxFlush = 1_000;
     private const int BufferingTimeInMilliseconds = 40;
+
+    private readonly ConsoleLogger consoleLogger;
+    private readonly ConcurrentQueue<LogEvent> queue = new();
 
     public ConsoleLoggerWorker(ExecutionRoot root, ConsoleLogger consoleLogger)
         : base(LogUnit.GetGroup(root), Process)
@@ -23,28 +26,26 @@ internal class ConsoleLoggerWorker : TaskCore
         {
             await worker.Flush(false).ConfigureAwait(false);
         }
+
+        await worker.Flush(true).ConfigureAwait(false); // Flush the remaining logs.
     }
 
-    public void Add(ConsoleLoggerWork work)
+    public void Add(LogEvent logEvent)
     {
-        this.queue.Enqueue(work);
+        this.queue.Enqueue(logEvent);
     }
 
-    public async Task<int> Flush(bool terminate)
+    public Task<int> Flush(bool terminate)
     {
         var count = 0;
-        while (count < MaxFlush && this.queue.TryDequeue(out var work))
+        var maxFlush = terminate ? int.MaxValue : MaxFlush; // Flush all the queued logs on termination.
+        var formatter = this.consoleLogger.Formatter;
+        while (count < maxFlush && this.queue.TryDequeue(out var logEvent))
         {
             count++;
-            work.Parameter.LogService.ConsoleService.WriteLine(this.consoleLogger.Formatter.Format(work.Parameter));
 
-            /*try
-            {// Console.WriteLine() might cause unexpected exceptions after console window is closed.
-                Console.WriteLine(this.consoleLogger.Formatter.Format(work.Parameter));
-            }
-            catch
-            {
-            }*/
+            // Console output might cause unexpected exceptions after the console window is closed (IConsoleService handles them).
+            formatter.FormatAndWriteLine(logEvent.LogService.ConsoleService, logEvent);
         }
 
         if (terminate)
@@ -52,21 +53,8 @@ internal class ConsoleLoggerWorker : TaskCore
             this.RequestTermination();
         }
 
-        return count;
+        return Task.FromResult(count);
     }
 
     public int Count => this.queue.Count;
-
-    private ConsoleLogger consoleLogger;
-    private ConcurrentQueue<ConsoleLoggerWork> queue = new();
-}
-
-internal class ConsoleLoggerWork
-{
-    public ConsoleLoggerWork(LogEvent parameter)
-    {
-        this.Parameter = parameter;
-    }
-
-    public LogEvent Parameter { get; }
 }

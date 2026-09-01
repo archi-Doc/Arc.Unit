@@ -144,20 +144,20 @@ public static class PathHelper
         }
     }
 
-    public static bool RunningInContainer
+    /// <summary>
+    /// Gets a value indicating whether the process is running in a container.
+    /// </summary>
+    public static bool RunningInContainer => runningInContainer ??= GetRunningInContainer();
+
+    private static bool? runningInContainer;
+
+    private static bool GetRunningInContainer()
     {
-        get
+        if (string.Equals(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), "true", StringComparison.OrdinalIgnoreCase))
         {
-            if (!containerChecked)
-            {
-                inContainer = File.Exists("/.dockerenv");
-                containerChecked = true;
-            }
-
-            return inContainer;
+            return true;
         }
-    }
 
-    private static bool containerChecked;
-    private static bool inContainer;
+        return File.Exists("/.dockerenv");
+    }
 }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 
 namespace Arc.Unit;
 
@@ -21,9 +22,9 @@ public class UnitArguments
 
     #region FieldAndProperty
 
+    private readonly List<string> values = new();
+    private readonly List<KeyValuePair<string, string>> options = new();
     private string rawArguments = string.Empty;
-    private List<string> values = new();
-    private List<KeyValuePair<string, string>> options = new();
 
     #endregion
 
@@ -49,11 +50,12 @@ public class UnitArguments
     /// <returns><c>true</c> if the option was found; otherwise, <c>false</c>.</returns>
     public bool TryGetOptionValue(string optionName, [MaybeNullWhen(false)] out string optionValue)
     {
-        foreach (var x in this.options)
+        var span = CollectionsMarshal.AsSpan(this.options);
+        for (var i = 0; i < span.Length; i++)
         {
-            if (x.Key.Equals(optionName, DefaultStringComparison))
+            if (span[i].Key.Equals(optionName, DefaultStringComparison))
             {
-                optionValue = x.Value;
+                optionValue = span[i].Value;
                 return true;
             }
         }
@@ -68,9 +70,7 @@ public class UnitArguments
     /// <param name="option">The option name to check for.</param>
     /// <returns><c>true</c> if the option exists; otherwise, <c>false</c>.</returns>
     public bool ContainsOption(string option)
-    {
-        return this.options.Any(x => x.Key.Equals(option, DefaultStringComparison));
-    }
+        => this.TryGetOptionValue(option, out _);
 
     /// <summary>
     /// Determines whether the specified value exists in the argument list.
@@ -97,73 +97,9 @@ public class UnitArguments
         }
     }
 
-    internal void Initialize(string? args)
-    {
-        if (string.IsNullOrEmpty(args))
-        {
-            return;
-        }
-
-        this.rawArguments = args;
-        string? previousOption = null;
-
-        foreach (var x in FormatArguments(args))
-        {
-            if (IsOptionString(x))
-            {// -option
-                if (previousOption != null)
-                {
-                    AddOptionAndValue(previousOption, string.Empty); // Previous option
-                    previousOption = null;
-                }
-
-                previousOption = x.Trim('-');
-            }
-            else
-            {// value
-                if (previousOption != null)
-                {// -option value
-                    AddOptionAndValue(previousOption, ProcessValueString(x));
-                    previousOption = null;
-                }
-                else
-                {// value
-                    this.values.Add(ProcessValueString(x));
-                }
-            }
-        }
-
-        if (previousOption != null)
-        {
-            AddOptionAndValue(previousOption, string.Empty); // Previous option
-        }
-
-        void AddOptionAndValue(string option, string value)
-        {
-            // option = option.ToLower();
-            this.options.Add(new(option, value));
-        }
-
-        static string ProcessValueString(string value)
-        {
-            if (value.Length >= 2 && value.StartsWith('\"') && value.EndsWith('\"'))
-            {
-                return value.Substring(1, value.Length - 2);
-            }
-            else if (value.Length >= 2 && value.StartsWith('\'') && value.EndsWith('\''))
-            {
-                return value.Substring(1, value.Length - 2);
-            }
-            else
-            {
-                return value;
-            }
-        }
-    }
-
     private static bool IsOptionString(string text) => text.StartsWith(OptionPrefix);
 
-    private static string[] FormatArguments(string arg)
+    private static List<string> FormatArguments(string arg)
     {
         var span = arg.AsSpan();
         var list = new List<string>();
@@ -334,6 +270,69 @@ AddString:
             }
         }
 
-        return list.ToArray();
+        return list;
+    }
+
+    private void Initialize(string? args)
+    {
+        if (string.IsNullOrEmpty(args))
+        {
+            return;
+        }
+
+        this.rawArguments = args;
+        string? previousOption = null;
+
+        foreach (var x in FormatArguments(args))
+        {
+            if (IsOptionString(x))
+            {// -option
+                if (previousOption != null)
+                {
+                    AddOptionAndValue(previousOption, string.Empty); // Previous option
+                    previousOption = null;
+                }
+
+                previousOption = x.Trim('-');
+            }
+            else
+            {// value
+                if (previousOption != null)
+                {// -option value
+                    AddOptionAndValue(previousOption, ProcessValueString(x));
+                    previousOption = null;
+                }
+                else
+                {// value
+                    this.values.Add(ProcessValueString(x));
+                }
+            }
+        }
+
+        if (previousOption != null)
+        {
+            AddOptionAndValue(previousOption, string.Empty); // Previous option
+        }
+
+        void AddOptionAndValue(string option, string value)
+        {
+            this.options.Add(new(option, value));
+        }
+
+        static string ProcessValueString(string value)
+        {
+            if (value.Length >= 2 && value.StartsWith('\"') && value.EndsWith('\"'))
+            {
+                return value.Substring(1, value.Length - 2);
+            }
+            else if (value.Length >= 2 && value.StartsWith('\'') && value.EndsWith('\''))
+            {
+                return value.Substring(1, value.Length - 2);
+            }
+            else
+            {
+                return value;
+            }
+        }
     }
 }

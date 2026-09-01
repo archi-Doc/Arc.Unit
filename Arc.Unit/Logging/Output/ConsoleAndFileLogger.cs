@@ -16,6 +16,6 @@ public class ConsoleAndFileLogger : ILogOutput
         this.fileLogger.Output(param);
     }
 
-    private ConsoleLogger consoleLogger;
-    private FileLogger<FileLoggerOptions> fileLogger;
+    private readonly ConsoleLogger consoleLogger;
+    private readonly FileLogger<FileLoggerOptions> fileLogger;
 }

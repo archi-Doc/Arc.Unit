@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
 
-internal class LogService : ILogService
+internal sealed class LogService : ILogService
 {
     private readonly IServiceProvider serviceProvider;
     private readonly IConsoleService consoleService;

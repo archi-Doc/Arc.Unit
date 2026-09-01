@@ -4,7 +4,7 @@ using Arc.Threading;
 
 namespace Arc.Unit;
 
-internal class FileLoggerFactory<TOption> : FileLogger<TOption>
+internal sealed class FileLoggerFactory<TOption> : FileLogger<TOption>
     where TOption : FileLoggerOptions
 {
     public FileLoggerFactory(ExecutionRoot root, LogUnit unitLogger, TOption options)

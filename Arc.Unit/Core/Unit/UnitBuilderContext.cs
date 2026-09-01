@@ -31,8 +31,6 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     #region FieldAndProperty
 
-    // public bool IsFirstBuilderRun { get; set; }
-
     /// <summary>
     /// Gets or sets a unit name.
     /// </summary>
@@ -68,7 +66,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
 
-    internal HashSet<UnitBuilder> ProcessedBuilderTypes { get; } = new();
+    internal HashSet<UnitBuilder> ProcessedBuilders { get; } = new();
 
     internal Dictionary<Type, object> CustomContexts { get; } = new();
 

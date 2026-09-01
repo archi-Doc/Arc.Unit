@@ -27,18 +27,14 @@ public class CommandGroup
     /// <returns><see langword="true"/>: Successfully added.</returns>
     public bool AddCommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
-        if (this.commandSet.Contains(commandType))
-        {
+        if (!this.commandSet.Add(commandType))
+        {// Already added.
             return false;
         }
-        else
-        {
-            // this.context.TryAddSingleton(commandType);
-            this.context.Services.TryAdd(ServiceDescriptor.Describe(commandType, commandType, lifetime));
-            this.commandSet.Add(commandType);
-            this.commandList.Add(commandType);
-            return true;
-        }
+
+        this.context.Services.TryAdd(ServiceDescriptor.Describe(commandType, commandType, lifetime));
+        this.commandList.Add(commandType);
+        return true;
     }
 
     /// <summary>
@@ -47,7 +43,7 @@ public class CommandGroup
     /// <returns>An array of <see cref="Type"/>.</returns>
     public Type[] ToArray() => this.commandList.ToArray();
 
-    private IUnitConfigurationContext context;
-    private List<Type> commandList = new();
-    private HashSet<Type> commandSet = new();
+    private readonly IUnitConfigurationContext context;
+    private readonly List<Type> commandList = new();
+    private readonly HashSet<Type> commandSet = new();
 }

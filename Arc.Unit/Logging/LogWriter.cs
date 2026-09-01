@@ -34,17 +34,17 @@ public readonly record struct LogWriter
     public void Write(string message, long eventId = default)
     {
         var broker = this.logBroker;
-        LogEvent param = new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, message);
         if (broker.FilterDelegate is not null)
         {// Filter -> Log
-            if (broker.FilterDelegate(new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, this)) is LogWriter loggerInstance)
-            {
-                loggerInstance.logBroker.LogDelegate(new(this.logService, broker.LogSourceType, loggerInstance.logBroker.LogLevel, eventId, message));
+            if (broker.FilterDelegate(new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, this)) is LogWriter loggerInstance &&
+                loggerInstance.logBroker is { } filteredBroker)
+            {// A default LogWriter (no broker) is treated as 'no log'.
+                filteredBroker.LogDelegate(new(this.logService, broker.LogSourceType, filteredBroker.LogLevel, eventId, message));
             }
         }
         else
         {// Log
-            broker.LogDelegate(param);
+            broker.LogDelegate(new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, message));
         }
     }
 

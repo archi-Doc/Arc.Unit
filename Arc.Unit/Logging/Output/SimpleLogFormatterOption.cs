@@ -28,7 +28,5 @@ public record class SimpleLogFormatterOptions
 
     public ConsoleColor SourceColor { get; init; } = ConsoleColor.DarkGreen;
 
-    // public ConsoleColor BracketColor { get; init; } = ConsoleColor.Gray;
-
     public ConsoleColor MessageColor { get; init; } = ConsoleColor.White;
 }

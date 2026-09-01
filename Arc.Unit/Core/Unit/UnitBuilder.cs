@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Text;
 using Arc.Threading;
 using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,12 +57,15 @@ public class UnitBuilder
 {
     #region FieldAndProperty
 
+    private static readonly Func<IServiceCollection, IServiceProvider> DefaultServiceProviderFactory =
+        static services => ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);
+
+    private readonly List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
+    private readonly List<Action<IUnitConfigurationContext>> configureActions = new();
+    private readonly List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
+    private readonly List<UnitBuilder> unitBuilders = new();
     private UnitProduct? builtUnit;
-    private List<Action<IUnitPreConfigurationContext>> preConfigureActions = new();
-    private List<Action<IUnitConfigurationContext>> configureActions = new();
-    private List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
-    private List<UnitBuilder> unitBuilders = new();
-    private Func<IServiceCollection, IServiceProvider> serviceProviderFactory = services => ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(services);
+    private Func<IServiceCollection, IServiceProvider> serviceProviderFactory = DefaultServiceProviderFactory;
 
     #endregion
 
@@ -139,20 +143,6 @@ public class UnitBuilder
         return this;
     }
 
-    /// <summary>
-    /// Adds a delegate to the builder for setting up the option.<br/>
-    /// This can be called multiple times and the results will be additive.
-    /// </summary>
-    /// <typeparam name="TOptions">The type of options class.</typeparam>
-    /// <param name="delegate">The delegate for setting up the unit.</param>
-    /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
-    public virtual UnitBuilder PrepareOptions<TOptions>(Action<IUnitPostConfigurationContext, TOptions> @delegate)
-        where TOptions : class
-    {
-        var ac = new Action<IUnitPostConfigurationContext, object>((context, options) => @delegate(context, (TOptions)options));
-        return this;
-    }
-
     public virtual UnitProduct GetBuiltUnit()
     {
         if (this.builtUnit == null)
@@ -170,10 +160,7 @@ public class UnitBuilder
 
     internal virtual TUnit Build<TUnit>(string[] args)
         where TUnit : UnitProduct
-    {
-        var s = args == null ? null : string.Join(' ', args);
-        return this.Build<TUnit>(s);
-    }
+        => this.Build<TUnit>(JoinArguments(args));
 
     internal virtual TUnit Build<TUnit>(string? args)
         where TUnit : UnitProduct
@@ -187,14 +174,14 @@ public class UnitBuilder
         var builderContext = new UnitBuilderContext(args);
 
         // Pre-configuration
-        builderContext.ProcessedBuilderTypes.Clear();
+        builderContext.ProcessedBuilders.Clear();
         this.PreConfigureInternal(builderContext);
 
         // Configuration: UnitLogger
         LogUnit.Configure(builderContext);
 
         // Configuration
-        builderContext.ProcessedBuilderTypes.Clear();
+        builderContext.ProcessedBuilders.Clear();
         this.ConfigureInternal(builderContext);
 
         // Custom configuration
@@ -229,7 +216,7 @@ public class UnitBuilder
         unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
 
         // Post-configuration
-        builderContext.ProcessedBuilderTypes.Clear();
+        builderContext.ProcessedBuilders.Clear();
         this.PostConfigureInternal(builderContext);
 
         var unit = serviceProvider.GetRequiredService<TUnit>();
@@ -237,9 +224,75 @@ public class UnitBuilder
         return unit;
     }
 
+    /// <summary>
+    /// Joins command-line arguments into a single string.<br/>
+    /// An argument which contains whitespace is enclosed in quotation marks, so that it is not split during parsing.
+    /// </summary>
+    /// <param name="args">Command-line arguments.</param>
+    /// <returns>The joined arguments.</returns>
+    private static string? JoinArguments(string[]? args)
+    {
+        if (args is null || args.Length == 0)
+        {
+            return null;
+        }
+
+        var sb = new StringBuilder();
+        foreach (var x in args)
+        {
+            if (sb.Length > 0)
+            {
+                sb.Append(' ');
+            }
+
+            if (RequiresQuotation(x))
+            {
+                sb.Append('\"').Append(x).Append('\"');
+            }
+            else
+            {
+                sb.Append(x);
+            }
+        }
+
+        return sb.ToString();
+
+        static bool RequiresQuotation(string arg)
+        {
+            var containsWhitespace = false;
+            foreach (var c in arg)
+            {
+                if (char.IsWhiteSpace(c))
+                {
+                    containsWhitespace = true;
+                    break;
+                }
+            }
+
+            if (!containsWhitespace)
+            {// No whitespace: no need to be enclosed.
+                return false;
+            }
+
+            if (arg.Length >= 2)
+            {// Already enclosed: "A B" 'A B' {A B}
+                var first = arg[0];
+                var last = arg[arg.Length - 1];
+                if ((first == '\"' && last == '\"') ||
+                    (first == '\'' && last == '\'') ||
+                    (first == '{' && last == '}'))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+
     private void PreConfigureInternal(UnitBuilderContext context)
     {// Pre-configuration
-        if (!context.ProcessedBuilderTypes.Add(this))
+        if (!context.ProcessedBuilders.Add(this))
         {// Already processed.
             return;
         }
@@ -259,7 +312,7 @@ public class UnitBuilder
 
     private void ConfigureInternal(UnitBuilderContext context)
     {// Configuration
-        if (!context.ProcessedBuilderTypes.Add(this))
+        if (!context.ProcessedBuilders.Add(this))
         {// Already processed.
             return;
         }
@@ -268,10 +321,6 @@ public class UnitBuilder
         foreach (var x in this.unitBuilders)
         {
             x.ConfigureInternal(context);
-            if (x.CustomConfiguration is { } customConfiguration)
-            {
-                customConfiguration(context);
-            }
         }
 
         // Actions
@@ -279,11 +328,14 @@ public class UnitBuilder
         {
             x(context);
         }
+
+        // Custom configuration
+        this.CustomConfiguration?.Invoke(context);
     }
 
     private void PostConfigureInternal(UnitBuilderContext context)
     {// Post-configuration
-        if (!context.ProcessedBuilderTypes.Add(this))
+        if (!context.ProcessedBuilders.Add(this))
         {// Already processed.
             return;
         }

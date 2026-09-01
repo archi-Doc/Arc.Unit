@@ -14,6 +14,9 @@ internal readonly struct LogSourceLevelPair : IEquatable<LogSourceLevelPair>
 
     public readonly LogLevel LogLevel;
 
+    public override bool Equals(object? obj)
+        => obj is LogSourceLevelPair other && this.Equals(other);
+
     public bool Equals(LogSourceLevelPair other)
         => this.LogSourceType == other.LogSourceType &&
             this.LogLevel == other.LogLevel;

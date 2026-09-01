@@ -22,16 +22,16 @@ public class MemoryLogger : ILogOutput
     public void Output(LogEvent param)
     {
         var b = this.formatter.FormatUtf8(param);
+        var maxMemoryUsage = this.options.MaxMemoryUsage;
 
         lock (this.syncObject)
         {
             this.queue.Enqueue(b);
             this.memoryUsage += b.Length;
 
-            while (this.memoryUsage > this.options.MaxMemoryUsage)
-            {
-                this.queue.TryDequeue(out var b2);
-                if (b2 is null)
+            while (maxMemoryUsage > 0 && this.memoryUsage > maxMemoryUsage)
+            {// 0: unlimited
+                if (!this.queue.TryDequeue(out var b2))
                 {
                     break;
                 }

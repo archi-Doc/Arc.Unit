@@ -23,6 +23,9 @@ public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
 
     public readonly LogWriter OriginalLogger;
 
+    public override bool Equals(object? obj)
+        => obj is LogFilterParameter other && this.Equals(other);
+
     public bool Equals(LogFilterParameter other)
         => this.LogSourceType == other.LogSourceType &&
         this.LogLevel == other.LogLevel &&

@@ -25,7 +25,7 @@ public class LogUnit
     /// <param name="timeSpan">The offset to apply to log time values.</param>
     public static void SetTimeOffset(TimeSpan timeSpan)
     {
-        OffsetTicks = timeSpan.Ticks; // (long)(timeSpan.TotalSeconds * Stopwatch.Frequency);
+        OffsetTicks = timeSpan.Ticks;
     }
 
     /// <summary>
@@ -145,25 +145,28 @@ public class LogUnit
     /// A resolved <see cref="LogBroker"/> when an output can be resolved; otherwise <see langword="null"/>.
     /// </returns>
     internal LogBroker? GetLogBroker<TLogSource>(LogLevel logLevel)
+        => this.brokers.GetOrAdd(
+            new(typeof(TLogSource), logLevel),
+            static (pair, logUnit) => logUnit.ResolveLogBroker(pair), // Static lambda: no closure is allocated.
+            this);
+
+    private LogBroker? ResolveLogBroker(LogSourceLevelPair pair)
     {
-        return this.brokers.GetOrAdd(new(typeof(TLogSource), logLevel), x =>
+        var context = new LoggerResolverContext(pair);
+        var resolvers = this.loggerResolvers;
+        for (var i = 0; i < resolvers.Length; i++)
         {
-            var context = new LoggerResolverContext(x);
-            for (var i = 0; i < this.loggerResolvers.Length; i++)
-            {
-                this.loggerResolvers[i](context);
-            }
+            resolvers[i](context);
+        }
 
-            if (context.LogOutputType is not null)
-            {
-                if (this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
-                {
-                    var logFilter = context.LogFilterType == null ? null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
-                    return new LogBroker(x.LogSourceType, x.LogLevel, logOutput, logFilter);
-                }
-            }
+        if (context.LogOutputType is not null &&
+            this.serviceProvider.GetService(context.LogOutputType) is ILogOutput logOutput)
+        {
+            var logFilter = context.LogFilterType is null ?
+                null : (ILogFilter)this.serviceProvider.GetRequiredService(context.LogFilterType);
+            return new LogBroker(pair.LogSourceType, pair.LogLevel, logOutput, logFilter);
+        }
 
-            return default;
-        });
+        return default;
     }
 }
