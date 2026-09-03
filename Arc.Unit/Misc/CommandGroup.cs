@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -25,7 +26,7 @@ public class CommandGroup
     /// <param name="commandType">The command type.</param>
     /// <param name="lifetime">The service lifetime for the command.</param>
     /// <returns><see langword="true"/>: Successfully added.</returns>
-    public bool AddCommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped)
+    public bool AddCommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
         if (!this.commandSet.Add(commandType))
         {// Already added.

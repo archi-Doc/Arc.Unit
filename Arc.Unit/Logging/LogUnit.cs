@@ -155,8 +155,19 @@ public class LogUnit
     /// A resolved <see cref="LogBroker"/> when an output can be resolved; otherwise <see langword="null"/>.
     /// </returns>
     internal LogBroker? GetLogBroker<TLogSource>(LogLevel logLevel)
+        => this.GetLogBroker(typeof(TLogSource), logLevel);
+
+    /// <summary>
+    /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.
+    /// </summary>
+    /// <param name="logSourceType">The log source marker type.</param>
+    /// <param name="logLevel">The minimum level represented by the broker key.</param>
+    /// <returns>
+    /// A resolved <see cref="LogBroker"/> when an output can be resolved; otherwise <see langword="null"/>.
+    /// </returns>
+    internal LogBroker? GetLogBroker(Type logSourceType, LogLevel logLevel)
         => this.brokers.GetOrAdd(
-            new(typeof(TLogSource), logLevel),
+            new(logSourceType, logLevel),
             static (pair, logUnit) => logUnit.ResolveLogBroker(pair), // Static lambda: no closure is allocated.
             this);
 

@@ -71,10 +71,12 @@ public class ConsoleLogger : BufferedLogOutput
 
     [SupportedOSPlatform("windows")]
     [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
 
     [SupportedOSPlatform("windows")]
     [DllImport("kernel32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
 
     /// <summary>

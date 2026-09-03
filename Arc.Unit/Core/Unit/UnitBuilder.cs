@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Arc.Threading;
 using CrossChannel;
@@ -13,7 +14,7 @@ namespace Arc.Unit;
 /// <b>Unit = Builder + Product(Instance) + Function</b>
 /// </summary>
 /// <typeparam name="TProduct">The type of product created by <see cref="Build(string?)"/>.</typeparam>
-public class UnitBuilder<TProduct> : UnitBuilder
+public class UnitBuilder<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TProduct> : UnitBuilder
     where TProduct : UnitProduct
 {
     /// <summary>
@@ -175,11 +176,11 @@ public class UnitBuilder
         this.serviceProviderFactory = factory;
     }
 
-    internal virtual TUnit Build<TUnit>(string[] args)
+    internal virtual TUnit Build<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TUnit>(string[] args)
         where TUnit : UnitProduct
         => this.Build<TUnit>(JoinArguments(args));
 
-    internal virtual TUnit Build<TUnit>(string? args)
+    internal virtual TUnit Build<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TUnit>(string? args)
         where TUnit : UnitProduct
     {
         if (this.builtUnit != null)

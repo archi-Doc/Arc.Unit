@@ -1,5 +1,6 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Arc.Unit;
@@ -32,7 +33,11 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnit
     /// <param name="commandType">The <see cref="Type"/> of the command to add.</param>
     /// <param name="lifetime">The service lifetime for the command.</param>
     /// <returns><see langword="true"/> if the command was successfully added; otherwise, <see langword="false"/>.</returns>
-    bool AddCommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
+    /// <remarks>
+    /// All the members of <paramref name="commandType"/> are preserved when the application is trimmed,
+    /// since the command type is usually processed by a command-line parser using reflection.
+    /// </remarks>
+    bool AddCommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
 
     /// <summary>
     /// Adds a subcommand type to the configuration context.
@@ -40,12 +45,16 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnit
     /// <param name="commandType">The <see cref="Type"/> of the subcommand to add.</param>
     /// <param name="lifetime">The service lifetime for the command.</param>
     /// <returns><see langword="true"/> if the subcommand was successfully added; otherwise, <see langword="false"/>.</returns>
-    bool AddSubcommand(Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
+    /// <remarks>
+    /// All the members of <paramref name="commandType"/> are preserved when the application is trimmed,
+    /// since the command type is usually processed by a command-line parser using reflection.
+    /// </remarks>
+    bool AddSubcommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped);
 
     /// <summary>
     /// Registers the specified type so that an instance is created by <see cref="UnitContext.CreateInstances()"/>.<br/>
     /// The type must also be registered in <see cref="Services"/> (<see cref="UnitConfigurationContextExtensions.AddSingletonUnit{TUnit}(IUnitConfigurationContext)"/> does both).
     /// </summary>
     /// <typeparam name="T">The type to be instantiated.</typeparam>
-    void RegisterInstanceCreation<T>();
+    void RegisterInstanceCreation<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>();
 }

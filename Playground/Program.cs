@@ -124,7 +124,9 @@ public class Program
         var logger2 = unit.Context.ServiceProvider.GetRequiredService<ILogger<ITestInterface>>();
 
         var obj = unit.Context.ServiceProvider.GetRequiredService<ITestInterface>();
-        var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<int>>();
+        // A reference type argument is used, since Microsoft.Extensions.DependencyInjection cannot create
+        // an open generic service with a value type argument (ITestInterface<int>) on Native AOT.
+        var obj2 = unit.Context.ServiceProvider.GetRequiredService<ITestInterface<string>>();
 
         var logUnit = unit.Context.ServiceProvider.GetRequiredService<LogUnit>();
         var logService = unit.Context.ServiceProvider.GetRequiredService<ILogService>();

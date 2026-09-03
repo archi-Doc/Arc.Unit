@@ -27,7 +27,7 @@ internal sealed class LogService : ILogService
        => this.serviceProvider.GetRequiredService<ILogger<TLogSource>>();
 
     public ILogger GetLogger(Type logSource)
-       => (ILogger)this.serviceProvider.GetRequiredService(typeof(ILogger<>).MakeGenericType(logSource));
+       => new LoggerFactory(this, this.LogUnit, logSource);
 
     public LogWriter? GetWriter<TLogSource>(LogLevel logLevel = LogLevel.Information)
     {

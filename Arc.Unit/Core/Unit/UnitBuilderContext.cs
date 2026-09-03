@@ -113,8 +113,10 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return options;
     }
 
-    void IUnitPreConfigurationContext.SetOptions<TOptions>(TOptions options)
+    void IUnitPreConfigurationContext.SetOptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TOptions>(TOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         var baseOptions = ((IUnitPreConfigurationContext)this).GetOptions<TOptions>();
         if (!ReferenceEquals(baseOptions, options))
         {// The registered instance cannot be replaced, so the values are copied into it.
@@ -130,15 +132,15 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     void IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
 
-    void IUnitConfigurationContext.RegisterInstanceCreation<T>() => this.InstanceCreationSet.Add(typeof(T));
+    void IUnitConfigurationContext.RegisterInstanceCreation<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() => this.InstanceCreationSet.Add(typeof(T));
 
-    bool IUnitConfigurationContext.AddCommand(Type commandType, ServiceLifetime lifetime)
+    bool IUnitConfigurationContext.AddCommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime)
     {
         var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup();
         return group.AddCommand(commandType, lifetime);
     }
 
-    bool IUnitConfigurationContext.AddSubcommand(Type commandType, ServiceLifetime lifetime)
+    bool IUnitConfigurationContext.AddSubcommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime)
     {
         var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetSubcommandGroup();
         return group.AddCommand(commandType, lifetime);
@@ -148,7 +150,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     #region IUnitConfigurationAndPreConfigurationContext
 
-    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetCommandGroup(Type type)
+    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetCommandGroup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     {
         if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
         {
