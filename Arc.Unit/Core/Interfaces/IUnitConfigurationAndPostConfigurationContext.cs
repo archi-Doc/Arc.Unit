@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Arc.Unit;
 
 /// <summary>
@@ -12,7 +14,7 @@ public interface IUnitConfigurationAndPostConfigurationContext
     /// </summary>
     /// <param name="type">The command type.</param>
     /// <returns><see cref="CommandGroup"/>.</returns>
-    CommandGroup GetCommandGroup(Type type);
+    CommandGroup GetCommandGroup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type);
 
     /// <summary>
     /// Gets <see cref="CommandGroup"/> of command.

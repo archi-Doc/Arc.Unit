@@ -1,4 +1,4 @@
-## Arc.Unit = Builder + Product(Instance) + Function
+﻿## Arc.Unit = Builder + Product(Instance) + Function
 
 [![Nuget](https://img.shields.io/nuget/v/Arc.Unit)](https://www.nuget.org/packages/Arc.Unit/)
 [![License](https://img.shields.io/github/license/archi-Doc/Arc.Unit)](https://github.com/archi-Doc/Arc.Unit/blob/main/LICENSE)
@@ -34,6 +34,7 @@ Work in progress.
 - [Command-line arguments](#command-line-arguments)
 - [Commands](#commands)
 - [Console service](#console-service)
+- [Native AOT](#native-aot)
 - [Samples](#samples)
 - [License](#license)
 
@@ -331,6 +332,21 @@ if (result.IsSuccess)
 ```
 
 `ConsoleService` is registered by default, and `EmptyConsole` discards all the output. `ConsoleHelper` provides the escape sequences (colors, cursor and erase operations).
+
+
+
+## Native AOT
+
+Arc.Unit is trim-compatible and Native AOT-compatible (`IsAotCompatible`), so an application can be published with:
+
+```
+dotnet publish -r win-x64 -p:PublishAot=true
+```
+
+The public API is annotated with `DynamicallyAccessedMembers`, so the trimmer preserves what the DI container and the command-line parser need. Two points to keep in mind:
+
+- **Open generic services must be closed with reference types.** `Microsoft.Extensions.DependencyInjection` cannot create a generic service with a value type argument on Native AOT, so a log source (`ILogger<TLogSource>`) and any open generic registration of your own must be closed with a class or an interface, not with a struct.
+- **The option class of a command has to be preserved.** Arc.Unit preserves the members of the types passed to `AddCommand()`/`AddSubcommand()`, but the option class which the parser binds the arguments to is a separate type. Add `[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(TOptions))]` to the command (see [ExampleCommand](/QuickStart/Commands/ExampleCommand.cs)).
 
 
 

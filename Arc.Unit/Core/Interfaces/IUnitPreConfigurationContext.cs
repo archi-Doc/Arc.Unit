@@ -1,5 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Arc.Unit;
 
 /// <summary>
@@ -42,7 +44,7 @@ public interface IUnitPreConfigurationContext
     /// </summary>
     /// <typeparam name="TOptions">The type of the options object to set.</typeparam>
     /// <param name="options">The options object to assign.</param>
-    void SetOptions<TOptions>(TOptions options)
+    void SetOptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TOptions>(TOptions options)
         where TOptions : class, new();
 
     /// <summary>

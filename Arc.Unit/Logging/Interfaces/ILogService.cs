@@ -42,6 +42,11 @@ public interface ILogService
     /// <returns>
     /// An <see cref="ILogger"/> instance for the specified source type.
     /// </returns>
+    /// <remarks>
+    /// A new instance is returned for each call, and the returned instance cannot be cast to <see cref="ILogger{TLogSource}"/><br/>
+    /// (a generic type is not constructed at runtime, so that the method works with Native AOT).<br/>
+    /// Use <see cref="GetLogger{TLogSource}()"/> when the log source type is known at compile time.
+    /// </remarks>
     ILogger GetLogger(Type logSource);
 
     /// <summary>

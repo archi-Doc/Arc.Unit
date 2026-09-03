@@ -1,6 +1,7 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace Arc.Unit;
@@ -22,24 +23,43 @@ internal static class OptionsCopy
     /// <summary>
     /// Copies all the instance fields (including the private and inherited fields) from one instance to another.
     /// </summary>
+    /// <typeparam name="TOptions">The type of the options instances.</typeparam>
     /// <param name="from">The source instance.</param>
     /// <param name="to">The destination instance.</param>
-    internal static void Copy(object from, object to)
+    internal static void Copy<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TOptions>(TOptions from, TOptions to)
+        where TOptions : class
     {
-        var fields = TypeToFields.GetOrAdd(from.GetType(), static type =>
-        {
-            var list = new List<FieldInfo>();
-            for (var t = type; t is not null && t != typeof(object); t = t.BaseType)
-            {
-                list.AddRange(t.GetFields(DeclaredInstanceFields));
-            }
-
-            return list.ToArray();
-        });
+        // typeof(TOptions) is used instead of from.GetType(), since 'to' is always created as TOptions
+        // (the fields declared by a derived type of 'from' cannot be set to 'to').
+        if (!TypeToFields.TryGetValue(typeof(TOptions), out var fields))
+        {// GetOrAdd() is not used, since a lambda parameter cannot carry the DynamicallyAccessedMembers annotation.
+            fields = GetInstanceFields(typeof(TOptions));
+            TypeToFields[typeof(TOptions)] = fields;
+        }
 
         for (var i = 0; i < fields.Length; i++)
         {
             fields[i].SetValue(to, fields[i].GetValue(from));
         }
+    }
+
+    [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern", Justification = "TOptions is annotated with DynamicallyAccessedMemberTypes.All, which preserves the type and its base types along with all their members.")]
+    [UnconditionalSuppressMessage("Trimming", "IL2075:UnrecognizedReflectionPattern", Justification = "TOptions is annotated with DynamicallyAccessedMemberTypes.All, which preserves the type and its base types along with all their members.")]
+    private static FieldInfo[] GetInstanceFields([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
+    {
+        var fields = type.GetFields(DeclaredInstanceFields);
+        var baseType = type.BaseType;
+        if (baseType is null || baseType == typeof(object))
+        {// No base type: the declared fields are the whole set (no list is allocated).
+            return fields;
+        }
+
+        var list = new List<FieldInfo>(fields);
+        for (var t = baseType; t is not null && t != typeof(object); t = t.BaseType)
+        {
+            list.AddRange(t.GetFields(DeclaredInstanceFields));
+        }
+
+        return list.ToArray();
     }
 }

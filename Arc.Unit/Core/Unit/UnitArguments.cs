@@ -18,7 +18,7 @@ public class UnitArguments
     private const char CloseBracket = '}'; // ']'
     private const char SingleQuote = '\'';
 
-    private static readonly StringComparison DefaultStringComparison = StringComparison.InvariantCultureIgnoreCase;
+    private const StringComparison DefaultStringComparison = StringComparison.OrdinalIgnoreCase;
 
     #region FieldAndProperty
 

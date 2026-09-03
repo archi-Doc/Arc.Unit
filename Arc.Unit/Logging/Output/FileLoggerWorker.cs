@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Globalization;
 using Arc.Threading;
 using Utf8StringInterpolation;
 
@@ -130,7 +131,11 @@ internal sealed class FileLoggerWorker : TaskCore
     }
 
     internal string GetCurrentPath()
-        => this.basePath + DateTime.UtcNow.ToString("yyyyMMdd") + this.baseExtension;
+    {// The invariant culture is required, so that the file name does not depend on the current culture/calendar.
+        Span<char> date = stackalloc char[8];
+        DateTime.UtcNow.TryFormat(date, out var written, "yyyyMMdd", CultureInfo.InvariantCulture);
+        return string.Concat(this.basePath, date.Slice(0, written), this.baseExtension);
+    }
 
     internal void LimitLogs(bool removeAll)
     {
