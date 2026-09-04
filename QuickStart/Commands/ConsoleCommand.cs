@@ -22,7 +22,7 @@ public class ConsoleCommand : ISimpleCommand
         this.consoleService = consoleService;
     }
 
-    public async Task Execute(string[] args, CancellationToken cancellationToken)
+    public Task Execute(string[] args, CancellationToken cancellationToken)
     {
         this.consoleService.WriteLine($"Name: {this.unitOptions.UnitName}", ConsoleColor.Red);
         this.consoleService.WriteLine($"Directory: {this.unitContext.Options.ProgramDirectory}");
@@ -39,5 +39,6 @@ public class ConsoleCommand : ISimpleCommand
 
         this.unitContext.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>().GetWriter()?.Write("---");
         this.logger.GetWriter(LogLevel.Debug)?.Write("End");
+        return Task.CompletedTask;
     }
 }

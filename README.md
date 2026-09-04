@@ -305,16 +305,19 @@ A relative path is combined with the current directory. The result is exposed as
 
 ## Commands
 
-Command types can be registered during the configuration phase, and the collected types are passed to a command-line parser such as [SimpleCommandLine](https://github.com/archi-Doc/SimpleCommandLine).
+Command types can be registered during the configuration phase. When using [SimpleCommandLine](https://github.com/archi-Doc/SimpleCommandLine), use its generic registration extensions and create the parser from the built unit:
 
 ```csharp
-context.AddCommand(typeof(ExampleCommand));       // -> UnitContext.Commands
-context.AddSubcommand(typeof(ExampleSubcommand)); // -> UnitContext.Subcommands
+context.AddCommand<ExampleCommand, ExampleCommandOptions>();
+context.AddSubcommand<ExampleSubcommand>();
 
-await SimpleParser.ParseAndExecute(product.Context.Commands, args, parserOptions);
+var parser = product.Context.CreateSimpleParser(parserOptions);
+await parser.ParseAndExecute(args);
 ```
 
-`AddCommand()` also registers the type in the DI container (the default lifetime is `Scoped`). `UnitContext.GetCommandTypes(Type)` returns the commands which belong to the specified group.
+These methods register the command in the DI container and preserve its command and options metadata for trimming and Native AOT. The default lifetime is `Scoped`. Register every nested options type with `context.AddOptionType<TOptions>()`.
+
+The non-generic `Arc.Unit` methods (`context.AddCommand(typeof(ExampleCommand))` and `AddSubcommand`) remain available for other parsers. `UnitContext.GetCommandTypes(Type)` returns the commands which belong to a specified group.
 
 
 
@@ -343,10 +346,10 @@ Arc.Unit is trim-compatible and Native AOT-compatible (`IsAotCompatible`), so an
 dotnet publish -r win-x64 -p:PublishAot=true
 ```
 
-The public API is annotated with `DynamicallyAccessedMembers`, so the trimmer preserves what the DI container and the command-line parser need. Two points to keep in mind:
+The public API is annotated with `DynamicallyAccessedMembers`, so the trimmer preserves what the DI container needs. Two points to keep in mind:
 
 - **Open generic services must be closed with reference types.** `Microsoft.Extensions.DependencyInjection` cannot create a generic service with a value type argument on Native AOT, so a log source (`ILogger<TLogSource>`) and any open generic registration of your own must be closed with a class or an interface, not with a struct.
-- **The option class of a command has to be preserved.** Arc.Unit preserves the members of the types passed to `AddCommand()`/`AddSubcommand()`, but the option class which the parser binds the arguments to is a separate type. Add `[DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(TOptions))]` to the command (see [ExampleCommand](/QuickStart/Commands/ExampleCommand.cs)).
+- **Register commands and their options statically.** With SimpleCommandLine, use `AddCommand<TCommand, TOptions>()`/`AddSubcommand<TCommand, TOptions>()`, register nested options with `AddOptionType<TOptions>()`, and create the parser with `UnitContext.CreateSimpleParser()`. The runtime type-discovery overloads are not trim-safe.
 
 
 

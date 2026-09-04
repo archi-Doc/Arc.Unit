@@ -13,12 +13,14 @@
     <Product>Arc.Unit</Product>
     <Description>Arc.Unit is an independent unit of function and dependency (like .Net Generic Host).</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/archi-Doc/Arc.Unit</PackageProjectUrl>
     <RepositoryUrl>https://github.com/archi-Doc/Arc.Unit</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>

@@ -4,6 +4,7 @@ using Arc;
 using Arc.Threading;
 using Arc.Unit;
 using Microsoft.Extensions.DependencyInjection;
+using SimpleCommandLine;
 
 namespace QuickStart;
 
@@ -31,7 +32,7 @@ public class Program
                 context.UnitName = "QuickUnit";
 
                 // Add Command
-                context.AddCommand(typeof(ExampleCommand));
+                context.AddCommand<ExampleCommand, ExampleCommandOptions>();
             });
 
         var unit = builder.Build();
