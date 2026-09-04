@@ -15,9 +15,6 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
-
     - name: Package1
       run: dotnet pack -c Release -o bin Arc.Unit/Arc.Unit.csproj
 

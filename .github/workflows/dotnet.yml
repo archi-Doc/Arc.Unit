@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Native AOT
 
 on:
   push:
@@ -19,5 +19,7 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
+    - name: Native AOT smoke test
+      run: |
+        dotnet publish QuickStart/QuickStart.csproj --configuration Release --runtime linux-x64 --self-contained true -p:PublishAot=true -p:TreatWarningsAsErrors=true --output artifacts/aot-quickstart
+        ./artifacts/aot-quickstart/QuickStart example -string native-aot

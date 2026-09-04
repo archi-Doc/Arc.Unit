@@ -33,7 +33,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 context.RegisterInstanceCreation<ConsoleUnit>();
 
                 // Command
-                context.AddCommand(typeof(ConsoleCommand));
+                context.AddCommand<ConsoleCommand>();
 
                 // Log filter
                 context.AddSingleton<ExampleLogFilter>();
@@ -101,8 +101,8 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             };
 
             // Main
-            // await SimpleParser.ParseAndRunAsync(this.Context.Commands, "example -string test", parserOptions);
-            await SimpleParser.ParseAndExecute(this.Context.Commands, param.Args, parserOptions);
+            var parser = this.Context.CreateSimpleParser(parserOptions);
+            await parser.ParseAndExecute(param.Args);
 
             await this.Context.SendStop();
             await this.Context.SendTerminate();
@@ -144,26 +144,30 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.options = options;
     }
 
-    async Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit prepared.");
         this.logger.GetWriter()?.Write($"Program: {this.options.ProgramDirectory}");
         this.logger.GetWriter()?.Write($"Data: {this.options.DataDirectory}");
+        return Task.CompletedTask;
     }
 
-    async Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit started.");
+        return Task.CompletedTask;
     }
 
-    async Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit stopped.");
+        return Task.CompletedTask;
     }
 
-    async Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit terminated.");
+        return Task.CompletedTask;
     }
 
     private ILogger<ConsoleUnit> logger;

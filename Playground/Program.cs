@@ -142,7 +142,7 @@ public class Program
         var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
         var path = fileLogger.GetCurrentPath();
 
-        Parallel.For(0, 5, async x =>
+        Parallel.For(0, 5, x =>
         {
             for (var i = 0; i < 3; i++)
             {
