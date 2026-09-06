@@ -32,7 +32,7 @@ public interface IUnitPreConfigurationContext
     UnitArguments Arguments { get; }
 
     /// <summary>
-    /// Retrieves the options object of the specified type for the unit.
+    /// Gets or creates the options instance. Call before the provider is built to make a new type injectable.
     /// </summary>
     /// <typeparam name="TOptions">The type of the options object to retrieve.</typeparam>
     /// <returns>An instance of <typeparamref name="TOptions"/> containing the current options.</returns>
@@ -40,10 +40,10 @@ public interface IUnitPreConfigurationContext
         where TOptions : class, new();
 
     /// <summary>
-    /// Sets the options object of the specified type for the unit.
+    /// Shallow-copies instance fields into the existing options object, preserving its identity.
     /// </summary>
     /// <typeparam name="TOptions">The type of the options object to set.</typeparam>
-    /// <param name="options">The options object to assign.</param>
+    /// <param name="options">The source object. Private and inherited fields of TOptions are copied.</param>
     void SetOptions<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TOptions>(TOptions options)
         where TOptions : class, new();
 

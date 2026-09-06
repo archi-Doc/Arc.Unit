@@ -3,81 +3,119 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// <see cref="ILogOutput"/> which keeps the formatted logs (UTF-8) in memory.<br/>
-/// The oldest logs are discarded when the memory usage exceeds <see cref="MemoryLoggerOptions.MaxMemoryUsage"/>.
+/// Stores UTF-8 log lines in reusable circular storage. Oldest lines are evicted when the byte limit is exceeded.
 /// </summary>
 public class MemoryLogger : ILogOutput
 {
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MemoryLogger"/> class.
-    /// </summary>
-    /// <param name="options"><see cref="MemoryLoggerOptions"/>.</param>
+    private readonly MemoryLoggerOptions options;
+    private readonly SimpleLogFormatter formatter;
+    private readonly Lock syncObject = new();
+    private readonly Queue<int> lengths = new();
+    private System.Buffers.ArrayBufferWriter<byte> staging = new();
+    private byte[] bytes = [];
+    private int head;
+    private int used;
+
+    /// <summary>Initializes a new instance of the <see cref="MemoryLogger"/> class.</summary>
+    /// <param name="options">Formatting and retained-byte limits.</param>
     public MemoryLogger(MemoryLoggerOptions options)
     {
         this.options = options;
-        this.formatter = new(this.options.FormatterOptions);
+        this.formatter = new(options.FormatterOptions);
     }
-
-    private readonly MemoryLoggerOptions options;
-    private readonly SimpleLogFormatter formatter;
-
-    private readonly object syncObject = new();
-    private readonly Queue<byte[]> queue = new();
-    private long memoryUsage;
 
     /// <inheritdoc/>
     public void Output(LogEvent logEvent)
     {
-        var b = this.formatter.FormatUtf8(logEvent);
-        var maxMemoryUsage = this.options.MaxMemoryUsage;
-
         lock (this.syncObject)
         {
-            this.queue.Enqueue(b);
-            this.memoryUsage += b.Length;
-
-            while (maxMemoryUsage > 0 && this.memoryUsage > maxMemoryUsage)
-            {// 0: unlimited
-                if (!this.queue.TryDequeue(out var b2))
+            this.staging.ResetWrittenCount();
+            try
+            {
+                var writer = new Utf8StringInterpolation.Utf8StringWriter<System.Buffers.ArrayBufferWriter<byte>>(this.staging);
+                this.formatter.FormatUtf8(ref writer, logEvent);
+                writer.Flush();
+                var line = this.staging.WrittenSpan;
+                var limit = this.options.MaxMemoryUsage <= 0 ? Array.MaxLength : Math.Min(this.options.MaxMemoryUsage, Array.MaxLength);
+                while (this.used + (long)line.Length > limit && this.lengths.TryDequeue(out var length))
                 {
-                    break;
+                    this.head = (int)((this.head + (long)length) % this.bytes.Length);
+                    this.used -= length;
                 }
 
-                this.memoryUsage -= b2.Length;
+                if (line.Length > limit)
+                {
+                    return;
+                }
+
+                this.EnsureCapacity(this.used + line.Length);
+                var tail = (int)((this.head + (long)this.used) % this.bytes.Length);
+                var first = Math.Min(line.Length, this.bytes.Length - tail);
+                line[..first].CopyTo(this.bytes.AsSpan(tail));
+                line[first..].CopyTo(this.bytes);
+                this.lengths.Enqueue(line.Length);
+                this.used += line.Length;
+            }
+            finally
+            {
+                if (this.staging.Capacity > 1024 * 1024)
+                {
+                    this.staging = new();
+                }
+                else
+                {
+                    this.staging.ResetWrittenCount();
+                }
             }
         }
     }
 
-    /// <summary>
-    /// Removes all the logs kept in memory.
-    /// </summary>
+    /// <summary>Clears retained logs. Storage is reused by subsequent writes.</summary>
     public void Clear()
     {
         lock (this.syncObject)
         {
-            this.queue.Clear();
-            this.memoryUsage = 0;
+            this.lengths.Clear();
+            this.head = 0;
+            this.used = 0;
         }
     }
 
-    /// <summary>
-    /// Copies all the logs kept in memory into a byte array.
-    /// </summary>
-    /// <returns>The UTF-8 encoded logs.</returns>
+    /// <summary>Copies retained UTF-8 lines in input order.</summary>
+    /// <returns>An independent byte array, or the shared empty array if no logs are retained.</returns>
     public byte[] ToUtf8Array()
     {
         lock (this.syncObject)
         {
-            var memory = new byte[this.memoryUsage];
-            var span = memory.AsSpan();
-
-            foreach (var x in this.queue)
+            if (this.used == 0)
             {
-                x.AsSpan().CopyTo(span);
-                span = span.Slice(x.Length);
+                return Array.Empty<byte>();
             }
 
-            return memory;
+            var result = new byte[this.used];
+            this.CopyTo(result);
+            return result;
         }
+    }
+
+    private void EnsureCapacity(int required)
+    {
+        if (required <= this.bytes.Length)
+        {
+            return;
+        }
+
+        var capacity = (int)Math.Min(Array.MaxLength, Math.Max(required, Math.Max(256L, this.bytes.Length * 2L)));
+        var replacement = new byte[capacity];
+        this.CopyTo(replacement);
+        this.bytes = replacement;
+        this.head = 0;
+    }
+
+    private void CopyTo(Span<byte> destination)
+    {
+        var first = Math.Min(this.used, this.bytes.Length - this.head);
+        this.bytes.AsSpan(this.head, first).CopyTo(destination);
+        this.bytes.AsSpan(0, this.used - first).CopyTo(destination[first..]);
     }
 }

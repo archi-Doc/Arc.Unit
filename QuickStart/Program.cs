@@ -37,14 +37,23 @@ public class Program
 
         var unit = builder.Build();
         root = unit.Context.ExecutionRoot;
-        await unit.RunAsync(new(args));
-
-        root.RequestTermination();
-        if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
+        try
         {
-            await unitLogger.FlushAndTerminate();
+            await unit.RunAsync(new(args));
         }
+        finally
+        {
+            root.RequestTermination();
+            if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
+            {
+                await unitLogger.FlushAndTerminate();
+            }
 
-        await root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
+            await root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
+            if (unit.Context.ServiceProvider is IAsyncDisposable disposable)
+            {
+                await disposable.DisposeAsync();
+            }
+        }
     }
 }

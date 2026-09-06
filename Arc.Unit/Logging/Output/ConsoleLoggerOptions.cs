@@ -32,7 +32,7 @@ public record class ConsoleLoggerOptions
     public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
-    /// Gets the maximum number of queued log (0 for unlimited).<br/>
+    /// Gets the maximum queued event count (zero or negative means unlimited). New events are dropped when full.<br/>
     /// This is used only when <see cref="EnableBuffering"/> is <see langword="true"/>.
     /// </summary>
     public int MaxQueue { get; init; } = DefaultMaxQueue;

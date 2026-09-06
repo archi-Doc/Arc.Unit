@@ -14,7 +14,7 @@ Features:
 - Three configuration phases (pre-configuration, configuration, post-configuration).
 - Composable builders: `AddBuilder()` merges another builder, and each builder is processed only once.
 - Lifecycle notifications: Prepare, Load, Start, Stop, Save and Terminate.
-- Options: obtain and replace option records while building.
+- Options: update shared option objects without replacing injected instances.
 - Logging: console/file/memory outputs, per source/level resolvers, and filters.
 - Command-line arguments (`UnitArguments`) and command registration for [SimpleCommandLine](https://github.com/archi-Doc/SimpleCommandLine).
 - Console abstraction (`IConsoleService`) which can be replaced for tests.
@@ -36,6 +36,8 @@ Work in progress.
 - [Console service](#console-service)
 - [Native AOT](#native-aot)
 - [Samples](#samples)
+- [Performance and concurrency](#performance-and-concurrency)
+- [Build and tests](#build-and-tests)
 - [License](#license)
 
 
@@ -46,7 +48,7 @@ Work in progress.
 dotnet add package Arc.Unit
 ```
 
-Arc.Unit targets .NET 10 and depends on `Arc.Collections`, `Arc.CrossChannel`, `Arc.Threading` and `Microsoft.Extensions.DependencyInjection`.
+Arc.Unit targets .NET 10 and depends on `Arc.Collections`, `Arc.CrossChannel`, `Arc.Threading`, `Microsoft.Extensions.DependencyInjection` and `Utf8StringInterpolation`. SimpleCommandLine is an optional integration used by QuickStart.
 
 
 
@@ -109,7 +111,7 @@ public class MyUnit : UnitBase, IUnitPreparable
 
 ## UnitBuilder
 
-`UnitBuilder` runs the registered delegates in three phases, and `Build()` can be called only once.
+`UnitBuilder` runs the registered delegates in three phases. One successful `Build()` is allowed; concurrent and reentrant builds throw. Configure a builder from one thread. A failed build can be retried, but configuration callbacks run again.
 
 | Phase | Method | Context | Typical use |
 | --- | --- | --- | --- |
@@ -156,6 +158,10 @@ Other members:
 
 The services registered by default are: `UnitContext`, `UnitOptions`, `ExecutionRoot`, `RadioClass`, `IConsoleService` (`ConsoleService`), the product type, and the logging services described below.
 
+Changes to `UnitName`, `ProgramDirectory` and `DataDirectory` in `PostConfigure` are reflected in `UnitOptions` when the build completes. Register all services and commands during `Configure`; adding registrations after the provider is built cannot change that provider.
+
+`AddSingleton*`, `AddScoped*` and `AddTransient*` follow Microsoft DI lifetimes. `TryAdd*` preserves an existing registration. Dispose scopes when their work completes, and dispose the root provider after stopping workers and flushing logs. A `UnitProduct` does not own automatic shutdown or disposal.
+
 
 
 ## UnitBase and the lifecycle
@@ -176,11 +182,15 @@ The services registered by default are: `UnitContext`, `UnitOptions`, `Execution
 
 `UnitContext` also provides `ServiceProvider`, `ExecutionRoot` (the root of the background tasks), `Options` (`UnitOptions`), `Radio`, `Commands`/`Subcommands` and `TerminationRequested`.
 
+The table describes the intended lifecycle, not an enforced state machine. Each `Send*` call forwards a notification; the caller controls order, repetition and cancellation. `TerminationRequested` is an independent application flag: setting it does not cancel `ExecutionRoot`. Use `try/finally` around application work to ensure shutdown runs when a command throws.
+
 
 
 ## Options
 
-An option is a `record class` with a parameterless constructor. `GetOptions<TOptions>()` returns the instance which is registered in the DI container, and `SetOptions<TOptions>()` copies the values into it (so the instance held by the container stays the same).
+Options are classes with a parameterless constructor; records make `with` updates convenient. `GetOptions<TOptions>()` gets or creates an instance, and `SetOptions<TOptions>()` shallow-copies its private, public and inherited instance fields into the existing object. References inside an options object remain shared.
+
+Call `GetOptions<TOptions>()` before the provider is built, or register the options as a singleton, to make them injectable. A new options type first requested in `PostConfigure` is kept in the context but cannot be added to the already-built provider. Finish configuration before concurrent use; updates are not atomic. Loggers may capture settings when constructed, so configure their options before resolving them.
 
 ```csharp
 builder.PostConfigure(context =>
@@ -211,7 +221,7 @@ Use `ILogger<DefaultLog>` (or `ILogger`) to omit the source name from the format
 
 ### Resolvers
 
-A resolver determines the output and the filter for each log source/level pair. Resolvers are called in the order they are registered, and the result is cached.
+A resolver determines the output and filter for each exact source/level pair. Resolvers share the context in registration order; later assignments win. Results, including disabled levels, are cached. Resolvers must be thread-safe because concurrent cache misses can invoke them more than once.
 
 ```csharp
 context.ClearLoggerResolver(); // Clears the default resolver (all logs -> ConsoleLogger).
@@ -247,6 +257,8 @@ To add another file logger, derive a new options type from `FileLoggerOptions`, 
 
 A filter is applied before the log is written, and it can change the destination or discard the log.
 
+The replacement writer supplies the output and level; the original source, event ID and log service are preserved. Its filter is not invoked again. Returning `null` or a default writer discards the event. Register outputs and filters as singletons: brokers are shared across scopes.
+
 ```csharp
 public LogWriter? Filter(LogFilterParameter parameter)
 {
@@ -272,6 +284,18 @@ await logUnit.FlushAndTerminate(); // Flushes all the buffered outputs and termi
 
 `LogUnit.SetTimeOffset()` adjusts the timestamp of the log events, and `SimpleLogFormatterOptions` customizes the format ("Timestamp [Level Source(EventId)] Message").
 
+`Flush()` processes one batch per output (up to 1,000 console events or 10,000 file events). `FlushAndTerminate()` closes worker queues, drains accepted events and rejects later writes. Stop producers before calling it. A flush failure in one output does not prevent other registered outputs from being flushed.
+
+### Capacity and file retention
+
+- Console and file `MaxQueue` limits are enforced atomically. Full queues discard new events; zero or negative values mean unlimited.
+- File names use the UTC date, independently of timestamp formatting and the current culture. Relative paths are resolved when the logger is created. Give each file logger a distinct path.
+- File cleanup only targets the configured prefix, a valid `yyyyMMdd` date and the configured extension. `MaxLogCapacity` uses decimal megabytes and periodic whole-file eviction; zero or negative values retain no files at cleanup. Files at exactly the limit are kept.
+- `ClearLogsAtStartup` runs before the worker accepts events. `DeleteAllLogs()` is serialized with file writes but leaves queued events intact. File I/O is best-effort: failed batches are not retried, and flush counts describe dequeued events rather than durable writes.
+- `MemoryLogger.MaxMemoryUsage` limits retained UTF-8 bytes, not total managed memory. An oversized event evicts prior events and is discarded. `Clear()` retains reusable storage; `ToUtf8Array()` returns an independent snapshot. UTF-8 output has no ANSI colors.
+
+`ILogService` and typed loggers are scoped. Reuse `GetLogger(Type)` results when the source is known only at runtime; each call creates a wrapper. Prefer `ILogger<T>` injection for known source types.
+
 
 
 ## Command-line arguments
@@ -288,9 +312,10 @@ builder.PreConfigure(context =>
 });
 ```
 
-- `Build(string[] args)` joins the arguments, and an argument which contains whitespace is enclosed in quotation marks.
-- `Build(string? args)` parses a single string, where `"A B"`, `'A B'`, `{A B}` and `"""A B"""` keep the enclosed text as one token.
-- Option names are compared case-insensitively, and an option without a value is stored as an empty string.
+- `Build(string[] args)` consumes each element directly and preserves empty values, whitespace and literal quotes. The input array is snapshotted.
+- `Build(string? args)` parses a string. `"A B"`, `'A B'`, `{A B}` and `"""A B"""` keep enclosed text together; single, double and triple quotes are removed, while braces remain part of the value.
+- Option names are compared case-insensitively without their dashes. Duplicates are retained and lookup returns the first. An option without a value is stored as an empty string; a token starting with `-` starts another option.
+- `|` separates tokens in string input and is retained as a value; it does not stop parsing. Array input keeps embedded pipes literal. `RawArguments` is the original string or a space-joined display of array arguments, not a reversible command-line encoding.
 
 Two options are handled by the builder itself:
 
@@ -308,6 +333,8 @@ A relative path is combined with the current directory. The result is exposed as
 Command types can be registered during the configuration phase. When using [SimpleCommandLine](https://github.com/archi-Doc/SimpleCommandLine), use its generic registration extensions and create the parser from the built unit:
 
 ```csharp
+using SimpleCommandLine;
+
 context.AddCommand<ExampleCommand, ExampleCommandOptions>();
 context.AddSubcommand<ExampleSubcommand>();
 
@@ -316,6 +343,8 @@ await parser.ParseAndExecute(args);
 ```
 
 These methods register the command in the DI container and preserve its command and options metadata for trimming and Native AOT. The default lifetime is `Scoped`. Register every nested options type with `context.AddOptionType<TOptions>()`.
+
+Pass a scope's `ServiceProvider` in `SimpleParserOptions` when commands need scoped lifetime and disposal. QuickStart shows this pattern. Parser instances contain mutable parse state and should not be shared across concurrent executions.
 
 The non-generic `Arc.Unit` methods (`context.AddCommand(typeof(ExampleCommand))` and `AddSubcommand`) remain available for other parsers. `UnitContext.GetCommandTypes(Type)` returns the commands which belong to a specified group.
 
@@ -335,6 +364,10 @@ if (result.IsSuccess)
 ```
 
 `ConsoleService` is registered by default, and `EmptyConsole` discards all the output. `ConsoleHelper` provides the escape sequences (colors, cursor and erase operations).
+
+`ReadLine()` reports an empty line as success, EOF or I/O failure as `Terminated`, and cancellation as `Canceled`. `EmptyConsole` returns successful empty input unless the token is already canceled. `ReadKey()` and `KeyAvailable` suppress console errors. Color settings control emitted escape sequences, not terminal support.
+
+`PathHelper` provides path composition, best-effort directory/file operations and a cached container check. Both byte-array and `ReadOnlyMemory<byte>` append overloads avoid copying. Try methods suppress I/O errors; append argument validation and cancellation before opening the file still throw.
 
 
 
@@ -357,6 +390,24 @@ The public API is annotated with `DynamicallyAccessedMembers`, so the trimmer pr
 
 - [QuickStart](/QuickStart): a console application with commands, a log filter and a file logger.
 - [Playground](/Playground): a sandbox which exercises the builder, the loggers and the termination process.
+
+Historical sources in `Playground/Obsolete` remain in the repository but are excluded from compilation.
+
+## Performance and concurrency
+
+The logging path caches brokers and delegates. Worker queues reuse storage; memory logging reuses circular UTF-8 storage instead of allocating a byte array for every event. File batches use reusable buffers without a final array copy, and daily paths are cached. Flush target snapshots change only when an output is registered. Reflection metadata for options is cached per generic type.
+
+Warm allocation tests cover fixed-size memory log writes, queue enqueue/dequeue and empty console reads. Growing buffers, creating message strings, snapshot APIs, first-use initialization and asynchronous file I/O may still allocate. Avoid interpolating messages before checking `GetWriter()`; the null-conditional form in the logging examples skips message creation for disabled levels.
+
+## Build and tests
+
+```sh
+dotnet build -c Release
+dotnet test --project Arc.Unit.Tests/Arc.Unit.Tests.csproj -c Release --coverage --coverage-output-format cobertura --results-directory artifacts/coverage
+dotnet publish QuickStart/QuickStart.csproj -c Release -r win-x64 -p:PublishAot=true -p:TreatWarningsAsErrors=true
+```
+
+Tests use xUnit v3 and Microsoft Testing Platform. They cover argument parsing, options copying, builder composition, DI lifetimes, lifecycle notifications, log routing, bounded queues, file retention, console errors and warm allocation budgets. Coverage reports are written to `artifacts/coverage`; they include generated CrossChannel code. Interactive terminal behavior and OS-specific failures still need platform testing. CI runs tests with coverage and a Linux NativeAOT command smoke test.
 
 
 

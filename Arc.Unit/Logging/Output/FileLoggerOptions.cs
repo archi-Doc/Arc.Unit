@@ -40,13 +40,14 @@ public record class FileLoggerOptions
     public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
-    /// Gets the maximum number of queued log (0 for unlimited).
+    /// Gets the maximum queued event count (zero or negative means unlimited). New events are dropped when full.
     /// </summary>
     public int MaxQueue { get; init; } = DefaultMaxQueue;
 
     /// <summary>
     /// Gets the upper limit of log capacity in megabytes.<br/>
-    /// The oldest log files are deleted when the total size exceeds this value.
+    /// One megabyte is 1,000,000 bytes. Periodic cleanup deletes oldest daily files until within the limit.
+    /// Zero or negative values retain no files at cleanup; they do not disable cleanup.
     /// </summary>
     public int MaxLogCapacity { get; init; } = 10;
 

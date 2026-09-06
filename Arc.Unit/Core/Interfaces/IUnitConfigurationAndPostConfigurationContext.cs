@@ -10,20 +10,20 @@ namespace Arc.Unit;
 public interface IUnitConfigurationAndPostConfigurationContext
 {
     /// <summary>
-    /// Gets <see cref="CommandGroup"/> of the specified command type.
+    /// Gets the child group of a command. Register commands during Configure, before the provider is built.
     /// </summary>
     /// <param name="type">The command type.</param>
     /// <returns><see cref="CommandGroup"/>.</returns>
     CommandGroup GetCommandGroup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type);
 
     /// <summary>
-    /// Gets <see cref="CommandGroup"/> of command.
+    /// Gets the top-level command group.
     /// </summary>
     /// <returns><see cref="CommandGroup"/>.</returns>
     CommandGroup GetCommandGroup();
 
     /// <summary>
-    /// Gets <see cref="CommandGroup"/> of subcommand.
+    /// Gets the separate subcommand group.
     /// </summary>
     /// <returns><see cref="CommandGroup"/>.</returns>
     CommandGroup GetSubcommandGroup();

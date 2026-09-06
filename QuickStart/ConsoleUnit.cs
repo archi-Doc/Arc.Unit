@@ -2,6 +2,7 @@
 
 using Arc.Threading;
 using Arc.Unit;
+using Microsoft.Extensions.DependencyInjection;
 using SimpleCommandLine;
 
 namespace QuickStart;
@@ -30,7 +31,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.Configure(context =>
             {
                 context.AddSingletonUnit<ConsoleUnit>();
-                context.RegisterInstanceCreation<ConsoleUnit>();
 
                 // Command
                 context.AddCommand<ConsoleCommand>();
@@ -93,29 +93,36 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             await this.Context.SendPrepare();
             await this.Context.SendStart();
 
+            await using var scope = this.Context.ServiceProvider.CreateAsyncScope();
             var parserOptions = SimpleParserOptions.Standard with
             {
-                ServiceProvider = this.Context.ServiceProvider,
+                ServiceProvider = scope.ServiceProvider,
                 RequireStrictCommandName = false,
                 RequireStrictOptionName = true,
             };
 
             // Main
             var parser = this.Context.CreateSimpleParser(parserOptions);
-            await parser.ParseAndExecute(param.Args);
-
-            await this.Context.SendStop();
-            await this.Context.SendTerminate();
+            try
+            {
+                await parser.ParseAndExecute(param.Args, this.Context.ExecutionRoot.CancellationToken);
+            }
+            finally
+            {
+                try
+                {
+                    await this.Context.SendStop();
+                }
+                finally
+                {
+                    await this.Context.SendTerminate();
+                }
+            }
         }
     }
 
     private class ExampleLogFilter : ILogFilter
     {
-        public ExampleLogFilter(ConsoleUnit consoleUnit)
-        {
-            this.consoleUnit = consoleUnit;
-        }
-
         public LogWriter? Filter(LogFilterParameter parameter)
         {// Log source/Event id/LogLevel -> Filter() -> ILog
             if (parameter.LogSourceType == typeof(ConsoleCommand))
@@ -133,8 +140,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
             return parameter.OriginalWriter;
         }
-
-        private ConsoleUnit consoleUnit;
     }
 
     public ConsoleUnit(UnitContext context, ILogger<ConsoleUnit> logger, UnitOptions options)
@@ -170,6 +175,6 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         return Task.CompletedTask;
     }
 
-    private ILogger<ConsoleUnit> logger;
-    private UnitOptions options;
+    private readonly ILogger<ConsoleUnit> logger;
+    private readonly UnitOptions options;
 }

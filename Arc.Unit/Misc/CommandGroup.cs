@@ -28,12 +28,14 @@ public class CommandGroup
     /// <returns><see langword="true"/>: Successfully added.</returns>
     public bool AddCommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
-        if (!this.commandSet.Add(commandType))
+        ArgumentNullException.ThrowIfNull(commandType);
+        if (this.commandSet.Contains(commandType))
         {// Already added.
             return false;
         }
 
         this.context.Services.TryAdd(ServiceDescriptor.Describe(commandType, commandType, lifetime));
+        this.commandSet.Add(commandType);
         this.commandList.Add(commandType);
         return true;
     }

@@ -1,4 +1,4 @@
-name: Build and Native AOT
+name: Build, Test and Native AOT
 
 on:
   push:
@@ -19,6 +19,14 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
+    - name: Test with coverage
+      run: dotnet test --project Arc.Unit.Tests/Arc.Unit.Tests.csproj --configuration Release --no-build --coverage --coverage-output-format cobertura --results-directory artifacts/coverage
+    - name: Upload coverage
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage
+        path: artifacts/coverage
     - name: Native AOT smoke test
       run: |
         dotnet publish QuickStart/QuickStart.csproj --configuration Release --runtime linux-x64 --self-contained true -p:PublishAot=true -p:TreatWarningsAsErrors=true --output artifacts/aot-quickstart

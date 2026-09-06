@@ -40,7 +40,7 @@ public interface IConsoleService
     public void WriteLine(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor);
 
     /// <summary>
-    /// Reads a line of text from the console asynchronously.
+    /// Reads a line. The default service reports EOF or I/O failure as Terminated, and cancellation as Canceled.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation, containing the input result.</returns>

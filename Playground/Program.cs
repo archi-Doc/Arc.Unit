@@ -108,9 +108,6 @@ public class Program
             });
 
         var builder2 = new UnitBuilder()
-            .Configure(context =>
-            {
-            })
             .PostConfigure(context =>
             {
                 context.UnitName = "mod";
@@ -173,16 +170,12 @@ public class Program
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
         root.RequestTermination();
-        if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
-        {
-            await unitLogger.FlushAndTerminate();
-        }
-
-        await root.WaitForTermination(); // Wait for the termination infinitely.
-
-        root.RequestTermination();
         await logUnit.FlushAndTerminate();
         await root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
+        if (unit.Context.ServiceProvider is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync();
+        }
 
         string ThrowException()
         {

@@ -3,7 +3,7 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// Represents the lifecycle state of a unit.
+/// Optional application-managed lifecycle state. Arc.Unit does not update this value automatically.
 /// </summary>
 public enum UnitState : byte
 {

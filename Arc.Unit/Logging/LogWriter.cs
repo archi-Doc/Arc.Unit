@@ -7,7 +7,7 @@ namespace Arc.Unit;
 /// </summary>
 /// <remarks>
 /// This type is immutable and delegates logging behavior to the broker configuration,
-/// including optional filtering and output routing.
+/// including optional filtering and output routing. A default writer discards messages.
 /// </remarks>
 public readonly record struct LogWriter
 {
@@ -29,11 +29,17 @@ public readonly record struct LogWriter
     /// <param name="eventId">An optional event identifier used to correlate log entries.</param>
     /// <remarks>
     /// When a filter delegate is configured, the filter may return a different <see cref="LogWriter"/>
-    /// instance that controls the final log level and delegate used for output.
+    /// instance that controls the final log level and destination. The original source and service are preserved;
+    /// the destination filter is not applied again.
     /// </remarks>
     public void Write(string message, long eventId = default)
     {
         var broker = this.logBroker;
+        if (broker is null)
+        {
+            return;
+        }
+
         if (broker.FilterDelegate is not null)
         {// Filter -> Log
             if (broker.FilterDelegate(new(this.logService, broker.LogSourceType, broker.LogLevel, eventId, this)) is LogWriter loggerInstance &&
@@ -52,7 +58,7 @@ public readonly record struct LogWriter
     private readonly LogBroker logBroker;
 
     /// <summary>
-    /// Gets the output target type used by the current log broker.
+    /// Gets the output type, or <see cref="EmptyLogger"/> for a default writer.
     /// </summary>
-    public Type OutputType => this.logBroker.OutputType;
+    public Type OutputType => this.logBroker?.OutputType ?? typeof(EmptyLogger);
 }

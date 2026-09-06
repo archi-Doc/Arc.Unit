@@ -2,7 +2,6 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Arc.Threading;
 using CrossChannel;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,6 +55,7 @@ public class UnitBuilder<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTy
 /// <see cref="Configure(Action{IUnitConfigurationContext})"/> and <see cref="PostConfigure(Action{IUnitPostConfigurationContext})"/>,
 /// combine other builders with <see cref="AddBuilder(UnitBuilder)"/>, and call <see cref="Build(string?)"/> once.
 /// </summary>
+/// <remarks>Configure from one thread. Concurrent or reentrant builds throw; a failed build may be retried.</remarks>
 public class UnitBuilder
 {
     #region FieldAndProperty
@@ -68,6 +68,7 @@ public class UnitBuilder
     private readonly List<Action<IUnitPostConfigurationContext>> postConfigureActions = new();
     private readonly List<UnitBuilder> unitBuilders = new();
     private UnitProduct? builtUnit;
+    private int building;
     private Func<IServiceCollection, IServiceProvider> serviceProviderFactory = DefaultServiceProviderFactory;
 
     #endregion
@@ -87,9 +88,9 @@ public class UnitBuilder
     /// <summary>
     /// Runs the registered delegates and builds a unit (can be called only once).
     /// </summary>
-    /// <param name="args">Command-line arguments (an argument which contains whitespace is enclosed in quotation marks).</param>
+    /// <param name="args">Pre-split arguments. Empty values, whitespace and literal quotes are preserved.</param>
     /// <returns><see cref="UnitProduct"/>.</returns>
-    /// <exception cref="InvalidOperationException">The unit has already been built.</exception>
+    /// <exception cref="InvalidOperationException">The unit was already built, or another build is in progress.</exception>
     public virtual UnitProduct Build(string[] args) => this.Build<UnitProduct>(args);
 
     /// <summary>
@@ -97,7 +98,7 @@ public class UnitBuilder
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
     /// <returns><see cref="UnitProduct"/>.</returns>
-    /// <exception cref="InvalidOperationException">The unit has already been built.</exception>
+    /// <exception cref="InvalidOperationException">The unit was already built, or another build is in progress.</exception>
     public virtual UnitProduct Build(string? args = null) => this.Build<UnitProduct>(args);
 
     /// <summary>
@@ -108,6 +109,7 @@ public class UnitBuilder
     /// <returns>The same instance of the <see cref="UnitBuilder"/> for chaining.</returns>
     public virtual UnitBuilder AddBuilder(UnitBuilder unitBuilder)
     {
+        ArgumentNullException.ThrowIfNull(unitBuilder);
         this.unitBuilders.Add(unitBuilder);
         return this;
     }
@@ -121,6 +123,7 @@ public class UnitBuilder
     /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
     public virtual UnitBuilder PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
     {
+        ArgumentNullException.ThrowIfNull(@delegate);
         this.preConfigureActions.Add(@delegate);
         return this;
     }
@@ -134,6 +137,7 @@ public class UnitBuilder
     /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
     public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
     {
+        ArgumentNullException.ThrowIfNull(@delegate);
         this.configureActions.Add(@delegate);
         return this;
     }
@@ -147,6 +151,7 @@ public class UnitBuilder
     /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
     public virtual UnitBuilder PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
     {
+        ArgumentNullException.ThrowIfNull(@delegate);
         this.postConfigureActions.Add(@delegate);
         return this;
     }
@@ -173,24 +178,44 @@ public class UnitBuilder
     /// <param name="factory">The service provider factory.</param>
     public void SetServiceProviderFactory(Func<IServiceCollection, IServiceProvider> factory)
     {
+        ArgumentNullException.ThrowIfNull(factory);
         this.serviceProviderFactory = factory;
     }
 
     internal virtual TUnit Build<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TUnit>(string[] args)
         where TUnit : UnitProduct
-        => this.Build<TUnit>(JoinArguments(args));
+        => this.Build<TUnit>(new UnitBuilderContext(new UnitArguments(args)));
 
     internal virtual TUnit Build<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TUnit>(string? args)
         where TUnit : UnitProduct
+        => this.Build<TUnit>(new UnitBuilderContext(args));
+
+    private TUnit Build<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TUnit>(UnitBuilderContext builderContext)
+        where TUnit : UnitProduct
     {
-        if (this.builtUnit != null)
+        if (Interlocked.CompareExchange(ref this.building, 1, 0) != 0)
         {
-            throw new InvalidOperationException();
+            throw new InvalidOperationException("A build is already in progress.");
         }
 
-        // Builder context
-        var builderContext = new UnitBuilderContext(args);
+        try
+        {
+            if (this.builtUnit is not null)
+            {
+                throw new InvalidOperationException("The unit has already been built.");
+            }
 
+            return this.BuildCore<TUnit>(builderContext);
+        }
+        finally
+        {
+            Volatile.Write(ref this.building, 0);
+        }
+    }
+
+    private TUnit BuildCore<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TUnit>(UnitBuilderContext builderContext)
+        where TUnit : UnitProduct
+    {
         // Pre-configuration
         builderContext.ProcessedBuilders.Clear();
         this.PreConfigureInternal(builderContext);
@@ -229,82 +254,27 @@ public class UnitBuilder
         var serviceProvider = this.serviceProviderFactory(builderContext.Services);
         builderContext.ServiceProvider = serviceProvider;
 
-        // BuilderContext to UnitContext.
-        var unitContext = serviceProvider.GetRequiredService<UnitContext>();
-        unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
-
-        // Post-configuration
-        builderContext.ProcessedBuilders.Clear();
-        this.PostConfigureInternal(builderContext);
-
-        var unit = serviceProvider.GetRequiredService<TUnit>();
-        this.builtUnit = unit;
-        return unit;
-    }
-
-    /// <summary>
-    /// Joins command-line arguments into a single string.<br/>
-    /// An argument which contains whitespace is enclosed in quotation marks, so that it is not split during parsing.
-    /// </summary>
-    /// <param name="args">Command-line arguments.</param>
-    /// <returns>The joined arguments.</returns>
-    private static string? JoinArguments(string[]? args)
-    {
-        if (args is null || args.Length == 0)
+        UnitContext? unitContext = null;
+        try
         {
-            return null;
+            // BuilderContext to UnitContext.
+            unitContext = serviceProvider.GetRequiredService<UnitContext>();
+            unitContext.FromBuilderToUnitContext(serviceProvider, builderContext);
+
+            // Post-configuration
+            builderContext.ProcessedBuilders.Clear();
+            this.PostConfigureInternal(builderContext);
+            unitContext.Options.CopyFrom(builderContext);
+
+            var unit = serviceProvider.GetRequiredService<TUnit>();
+            this.builtUnit = unit;
+            return unit;
         }
-
-        var sb = new StringBuilder();
-        foreach (var x in args)
+        catch
         {
-            if (sb.Length > 0)
-            {
-                sb.Append(' ');
-            }
-
-            if (RequiresQuotation(x))
-            {
-                sb.Append('\"').Append(x).Append('\"');
-            }
-            else
-            {
-                sb.Append(x);
-            }
-        }
-
-        return sb.ToString();
-
-        static bool RequiresQuotation(string arg)
-        {
-            var containsWhitespace = false;
-            foreach (var c in arg)
-            {
-                if (char.IsWhiteSpace(c))
-                {
-                    containsWhitespace = true;
-                    break;
-                }
-            }
-
-            if (!containsWhitespace)
-            {// No whitespace: no need to be enclosed.
-                return false;
-            }
-
-            if (arg.Length >= 2)
-            {// Already enclosed: "A B" 'A B' {A B}
-                var first = arg[0];
-                var last = arg[arg.Length - 1];
-                if ((first == '\"' && last == '\"') ||
-                    (first == '\'' && last == '\'') ||
-                    (first == '{' && last == '}'))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            unitContext?.ExecutionRoot?.RequestTermination(TerminationOptions.IncludeIndependent);
+            (serviceProvider as IDisposable)?.Dispose();
+            throw;
         }
     }
 
