@@ -17,7 +17,7 @@ public record class SimpleLogFormatterOptions
     }
 
     /// <summary>
-    /// Gets a value indicating whether color escape sequences are added to the formatted text.
+    /// Gets a value indicating whether text and console formatting emit ANSI colors. UTF-8 formatting never emits colors.
     /// </summary>
     public bool EnableColor { get; init; }
 

@@ -11,7 +11,6 @@ namespace Arc.Unit;
 public class UnitArguments
 {
     private const char Separator = '|';
-    private const string SeparatorString = "|";
     private const char OptionPrefix = '-';
     private const char Quote = '\"';
     private const char OpenBracket = '{'; // '['
@@ -24,7 +23,8 @@ public class UnitArguments
 
     private readonly List<string> values = new();
     private readonly List<KeyValuePair<string, string>> options = new();
-    private string rawArguments = string.Empty;
+    private readonly string[]? argumentArray;
+    private string? rawArguments;
 
     #endregion
 
@@ -37,10 +37,43 @@ public class UnitArguments
         this.Initialize(args);
     }
 
+    internal UnitArguments(string[]? args)
+    {
+        this.argumentArray = args is null ? [] : (string[])args.Clone();
+        string? previousOption = null;
+        foreach (var token in this.argumentArray)
+        {
+            ArgumentNullException.ThrowIfNull(token);
+            if (IsOptionString(token))
+            {
+                if (previousOption is not null)
+                {
+                    this.options.Add(new(previousOption, string.Empty));
+                }
+
+                previousOption = token.Trim('-');
+            }
+            else if (previousOption is not null)
+            {
+                this.options.Add(new(previousOption, token));
+                previousOption = null;
+            }
+            else
+            {
+                this.values.Add(token);
+            }
+        }
+
+        if (previousOption is not null)
+        {
+            this.options.Add(new(previousOption, string.Empty));
+        }
+    }
+
     /// <summary>
-    /// Gets the raw argument string as provided.
+    /// Gets the original string, or a space-joined display of pre-split arguments (not a reversible encoding).
     /// </summary>
-    public string RawArguments => this.rawArguments;
+    public string RawArguments => this.rawArguments ??= this.argumentArray is null ? string.Empty : string.Join(' ', this.argumentArray);
 
     /// <summary>
     /// Attempts to get the value associated with the specified option name.
@@ -99,10 +132,10 @@ public class UnitArguments
 
     private static bool IsOptionString(string text) => text.StartsWith(OptionPrefix);
 
-    private static List<string> FormatArguments(string arg)
+    private static List<Range> FormatArguments(string arg)
     {
         var span = arg.AsSpan();
-        var list = new List<string>();
+        var list = new List<Range>();
 
         var start = 0;
         var position = 0;
@@ -152,6 +185,7 @@ public class UnitArguments
                 var peek = enclosed.Peek();
 
                 if (currentChar == Quote &&
+                    (peek == '3' || peek == OpenBracket) &&
                     (position + 2) < span.Length &&
                     span[position + 1] == Quote &&
                     span[position + 2] == Quote)
@@ -175,7 +209,8 @@ public class UnitArguments
                     }
                     else
                     {// { """A
-                        enclosed.Push(currentChar);
+                        enclosed.Push('3');
+                        position += 2;
                     }
                 }
                 else if (currentChar == Quote && lastChar != '\\')
@@ -189,7 +224,7 @@ public class UnitArguments
                             goto AddString;
                         }
                     }
-                    else if (peek == '3')
+                    else if (peek == '3' || peek == SingleQuote)
                     {
                     }
                     else
@@ -208,7 +243,7 @@ public class UnitArguments
                             goto AddString;
                         }
                     }
-                    else if (peek == '3')
+                    else if (peek == '3' || peek == Quote)
                     {
                     }
                     else
@@ -243,16 +278,16 @@ public class UnitArguments
 AddString:
             if (start < position)
             { // Add string
-                var s = span[start..position].ToString().Trim();
+                var s = span[start..position].Trim();
                 if (s.Length > 0)
                 {
-                    list.Add(s);
+                    list.Add(start..position);
                 }
             }
 
             if (currentChar == Separator)
             {
-                list.Add(SeparatorString);
+                list.Add(position..(position + 1));
                 position++;
                 nextPosition++;
             }
@@ -263,10 +298,10 @@ AddString:
 
         if (start < position && position <= span.Length)
         { // Add string
-            var s = span[start..position].ToString().Trim();
+            var s = span[start..position].Trim();
             if (s.Length > 0)
             {
-                list.Add(s);
+                list.Add(start..position);
             }
         }
 
@@ -283,9 +318,10 @@ AddString:
         this.rawArguments = args;
         string? previousOption = null;
 
-        foreach (var x in FormatArguments(args))
+        foreach (var range in FormatArguments(args))
         {
-            if (IsOptionString(x))
+            var x = args.AsSpan(range).Trim();
+            if (x[0] == OptionPrefix)
             {// -option
                 if (previousOption != null)
                 {
@@ -293,7 +329,7 @@ AddString:
                     previousOption = null;
                 }
 
-                previousOption = x.Trim('-');
+                previousOption = x.Trim('-').ToString();
             }
             else
             {// value
@@ -319,19 +355,24 @@ AddString:
             this.options.Add(new(option, value));
         }
 
-        static string ProcessValueString(string value)
+        static string ProcessValueString(ReadOnlySpan<char> value)
         {
-            if (value.Length >= 2 && value.StartsWith('\"') && value.EndsWith('\"'))
+            if (value.Length >= 6 && value.StartsWith("\"\"\"", StringComparison.Ordinal) && value.EndsWith("\"\"\"", StringComparison.Ordinal))
             {
-                return value.Substring(1, value.Length - 2);
+                return value[3..^3].ToString();
             }
-            else if (value.Length >= 2 && value.StartsWith('\'') && value.EndsWith('\''))
+
+            if (value.Length >= 2 && value[0] == Quote && value[^1] == Quote)
             {
-                return value.Substring(1, value.Length - 2);
+                return value[1..^1].ToString();
+            }
+            else if (value.Length >= 2 && value[0] == SingleQuote && value[^1] == SingleQuote)
+            {
+                return value[1..^1].ToString();
             }
             else
             {
-                return value;
+                return value.ToString();
             }
         }
     }

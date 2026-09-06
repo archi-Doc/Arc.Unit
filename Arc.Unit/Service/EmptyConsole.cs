@@ -3,10 +3,13 @@
 namespace Arc.Unit;
 
 /// <summary>
-/// <see cref="IConsoleService"/> which discards all output and returns an empty input.
+/// Discards output and returns successful empty input, or Canceled for an already-canceled token.
 /// </summary>
 public sealed class EmptyConsole : IConsoleService
 {
+    private static readonly Task<InputResult> EmptyInput = Task.FromResult(new InputResult(InputResultKind.Success));
+    private static readonly Task<InputResult> CanceledInput = Task.FromResult(new InputResult(InputResultKind.Canceled));
+
     /// <inheritdoc/>
     public bool KeyAvailable => false;
 
@@ -22,7 +25,7 @@ public sealed class EmptyConsole : IConsoleService
     /// <inheritdoc/>
     public Task<InputResult> ReadLine(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult(new InputResult(InputResultKind.Success));
+        return cancellationToken.IsCancellationRequested ? CanceledInput : EmptyInput;
     }
 
     /// <inheritdoc/>

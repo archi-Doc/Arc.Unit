@@ -6,21 +6,31 @@ namespace Arc.Unit;
 
 /// <summary>
 /// Provides helper methods for file and directory paths.<br/>
-/// The methods prefixed with "Try" do not throw an exception when the operation fails.
+/// Try methods suppress I/O errors. Append operations still validate arguments and honor initial cancellation.
 /// </summary>
 public static class PathHelper
 {
     /// <summary>
-    /// Appends the specified bytes to the file (no exception will be thrown, except for the argument validation).
+    /// Appends bytes without copying. Argument errors and initial cancellation throw; I/O errors return false.
     /// </summary>
     /// <param name="path">The file path.</param>
     /// <param name="bytes">The bytes to append.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns><see langword="true"/>; The bytes are successfully appended.</returns>
-    public static async Task<bool> TryAppendAllBytes(string path, byte[] bytes, CancellationToken cancellationToken = default)
+    public static Task<bool> TryAppendAllBytes(string path, byte[] bytes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(bytes);
+        return TryAppendAllBytes(path, bytes.AsMemory(), cancellationToken);
+    }
+
+    /// <summary>Appends memory without copying it. I/O errors return false.</summary>
+    /// <param name="path">The destination file.</param>
+    /// <param name="bytes">The bytes; keep the memory valid until completion.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True on success. Cancellation before opening the file throws; I/O cancellation returns false.</returns>
+    public static async Task<bool> TryAppendAllBytes(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
-        ArgumentNullException.ThrowIfNull(bytes);
         cancellationToken.ThrowIfCancellationRequested();
 
         try

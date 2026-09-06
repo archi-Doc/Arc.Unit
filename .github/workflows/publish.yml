@@ -15,6 +15,9 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --configuration Release --no-restore
+    - name: Test
+      run: dotnet test --project Arc.Unit.Tests/Arc.Unit.Tests.csproj --configuration Release --no-build
+
     - name: Package1
       run: dotnet pack -c Release -o bin Arc.Unit/Arc.Unit.csproj
 

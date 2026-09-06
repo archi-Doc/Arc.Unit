@@ -19,6 +19,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Arc.Unit.Tests" />
     <AdditionalFiles Include="..\stylecop.json" Link="stylecop.json" />
     <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>

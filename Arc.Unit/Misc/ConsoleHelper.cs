@@ -155,12 +155,20 @@ public static class ConsoleHelper
             ConsoleColor.DarkMagenta => "\u001b[45m",
             ConsoleColor.DarkCyan => "\u001b[46m",
             ConsoleColor.Gray => "\u001b[47m",
+            ConsoleColor.DarkGray => "\u001b[100m",
+            ConsoleColor.Red => "\u001b[101m",
+            ConsoleColor.Green => "\u001b[102m",
+            ConsoleColor.Yellow => "\u001b[103m",
+            ConsoleColor.Blue => "\u001b[104m",
+            ConsoleColor.Magenta => "\u001b[105m",
+            ConsoleColor.Cyan => "\u001b[106m",
+            ConsoleColor.White => "\u001b[107m",
             _ => DefaultBackgroundColorEscapeCode,
         };
     }
 
     /// <summary>
-    /// Converts an SGR parameter (30-37, 39) into a foreground <see cref="ConsoleColor"/>.
+    /// Converts an SGR parameter (30-37, 39, 90-97) into a foreground color.
     /// </summary>
     /// <param name="code">The SGR parameter of the escape sequence.</param>
     /// <param name="isBright"><see langword="true"/> if the bright (bold) attribute is set.</param>
@@ -170,7 +178,7 @@ public static class ConsoleHelper
     {
         color = code switch
         {
-            30 => ConsoleColor.Black,
+            30 => isBright ? ConsoleColor.DarkGray : ConsoleColor.Black,
             31 => isBright ? ConsoleColor.Red : ConsoleColor.DarkRed,
             32 => isBright ? ConsoleColor.Green : ConsoleColor.DarkGreen,
             33 => isBright ? ConsoleColor.Yellow : ConsoleColor.DarkYellow,
@@ -178,6 +186,14 @@ public static class ConsoleHelper
             35 => isBright ? ConsoleColor.Magenta : ConsoleColor.DarkMagenta,
             36 => isBright ? ConsoleColor.Cyan : ConsoleColor.DarkCyan,
             37 => isBright ? ConsoleColor.White : ConsoleColor.Gray,
+            90 => ConsoleColor.DarkGray,
+            91 => ConsoleColor.Red,
+            92 => ConsoleColor.Green,
+            93 => ConsoleColor.Yellow,
+            94 => ConsoleColor.Blue,
+            95 => ConsoleColor.Magenta,
+            96 => ConsoleColor.Cyan,
+            97 => ConsoleColor.White,
             _ => null,
         };
 
@@ -185,7 +201,7 @@ public static class ConsoleHelper
     }
 
     /// <summary>
-    /// Converts an SGR parameter (40-47, 49) into a background <see cref="ConsoleColor"/>.
+    /// Converts an SGR parameter (40-47, 49, 100-107) into a background color.
     /// </summary>
     /// <param name="code">The SGR parameter of the escape sequence.</param>
     /// <param name="color">When this method returns, contains the color, or <see langword="null"/> for the default color.</param>
@@ -202,6 +218,14 @@ public static class ConsoleHelper
             45 => ConsoleColor.DarkMagenta,
             46 => ConsoleColor.DarkCyan,
             47 => ConsoleColor.Gray,
+            100 => ConsoleColor.DarkGray,
+            101 => ConsoleColor.Red,
+            102 => ConsoleColor.Green,
+            103 => ConsoleColor.Yellow,
+            104 => ConsoleColor.Blue,
+            105 => ConsoleColor.Magenta,
+            106 => ConsoleColor.Cyan,
+            107 => ConsoleColor.White,
             _ => null,
         };
 

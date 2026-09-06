@@ -54,10 +54,7 @@ public class ConsoleLogger : BufferedLogOutput
             return;
         }
 
-        if (this.options.MaxQueue <= 0 || worker.Count < this.options.MaxQueue)
-        {
-            worker.Add(logEvent);
-        }
+        worker.Add(logEvent, this.options.MaxQueue);
     }
 
     /// <inheritdoc/>

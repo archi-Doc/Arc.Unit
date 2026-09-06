@@ -54,14 +54,14 @@ public class ConsoleService : IConsoleService
     }
 
     /// <inheritdoc/>
-    public async Task<InputResult> ReadLine(CancellationToken cancellationToken)
+    public async Task<InputResult> ReadLine(CancellationToken cancellationToken = default)
     {
         try
         {
             try
             {
                 var text = await Console.In.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-                return new(text ?? string.Empty);
+                return text is null ? new(InputResultKind.Terminated) : new(text);
             }
             catch (OperationCanceledException)
             {

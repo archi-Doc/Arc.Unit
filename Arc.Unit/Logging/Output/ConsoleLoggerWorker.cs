@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
 using Arc.Threading;
 
 namespace Arc.Unit;
@@ -14,12 +13,14 @@ internal sealed class ConsoleLoggerWorker : TaskCore
     private const int BufferingTimeInMilliseconds = 40;
 
     private readonly ConsoleLogger consoleLogger;
-    private readonly ConcurrentQueue<LogEvent> queue = new();
+    private readonly LogEventQueue queue = new();
+    private readonly Lock flushLock = new();
 
     public ConsoleLoggerWorker(ExecutionRoot root, ConsoleLogger consoleLogger)
-        : base(LogUnit.GetGroup(root), Process)
+        : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DelayedStart)
     {
         this.consoleLogger = consoleLogger;
+        this.SendSignal(ExecutionSignal.Start);
     }
 
     public static async Task Process(TaskCore obj)
@@ -33,13 +34,26 @@ internal sealed class ConsoleLoggerWorker : TaskCore
         await worker.Flush(true).ConfigureAwait(false); // Flush the remaining logs.
     }
 
-    public void Add(LogEvent logEvent)
+    public void Add(LogEvent logEvent, int maxQueue)
     {
-        this.queue.Enqueue(logEvent);
+        this.queue.Enqueue(logEvent, maxQueue);
     }
 
     public Task<int> Flush(bool terminate)
     {
+        lock (this.flushLock)
+        {
+            return this.FlushCore(terminate);
+        }
+    }
+
+    private Task<int> FlushCore(bool terminate)
+    {
+        if (terminate)
+        {
+            this.queue.Complete();
+        }
+
         var count = 0;
         var maxFlush = terminate ? int.MaxValue : MaxFlush; // Flush all the queued logs on termination.
         var formatter = this.consoleLogger.Formatter;

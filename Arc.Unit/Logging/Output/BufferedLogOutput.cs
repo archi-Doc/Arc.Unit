@@ -19,7 +19,7 @@ public abstract class BufferedLogOutput : ILogOutput
     }
 
     /// <summary>
-    /// Writes the buffered logs to the log output.
+    /// Writes a batch of buffered logs. A terminating flush drains accepted events and closes the worker queue.
     /// </summary>
     /// <param name="terminate"><see langword="true" /> to write all the buffered logs and terminate the log worker.</param>
     /// <returns>The number of flushed logs.</returns>

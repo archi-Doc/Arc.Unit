@@ -29,7 +29,8 @@ public record class MemoryLoggerOptions
     public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
-    /// Gets the maximum memory usage in bytes (0 for unlimited, default value is <see cref="DefaultMaxMemoryUsage"/>).
+    /// Gets the retained UTF-8 byte limit (zero or negative means unlimited). Buffer capacity and bookkeeping are excluded.
+    /// The default is <see cref="DefaultMaxMemoryUsage"/>. An oversized line evicts prior lines and is discarded.
     /// </summary>
     public long MaxMemoryUsage { get; init; } = DefaultMaxMemoryUsage;
 }

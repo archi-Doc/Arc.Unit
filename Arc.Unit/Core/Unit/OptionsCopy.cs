@@ -1,6 +1,5 @@
 ﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
-using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
@@ -18,8 +17,6 @@ internal static class OptionsCopy
     private const BindingFlags DeclaredInstanceFields =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
 
-    private static readonly ConcurrentDictionary<Type, FieldInfo[]> TypeToFields = new();
-
     /// <summary>
     /// Copies all the instance fields (including the private and inherited fields) from one instance to another.
     /// </summary>
@@ -31,16 +28,17 @@ internal static class OptionsCopy
     {
         // typeof(TOptions) is used instead of from.GetType(), since 'to' is always created as TOptions
         // (the fields declared by a derived type of 'from' cannot be set to 'to').
-        if (!TypeToFields.TryGetValue(typeof(TOptions), out var fields))
-        {// GetOrAdd() is not used, since a lambda parameter cannot carry the DynamicallyAccessedMembers annotation.
-            fields = GetInstanceFields(typeof(TOptions));
-            TypeToFields[typeof(TOptions)] = fields;
-        }
+        var fields = Cache<TOptions>.Fields;
 
         for (var i = 0; i < fields.Length; i++)
         {
             fields[i].SetValue(to, fields[i].GetValue(from));
         }
+    }
+
+    private static class Cache<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TOptions>
+    {
+        internal static readonly FieldInfo[] Fields = GetInstanceFields(typeof(TOptions));
     }
 
     [UnconditionalSuppressMessage("Trimming", "IL2070:UnrecognizedReflectionPattern", Justification = "TOptions is annotated with DynamicallyAccessedMemberTypes.All, which preserves the type and its base types along with all their members.")]

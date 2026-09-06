@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="Arc.Unit.Tests/Arc.Unit.Tests.csproj" />
   <Project Path="Arc.Unit/Arc.Unit.csproj" />
   <Project Path="Playground/Playground.csproj" />
   <Project Path="QuickStart/QuickStart.csproj" />

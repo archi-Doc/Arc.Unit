@@ -37,10 +37,15 @@ public class SimpleLogFormatter
     public string Format(LogEvent logEvent)
     {
         var sb = RentStringBuilder();
-        this.Format(sb, logEvent);
-        var result = sb.ToString();
-        ReturnStringBuilder(sb);
-        return result;
+        try
+        {
+            this.Format(sb, logEvent);
+            return sb.ToString();
+        }
+        finally
+        {
+            ReturnStringBuilder(sb);
+        }
     }
 
     /// <summary>
@@ -119,7 +124,7 @@ public class SimpleLogFormatter
     }
 
     /// <summary>
-    /// Formats the log event into a UTF-8 byte array (a line terminator is appended).
+    /// Formats a UTF-8 line without color escape sequences, regardless of EnableColor.
     /// </summary>
     /// <param name="logEvent">The log event to be formatted.</param>
     /// <returns>The formatted UTF-8 text.</returns>
@@ -132,7 +137,7 @@ public class SimpleLogFormatter
     }
 
     /// <summary>
-    /// Formats the log event and writes it to the specified writer (a line terminator is appended).
+    /// Appends a UTF-8 line without color escape sequences to the writer.
     /// </summary>
     /// <param name="writer">The UTF-8 writer to write to.</param>
     /// <param name="logEvent">The log event to be formatted.</param>

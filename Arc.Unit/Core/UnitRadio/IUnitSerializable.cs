@@ -7,6 +7,7 @@ namespace Arc.Unit;
 /// <summary>
 /// An interface for the serialization process of unit objects.
 /// </summary>
+/// <remarks>The caller chooses notification order and frequency; Arc.Unit does not enforce them.</remarks>
 [RadioService]
 public interface IUnitSerializable : IRadioService
 {

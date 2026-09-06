@@ -72,9 +72,14 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     #endregion
 
     public UnitBuilderContext(string? args)
+        : this(new UnitArguments(args))
+    {
+    }
+
+    internal UnitBuilderContext(UnitArguments arguments)
     {
         this.UnitName = Assembly.GetEntryAssembly()?.GetName().Name ?? string.Empty;
-        this.Arguments = new(args); // Arguments
+        this.Arguments = arguments; // Arguments
         this.SetDirectory(); // Directory
     }
 

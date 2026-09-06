@@ -17,7 +17,8 @@ public sealed class UnitContext
     #region FieldAndProperty
 
     /// <summary>
-    /// Gets or sets a value indicating whether a termination has been requested (the units may set and check this flag).
+    /// Gets or sets a value indicating whether the application requested termination.
+    /// This flag does not cancel ExecutionRoot or send notifications.
     /// </summary>
     public bool TerminationRequested { get; set; }
 
@@ -183,7 +184,7 @@ public sealed class UnitContext
     /// <summary>
     /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
     /// </summary>
-    /// <param name="serviceProvider"><see cref="IServiceCollection"/>.</param>
+    /// <param name="serviceProvider">The built service provider.</param>
     /// <param name="builderContext"><see cref="UnitBuilderContext"/>.</param>
     internal void FromBuilderToUnitContext(IServiceProvider serviceProvider, UnitBuilderContext builderContext)
     {

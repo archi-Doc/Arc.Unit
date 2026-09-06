@@ -16,7 +16,7 @@ public interface IFileLogger
     string GetCurrentPath();
 
     /// <summary>
-    /// Deletes all the log files created by this logger.
+    /// Deletes matching daily files, serialized with writes. Queued events are retained and may recreate a file.
     /// </summary>
     void DeleteAllLogs();
 
@@ -24,7 +24,7 @@ public interface IFileLogger
     /// Writes the buffered logs to the log file.
     /// </summary>
     /// <param name="terminate"><see langword="true" /> to write all the buffered logs and terminate the log worker.</param>
-    /// <returns>The number of flushed logs.</returns>
+    /// <returns>The number of dequeued events, even if best-effort file writes fail.</returns>
     Task<int> Flush(bool terminate);
 }
 
@@ -32,6 +32,8 @@ public interface IFileLogger
 /// <see cref="ILogOutput"/> which writes logs to a file (one file per day).<br/>
 /// Logs are buffered and written by a background worker, and the total capacity is limited by <see cref="FileLoggerOptions.MaxLogCapacity"/>.
 /// </summary>
+/// <remarks>Each logger must own a distinct path. Writes are best-effort and failed batches are not retried.
+/// Normal flushes process up to 10,000 events; terminating flushes close the queue and drain accepted events.</remarks>
 /// <typeparam name="TOption">The type of options which determines the file path and the behavior.</typeparam>
 public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     where TOption : FileLoggerOptions
@@ -45,9 +47,9 @@ public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     public FileLogger(ExecutionRoot root, LogUnit logUnit, TOption options)
         : base(logUnit)
     {
-        if (string.IsNullOrEmpty(Path.GetDirectoryName(options.Path)))
+        if (!Path.IsPathFullyQualified(options.Path))
         {// Relative to the current directory.
-            options = options with { Path = Path.Combine(Directory.GetCurrentDirectory(), options.Path), };
+            options = options with { Path = Path.GetFullPath(options.Path), };
         }
 
         this.worker = new(root, options);
@@ -66,10 +68,7 @@ public class FileLogger<TOption> : BufferedLogOutput, IFileLogger
     /// <inheritdoc/>
     public override void Output(LogEvent logEvent)
     {
-        if (this.options.MaxQueue <= 0 || this.worker.Count < this.options.MaxQueue)
-        {
-            this.worker.Add(logEvent);
-        }
+        this.worker.Add(logEvent, this.options.MaxQueue);
     }
 
     /// <inheritdoc/>

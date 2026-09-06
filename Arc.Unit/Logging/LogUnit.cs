@@ -79,7 +79,8 @@ public class LogUnit
     private readonly IServiceProvider serviceProvider;
     private readonly LoggerResolverDelegate[] loggerResolvers;
     private readonly ConcurrentDictionary<LogSourceLevelPair, LogBroker?> brokers = new();
-    private readonly ConcurrentDictionary<BufferedLogOutput, BufferedLogOutput> logOutputsToBeFlushed = new();
+    private readonly Lock flushTargetsLock = new();
+    private BufferedLogOutput[] flushTargets = [];
 
     #endregion
 
@@ -109,39 +110,40 @@ public class LogUnit
     /// This is called by the constructor of <see cref="BufferedLogOutput"/>, so it is usually not necessary to call it directly.
     /// </remarks>
     public bool RegisterFlushTarget(BufferedLogOutput logOutput)
-        => this.logOutputsToBeFlushed.TryAdd(logOutput, logOutput);
+    {
+        ArgumentNullException.ThrowIfNull(logOutput);
+        lock (this.flushTargetsLock)
+        {
+            foreach (var target in this.flushTargets)
+            {
+                if (ReferenceEquals(target, logOutput))
+                {
+                    return false;
+                }
+            }
+
+            Volatile.Write(ref this.flushTargets, [.. this.flushTargets, logOutput]);
+            return true;
+        }
+    }
 
     /// <summary>
     /// Flushes all registered buffered outputs without termination.
     /// </summary>
     /// <returns>A task that represents the asynchronous flush operation.</returns>
-    public async Task Flush()
-    {
-        var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(false));
-        await Task.WhenAll(flushTasks).ConfigureAwait(false);
-    }
+    public Task Flush() => this.FlushTargets(false, false);
 
     /// <summary>
     /// Flushes only registered console outputs without termination.
     /// </summary>
     /// <returns>A task that represents the asynchronous flush operation.</returns>
-    public async Task FlushConsole()
-    {
-        var flushTasks = this.logOutputsToBeFlushed.Keys
-            .Where(x => x is ConsoleLogger)
-            .Select(x => x.Flush(false));
-        await Task.WhenAll(flushTasks).ConfigureAwait(false);
-    }
+    public Task FlushConsole() => this.FlushTargets(false, true);
 
     /// <summary>
     /// Flushes all registered buffered outputs and requests termination semantics.
     /// </summary>
     /// <returns>A task that represents the asynchronous flush and termination operation.</returns>
-    public async Task FlushAndTerminate()
-    {
-        var flushTasks = this.logOutputsToBeFlushed.Keys.Select(x => x.Flush(true));
-        await Task.WhenAll(flushTasks).ConfigureAwait(false);
-    }
+    public Task FlushAndTerminate() => this.FlushTargets(true, false);
 
     internal static ExecutionGroup GetGroup(ExecutionRoot root)
         => root.IndependentGroup.GetOrAddGroup(IsGroupIndependent, GroupName);
@@ -170,6 +172,47 @@ public class LogUnit
             new(logSourceType, logLevel),
             static (pair, logUnit) => logUnit.ResolveLogBroker(pair), // Static lambda: no closure is allocated.
             this);
+
+    private Task FlushTargets(bool terminate, bool consoleOnly)
+    {
+        var targets = Volatile.Read(ref this.flushTargets);
+        Task? first = null;
+        List<Task>? pending = null;
+        foreach (var target in targets)
+        {
+            if (consoleOnly && target is not ConsoleLogger)
+            {
+                continue;
+            }
+
+            Task task;
+            try
+            {
+                task = target.Flush(terminate);
+            }
+            catch (Exception exception)
+            {
+                task = Task.FromException(exception);
+            }
+
+            if (task.IsCompletedSuccessfully)
+            {
+                continue;
+            }
+
+            if (first is null)
+            {
+                first = task;
+            }
+            else
+            {
+                pending ??= [first];
+                pending.Add(task);
+            }
+        }
+
+        return pending is not null ? Task.WhenAll(pending) : first ?? Task.CompletedTask;
+    }
 
     private LogBroker? ResolveLogBroker(LogSourceLevelPair pair)
     {
