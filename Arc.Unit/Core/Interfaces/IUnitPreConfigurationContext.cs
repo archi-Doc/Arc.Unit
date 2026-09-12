@@ -36,7 +36,7 @@ public interface IUnitPreConfigurationContext
     /// </summary>
     /// <typeparam name="TOptions">The type of the options object to retrieve.</typeparam>
     /// <returns>An instance of <typeparamref name="TOptions"/> containing the current options.</returns>
-    TOptions GetOptions<TOptions>()
+    TOptions GetOrCreateOptions<TOptions>()
         where TOptions : class, new();
 
     /// <summary>

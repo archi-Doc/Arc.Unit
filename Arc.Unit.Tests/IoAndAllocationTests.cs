@@ -18,23 +18,23 @@ public class IoAndAllocationTests
             using var unit = new TestUnitScope(new UnitBuilder().Configure(c =>
             {
                 c.Services.AddSingleton<IConsoleService>(console);
-                c.ClearLoggerResolver();
-                c.AddLoggerResolver(r => r.SetOutput<ConsoleAndFileLogger>());
+                c.ClearLogOutputResolvers();
+                c.AddLogOutputResolver(r => r.SetOutput<ConsoleAndFileLogOutput>());
             }).PostConfigure(c =>
             {
-                c.SetOptions(new FileLoggerOptions { Path = Path.Combine(directory.FullName, "test.txt"), MaxQueue = 0 });
-                c.SetOptions(new ConsoleLoggerOptions { EnableBuffering = buffered, MaxQueue = 0, FormatterOptions = new(false) { TimestampFormat = null } });
+                c.SetOptions(new FileLogOutputOptions { FilePath = Path.Combine(directory.FullName, "test.txt"), MaxQueueLength = 0 });
+                c.SetOptions(new ConsoleLogOutputOptions { EnableBuffering = buffered, MaxQueueLength = 0, FormatterOptions = new(false) { TimestampFormat = null } });
             }));
             var service = unit.Context.ServiceProvider.GetRequiredService<ILogService>();
-            var file = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
+            var file = unit.Context.ServiceProvider.GetRequiredService<FileLogOutput<FileLogOutputOptions>>();
             var logUnit = unit.Context.ServiceProvider.GetRequiredService<LogUnit>();
             for (var i = 0; i < 1200; i++)
             {
-                service.GetWriter<DefaultLog>()?.Write($"message-{i}");
+                service.GetWriter<DefaultLogSource>()?.Write($"message-{i}");
             }
 
-            await logUnit.FlushConsole();
-            await logUnit.FlushAndTerminate();
+            await logUnit.FlushConsoleAsync();
+            await logUnit.FlushAndTerminateAsync();
             Assert.Equal(1200, console.Lines.Count);
             Assert.Equal("[INF] message-0", console.Lines[0]);
             Assert.Equal("[INF] message-1199", console.Lines[^1]);
@@ -55,22 +55,22 @@ public class IoAndAllocationTests
     {
         var directory = Directory.CreateTempSubdirectory("arc-unit-test-");
         using var unit = new TestUnitScope(new UnitBuilder());
-        var worker = new FileLoggerWorker(unit.Context.ExecutionRoot, new FileLoggerOptions { Path = Path.Combine(directory.FullName, "batch.txt"), ClearLogsAtStartup = true });
+        var worker = new FileLogOutputWorker(unit.Context.ExecutionRoot, new FileLogOutputOptions { FilePath = Path.Combine(directory.FullName, "batch.txt"), ClearLogsAtStartup = true });
         try
         {
             for (var i = 0; i < 10001; i++)
             {
-                worker.Add(new(null!, typeof(DefaultLog), LogLevel.Information, 0, "line"));
+                worker.Add(new(null!, typeof(DefaultLogSource), LogLevel.Information, 0, "line"));
             }
 
-            Assert.Equal(10001, await worker.Flush(true));
+            Assert.Equal(10001, await worker.FlushAsync(true));
             worker.Add(default);
             Assert.Equal(0, worker.Count);
             Assert.Equal(10001, (await File.ReadAllLinesAsync(worker.GetCurrentPath())).Length);
         }
         finally
         {
-            await worker.Flush(true);
+            await worker.FlushAsync(true);
             directory.Delete(true);
         }
     }
@@ -83,12 +83,12 @@ public class IoAndAllocationTests
         {
             var service = new ConsoleService();
             Console.SetIn(new StringReader("\nhello\n"));
-            Assert.True((await service.ReadLine()).IsSuccess);
-            Assert.Equal("hello", (await service.ReadLine()).Text);
-            Assert.True((await service.ReadLine()).IsTerminated);
-            Assert.True((await service.ReadLine(new CancellationToken(true))).IsCanceled);
+            Assert.True((await service.ReadLineAsync()).IsSuccess);
+            Assert.Equal("hello", (await service.ReadLineAsync()).Text);
+            Assert.True((await service.ReadLineAsync()).IsTerminated);
+            Assert.True((await service.ReadLineAsync(new CancellationToken(true))).IsCanceled);
             Console.SetIn(new FailingReader());
-            Assert.True((await service.ReadLine()).IsTerminated);
+            Assert.True((await service.ReadLineAsync()).IsTerminated);
         }
         finally
         {
@@ -106,7 +106,7 @@ public class IoAndAllocationTests
             Console.SetOut(output);
             var service = new ConsoleService();
             service.Write("text", ConsoleColor.Red);
-            Assert.Contains("\u001b[", output.ToString());
+            Assert.Contains("[", output.ToString());
             output.GetStringBuilder().Clear();
             service.EnableColor = false;
             service.Write((string?)null);
@@ -146,7 +146,7 @@ public class IoAndAllocationTests
         var foreground = ConsoleHelper.GetForegroundColorEscapeCode(expected);
         var lastEscape = foreground.LastIndexOf('[');
         var code = int.Parse(foreground.AsSpan(lastEscape + 1, foreground.Length - lastEscape - 2), CultureInfo.InvariantCulture);
-        Assert.True(ConsoleHelper.TryGetForegroundColor(code, foreground.StartsWith("\u001b[1m", StringComparison.Ordinal), out var actual));
+        Assert.True(ConsoleHelper.TryGetForegroundColor(code, foreground.StartsWith("[1m", StringComparison.Ordinal), out var actual));
         Assert.Equal(expected, actual);
         var background = ConsoleHelper.GetBackgroundColorEscapeCode(expected);
         code = int.Parse(background.AsSpan(2, background.Length - 3), CultureInfo.InvariantCulture);
@@ -168,18 +168,18 @@ public class IoAndAllocationTests
             Assert.Equal(file, PathHelper.GetRootedFile("ignored", file));
             Assert.Equal(directory.FullName, PathHelper.GetRootedDirectory("ignored", directory.FullName));
             Assert.Equal(directory.FullName, PathHelper.CombineDirectory("ignored", directory.FullName));
-            Assert.True(await PathHelper.TryAppendAllBytes(file, new byte[] { 1, 2 }));
-            Assert.True(await PathHelper.TryAppendAllBytes(file, new ReadOnlyMemory<byte>([3, 4])));
+            Assert.True(await PathHelper.TryAppendAllBytesAsync(file, new byte[] { 1, 2 }));
+            Assert.True(await PathHelper.TryAppendAllBytesAsync(file, new ReadOnlyMemory<byte>([3, 4])));
             Assert.Equal(new byte[] { 1, 2, 3, 4 }, await File.ReadAllBytesAsync(file));
-            Assert.False(await PathHelper.TryAppendAllBytes(directory.FullName, Array.Empty<byte>()));
-            await Assert.ThrowsAsync<OperationCanceledException>(() => PathHelper.TryAppendAllBytes(file, Array.Empty<byte>(), new CancellationToken(true)));
+            Assert.False(await PathHelper.TryAppendAllBytesAsync(directory.FullName, Array.Empty<byte>()));
+            await Assert.ThrowsAsync<OperationCanceledException>(() => PathHelper.TryAppendAllBytesAsync(file, Array.Empty<byte>(), new CancellationToken(true)));
             Assert.Null(PathHelper.TryCreateDirectory(file));
             Assert.NotNull(PathHelper.TryCreateDirectory(Path.Combine(directory.FullName, "child")));
             Assert.True(PathHelper.TryDeleteDirectory(Path.Combine(directory.FullName, "child")));
             Assert.False(PathHelper.TryDeleteDirectory(Path.Combine(directory.FullName, "missing")));
             Assert.True(PathHelper.TryDeleteFile(file));
             Assert.False(PathHelper.TryDeleteFile(directory.FullName));
-            Assert.Equal(PathHelper.RunningInContainer, PathHelper.RunningInContainer);
+            Assert.Equal(PathHelper.IsRunningInContainer, PathHelper.IsRunningInContainer);
         }
         finally
         {
@@ -188,18 +188,18 @@ public class IoAndAllocationTests
     }
 
     [Fact]
-    public void WarmMemoryLoggerQueueAndEmptyConsoleDoNotAllocatePerOperation()
+    public void WarmMemoryLogOutputQueueAndEmptyConsoleDoNotAllocatePerOperation()
     {
-        var memory = new MemoryLogger(new() { MaxMemoryUsage = 512, FormatterOptions = new(false) { TimestampFormat = null } });
+        var memory = new MemoryLogOutput(new() { MaxRetainedBytes = 512, FormatterOptions = new(false) { TimestampFormat = null } });
         var queue = new LogEventQueue();
-        var console = new EmptyConsole();
-        var log = new LogEvent(null!, typeof(DefaultLog), LogLevel.Information, 0, "constant");
+        var console = new EmptyConsoleService();
+        var log = new LogEvent(null!, typeof(DefaultLogSource), LogLevel.Information, 0, "constant");
         for (var i = 0; i < 10_000; i++)
         {
             memory.Output(log);
             queue.Enqueue(log, 1);
             queue.TryDequeue(out _);
-            _ = console.ReadLine();
+            _ = console.ReadLineAsync();
         }
 
         var before = GC.GetAllocatedBytesForCurrentThread();
@@ -208,7 +208,7 @@ public class IoAndAllocationTests
             memory.Output(log);
             queue.Enqueue(log, 1);
             queue.TryDequeue(out _);
-            _ = console.ReadLine();
+            _ = console.ReadLineAsync();
         }
 
         Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
@@ -220,7 +220,7 @@ public class IoAndAllocationTests
         public bool EnableColor { get; set; }
         public bool KeyAvailable => false;
         public ConsoleKeyInfo ReadKey(bool intercept) => default;
-        public Task<InputResult> ReadLine(CancellationToken cancellationToken = default) => Task.FromResult(new InputResult(""));
+        public Task<InputResult> ReadLineAsync(CancellationToken cancellationToken = default) => Task.FromResult(new InputResult(""));
         public void Write(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor) => this.Write(message.AsSpan(), color);
         public void Write(ReadOnlySpan<char> message, ConsoleColor color = ConsoleHelper.DefaultColor) { }
         public void WriteLine(string? message = null, ConsoleColor color = ConsoleHelper.DefaultColor) => this.WriteLine(message.AsSpan(), color);

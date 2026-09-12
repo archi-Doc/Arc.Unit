@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
@@ -58,7 +58,7 @@ public readonly record struct LogWriter
     private readonly LogBroker logBroker;
 
     /// <summary>
-    /// Gets the output type, or <see cref="EmptyLogger"/> for a default writer.
+    /// Gets the output type, or <see cref="EmptyLogOutput"/> for a default writer.
     /// </summary>
-    public Type OutputType => this.logBroker?.OutputType ?? typeof(EmptyLogger);
+    public Type OutputType => this.logBroker?.OutputType ?? typeof(EmptyLogOutput);
 }

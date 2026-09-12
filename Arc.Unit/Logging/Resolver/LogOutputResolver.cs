@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
@@ -8,4 +8,4 @@ namespace Arc.Unit;
 /// Resolution may run concurrently for a cache miss, so delegates must be thread-safe.
 /// </summary>
 /// <param name="context">The context which holds the log source/level and receives the output/filter.</param>
-public delegate void LoggerResolverDelegate(LoggerResolverContext context);
+public delegate void LogOutputResolver(LogOutputResolverContext context);

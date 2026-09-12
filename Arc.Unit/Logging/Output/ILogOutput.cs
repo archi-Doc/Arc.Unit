@@ -4,7 +4,7 @@ namespace Arc.Unit;
 
 /// <summary>
 /// Interface for receiving and outputting log events.<br/>
-/// An implementation is registered in the DI container, and selected by <see cref="LoggerResolverDelegate"/>.
+/// An implementation is registered in the DI container, and selected by <see cref="LogOutputResolver"/>.
 /// </summary>
 public interface ILogOutput
 {

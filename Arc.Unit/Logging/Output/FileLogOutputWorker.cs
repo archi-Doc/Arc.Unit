@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
 using System.Buffers;
@@ -9,9 +9,9 @@ using Utf8StringInterpolation;
 namespace Arc.Unit;
 
 /// <summary>
-/// Background worker which writes the buffered logs of <see cref="FileLogger{TOption}"/> to a file, and limits the log capacity.
+/// Background worker which writes the buffered logs of <see cref="FileLogOutput{TOptions}"/> to a file, and limits the log capacity.
 /// </summary>
-internal sealed class FileLoggerWorker : TaskCore
+internal sealed class FileLogOutputWorker : TaskCore
 {
     private const int MaxFlush = 10_000;
     private const int LimitLogThreshold = 10_000;
@@ -34,13 +34,13 @@ internal sealed class FileLoggerWorker : TaskCore
 
     public int Count => this.queue.Count;
 
-    public FileLoggerWorker(ExecutionRoot root, FileLoggerOptions options)
+    public FileLogOutputWorker(ExecutionRoot root, FileLogOutputOptions options)
         : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DelayedStart)
     {
         this.formatter = new(options.FormatterOptions);
 
-        this.maxCapacity = (long)options.MaxLogCapacity * 1_000_000;
-        var fullPath = options.Path;
+        this.maxCapacity = (long)options.MaxLogCapacityInMegabytes * 1_000_000;
+        var fullPath = options.FilePath;
         var fileName = Path.GetFileName(fullPath);
         var idx = fileName.LastIndexOf('.'); // "TestLog.txt" -> 7
         if (idx >= 0)
@@ -65,22 +65,22 @@ internal sealed class FileLoggerWorker : TaskCore
 
     public static async Task Process(object? obj)
     {
-        var worker = (FileLoggerWorker)obj!;
+        var worker = (FileLogOutputWorker)obj!;
 
         while (await worker.TryDelay(IntervalInMilliseconds))
         {
-            await worker.Flush(false).ConfigureAwait(false);
+            await worker.FlushAsync(false).ConfigureAwait(false);
         }
 
-        await worker.Flush(true).ConfigureAwait(false); // Flush the remaining logs.
+        await worker.FlushAsync(true).ConfigureAwait(false); // Flush the remaining logs.
     }
 
-    public void Add(LogEvent logEvent, int maxQueue = 0)
+    public void Add(LogEvent logEvent, int maxQueueLength = 0)
     {
-        this.queue.Enqueue(logEvent, maxQueue);
+        this.queue.Enqueue(logEvent, maxQueueLength);
     }
 
-    public async Task<int> Flush(bool terminate)
+    public async Task<int> FlushAsync(bool terminate)
     {
         await this.semaphore.WaitAsync().ConfigureAwait(false);
         try
@@ -103,7 +103,7 @@ internal sealed class FileLoggerWorker : TaskCore
                         PathHelper.TryCreateDirectory(this.directoryPath);
                     }
 
-                    await PathHelper.TryAppendAllBytes(path, this.buffer.WrittenMemory).ConfigureAwait(false);
+                    await PathHelper.TryAppendAllBytesAsync(path, this.buffer.WrittenMemory).ConfigureAwait(false);
                 }
 
                 if (!terminate || count < MaxFlush)

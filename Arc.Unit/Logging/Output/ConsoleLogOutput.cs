@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
 using System.Runtime.InteropServices;
@@ -9,9 +9,9 @@ namespace Arc.Unit;
 
 /// <summary>
 /// <see cref="ILogOutput"/> which writes logs to the console via <see cref="IConsoleService"/>.<br/>
-/// Logs are written immediately, or buffered and written by a background worker when <see cref="ConsoleLoggerOptions.EnableBuffering"/> is set.
+/// Logs are written immediately, or buffered and written by a background worker when <see cref="ConsoleLogOutputOptions.EnableBuffering"/> is set.
 /// </summary>
-public class ConsoleLogger : BufferedLogOutput
+public class ConsoleLogOutput : BufferedLogOutput
 {
 #pragma warning disable SA1310 // Field names should not contain underscore
     private const int STD_OUTPUT_HANDLE = -11;
@@ -19,16 +19,16 @@ public class ConsoleLogger : BufferedLogOutput
     private const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
 #pragma warning restore SA1310 // Field names should not contain underscore
 
-    private readonly ConsoleLoggerOptions options;
-    private readonly ConsoleLoggerWorker? worker;
+    private readonly ConsoleLogOutputOptions options;
+    private readonly ConsoleLogOutputWorker? worker;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConsoleLogger"/> class.
+    /// Initializes a new instance of the <see cref="ConsoleLogOutput"/> class.
     /// </summary>
     /// <param name="root"><see cref="ExecutionRoot"/> which owns the background worker.</param>
     /// <param name="logUnit"><see cref="LogUnit"/>.</param>
-    /// <param name="options"><see cref="ConsoleLoggerOptions"/>.</param>
-    public ConsoleLogger(ExecutionRoot root, LogUnit logUnit, ConsoleLoggerOptions options)
+    /// <param name="options"><see cref="ConsoleLogOutputOptions"/>.</param>
+    public ConsoleLogOutput(ExecutionRoot root, LogUnit logUnit, ConsoleLogOutputOptions options)
         : base(logUnit)
     {
         // Console
@@ -54,11 +54,11 @@ public class ConsoleLogger : BufferedLogOutput
             return;
         }
 
-        worker.Add(logEvent, this.options.MaxQueue);
+        worker.Add(logEvent, this.options.MaxQueueLength);
     }
 
     /// <inheritdoc/>
-    public override Task<int> Flush(bool terminate) => this.worker?.Flush(terminate) ?? Task.FromResult(0);
+    public override Task<int> FlushAsync(bool terminate) => this.worker?.FlushAsync(terminate) ?? Task.FromResult(0);
 
     internal SimpleLogFormatter Formatter { get; init; }
 

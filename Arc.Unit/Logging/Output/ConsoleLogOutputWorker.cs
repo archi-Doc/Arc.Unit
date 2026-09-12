@@ -1,45 +1,45 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Threading;
 
 namespace Arc.Unit;
 
 /// <summary>
-/// Background worker which writes the buffered logs of <see cref="ConsoleLogger"/> to the console.
+/// Background worker which writes the buffered logs of <see cref="ConsoleLogOutput"/> to the console.
 /// </summary>
-internal sealed class ConsoleLoggerWorker : TaskCore
+internal sealed class ConsoleLogOutputWorker : TaskCore
 {
     private const int MaxFlush = 1_000;
     private const int BufferingTimeInMilliseconds = 40;
 
-    private readonly ConsoleLogger consoleLogger;
+    private readonly ConsoleLogOutput consoleLogOutput;
     private readonly LogEventQueue queue = new();
     private readonly Lock flushLock = new();
 
-    public ConsoleLoggerWorker(ExecutionRoot root, ConsoleLogger consoleLogger)
+    public ConsoleLogOutputWorker(ExecutionRoot root, ConsoleLogOutput consoleLogOutput)
         : base(LogUnit.GetGroup(root), Process, ExecutionCoreOptions.DelayedStart)
     {
-        this.consoleLogger = consoleLogger;
+        this.consoleLogOutput = consoleLogOutput;
         this.SendSignal(ExecutionSignal.Start);
     }
 
     public static async Task Process(TaskCore obj)
     {
-        var worker = (ConsoleLoggerWorker)obj!;
+        var worker = (ConsoleLogOutputWorker)obj!;
         while (await worker.TryDelay(BufferingTimeInMilliseconds))
         {
-            await worker.Flush(false).ConfigureAwait(false);
+            await worker.FlushAsync(false).ConfigureAwait(false);
         }
 
-        await worker.Flush(true).ConfigureAwait(false); // Flush the remaining logs.
+        await worker.FlushAsync(true).ConfigureAwait(false); // Flush the remaining logs.
     }
 
-    public void Add(LogEvent logEvent, int maxQueue)
+    public void Add(LogEvent logEvent, int maxQueueLength)
     {
-        this.queue.Enqueue(logEvent, maxQueue);
+        this.queue.Enqueue(logEvent, maxQueueLength);
     }
 
-    public Task<int> Flush(bool terminate)
+    public Task<int> FlushAsync(bool terminate)
     {
         lock (this.flushLock)
         {
@@ -56,7 +56,7 @@ internal sealed class ConsoleLoggerWorker : TaskCore
 
         var count = 0;
         var maxFlush = terminate ? int.MaxValue : MaxFlush; // Flush all the queued logs on termination.
-        var formatter = this.consoleLogger.Formatter;
+        var formatter = this.consoleLogOutput.Formatter;
         while (count < maxFlush && this.queue.TryDequeue(out var logEvent))
         {
             count++;

@@ -1,21 +1,21 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
-/// Options of <see cref="ConsoleLogger"/>.
+/// Options of <see cref="ConsoleLogOutput"/>.
 /// </summary>
-public record class ConsoleLoggerOptions
+public record class ConsoleLogOutputOptions
 {
     /// <summary>
-    /// The default value of <see cref="MaxQueue"/>.
+    /// The default value of <see cref="MaxQueueLength"/>.
     /// </summary>
-    public const int DefaultMaxQueue = 1_000;
+    public const int DefaultMaxQueueLength = 1_000;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConsoleLoggerOptions"/> class.
+    /// Initializes a new instance of the <see cref="ConsoleLogOutputOptions"/> class.
     /// </summary>
-    public ConsoleLoggerOptions()
+    public ConsoleLogOutputOptions()
     {
         this.FormatterOptions = new(true);
     }
@@ -35,5 +35,5 @@ public record class ConsoleLoggerOptions
     /// Gets the maximum queued event count (zero or negative means unlimited). New events are dropped when full.<br/>
     /// This is used only when <see cref="EnableBuffering"/> is <see langword="true"/>.
     /// </summary>
-    public int MaxQueue { get; init; } = DefaultMaxQueue;
+    public int MaxQueueLength { get; init; } = DefaultMaxQueueLength;
 }

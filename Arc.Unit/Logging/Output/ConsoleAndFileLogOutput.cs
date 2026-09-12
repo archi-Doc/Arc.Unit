@@ -1,30 +1,30 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
-/// <see cref="ILogOutput"/> which writes logs to both <see cref="ConsoleLogger"/> and <see cref="FileLogger{TOption}"/>.
+/// <see cref="ILogOutput"/> which writes logs to both <see cref="ConsoleLogOutput"/> and <see cref="FileLogOutput{TOptions}"/>.
 /// </summary>
-public class ConsoleAndFileLogger : ILogOutput
+public class ConsoleAndFileLogOutput : ILogOutput
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ConsoleAndFileLogger"/> class.
+    /// Initializes a new instance of the <see cref="ConsoleAndFileLogOutput"/> class.
     /// </summary>
-    /// <param name="consoleLogger"><see cref="ConsoleLogger"/>.</param>
-    /// <param name="fileLogger"><see cref="FileLogger{TOption}"/> of <see cref="FileLoggerOptions"/>.</param>
-    public ConsoleAndFileLogger(ConsoleLogger consoleLogger, FileLogger<FileLoggerOptions> fileLogger)
+    /// <param name="consoleLogOutput"><see cref="ConsoleLogOutput"/>.</param>
+    /// <param name="fileLogOutput"><see cref="FileLogOutput{TOptions}"/> of <see cref="FileLogOutputOptions"/>.</param>
+    public ConsoleAndFileLogOutput(ConsoleLogOutput consoleLogOutput, FileLogOutput<FileLogOutputOptions> fileLogOutput)
     {
-        this.consoleLogger = consoleLogger;
-        this.fileLogger = fileLogger;
+        this.consoleLogOutput = consoleLogOutput;
+        this.fileLogOutput = fileLogOutput;
     }
 
     /// <inheritdoc/>
     public void Output(LogEvent logEvent)
     {
-        this.consoleLogger.Output(logEvent);
-        this.fileLogger.Output(logEvent);
+        this.consoleLogOutput.Output(logEvent);
+        this.fileLogOutput.Output(logEvent);
     }
 
-    private readonly ConsoleLogger consoleLogger;
-    private readonly FileLogger<FileLoggerOptions> fileLogger;
+    private readonly ConsoleLogOutput consoleLogOutput;
+    private readonly FileLogOutput<FileLogOutputOptions> fileLogOutput;
 }

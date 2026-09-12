@@ -46,7 +46,7 @@ public class Program
             root.RequestTermination();
             if (unit.Context.ServiceProvider.GetService<LogUnit>() is { } unitLogger)
             {
-                await unitLogger.FlushAndTerminate();
+                await unitLogger.FlushAndTerminateAsync();
             }
 
             await root.WaitForTerminationAsync(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.

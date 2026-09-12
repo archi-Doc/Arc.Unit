@@ -1,21 +1,21 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
-/// Options of <see cref="MemoryLogger"/>.
+/// Options of <see cref="MemoryLogOutput"/>.
 /// </summary>
-public record class MemoryLoggerOptions
+public record class MemoryLogOutputOptions
 {
     /// <summary>
-    /// The default value of <see cref="MaxMemoryUsage"/> (100 MB).
+    /// The default value of <see cref="MaxRetainedBytes"/> (100 MB).
     /// </summary>
-    public const long DefaultMaxMemoryUsage = 100_000_000;
+    public const long DefaultMaxRetainedBytes = 100_000_000;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MemoryLoggerOptions"/> class.
+    /// Initializes a new instance of the <see cref="MemoryLogOutputOptions"/> class.
     /// </summary>
-    public MemoryLoggerOptions()
+    public MemoryLogOutputOptions()
     {
         this.FormatterOptions = new SimpleLogFormatterOptions(false) with
         {
@@ -30,7 +30,7 @@ public record class MemoryLoggerOptions
 
     /// <summary>
     /// Gets the retained UTF-8 byte limit (zero or negative means unlimited). Buffer capacity and bookkeeping are excluded.
-    /// The default is <see cref="DefaultMaxMemoryUsage"/>. An oversized line evicts prior lines and is discarded.
+    /// The default is <see cref="DefaultMaxRetainedBytes"/>. An oversized line evicts prior lines and is discarded.
     /// </summary>
-    public long MaxMemoryUsage { get; init; } = DefaultMaxMemoryUsage;
+    public long MaxRetainedBytes { get; init; } = DefaultMaxRetainedBytes;
 }

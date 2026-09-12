@@ -1,4 +1,4 @@
-﻿## Arc.Unit = Builder + Product(Instance) + Function
+## Arc.Unit = Builder + Product(Instance) + Function
 
 [![Nuget](https://img.shields.io/nuget/v/Arc.Unit)](https://www.nuget.org/packages/Arc.Unit/)
 [![License](https://img.shields.io/github/license/archi-Doc/Arc.Unit)](https://github.com/archi-Doc/Arc.Unit/blob/main/LICENSE)
@@ -20,6 +20,8 @@ Features:
 - Console abstraction (`IConsoleService`) which can be replaced for tests.
 
 Work in progress.
+
+API names were revised in this version. See [Arc.Unit Renaming](/doc/Arc.Unit%20Renaming.md) to migrate existing code.
 
 
 
@@ -72,20 +74,20 @@ var context = product.Context;
 
 // 3. Create the registered instances and send the notifications.
 context.CreateInstances();
-await context.SendPrepare();
-await context.SendLoad();
-await context.SendStart();
+await context.SendPrepareAsync();
+await context.SendLoadAsync();
+await context.SendStartAsync();
 
 // Main processing...
 
-await context.SendSave();
-await context.SendStop();
-await context.SendTerminate();
+await context.SendSaveAsync();
+await context.SendStopAsync();
+await context.SendTerminateAsync();
 
 // 4. Terminate the background workers and flush the logs.
 context.ExecutionRoot.RequestTermination();
-await context.ServiceProvider.GetRequiredService<LogUnit>().FlushAndTerminate();
-await context.ExecutionRoot.WaitForTermination(TerminationOptions.IncludeIndependent);
+await context.ServiceProvider.GetRequiredService<LogUnit>().FlushAndTerminateAsync();
+await context.ExecutionRoot.WaitForTerminationAsync(TerminationOptions.IncludeIndependent);
 ```
 
 ```csharp
@@ -99,7 +101,7 @@ public class MyUnit : UnitBase, IUnitPreparable
         this.logger = logger;
     }
 
-    Task IUnitPreparable.Prepare(UnitContext context, CancellationToken cancellationToken)
+    Task IUnitPreparable.PrepareAsync(UnitContext context, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit prepared.");
         return Task.CompletedTask;
@@ -116,7 +118,7 @@ public class MyUnit : UnitBase, IUnitPreparable
 | Phase | Method | Context | Typical use |
 | --- | --- | --- | --- |
 | 1. Pre-configuration | `PreConfigure()` | `IUnitPreConfigurationContext` | Read the command-line arguments, set `UnitName`/`ProgramDirectory`/`DataDirectory`, prepare options. |
-| 2. Configuration | `Configure()` | `IUnitConfigurationContext` | Register services and units, add commands, set up the loggers. |
+| 2. Configuration | `Configure()` | `IUnitConfigurationContext` | Register services and units, add commands, set up the log outputs. |
 | — | — | — | The `IServiceProvider` is created here. |
 | 3. Post-configuration | `PostConfigure()` | `IUnitPostConfigurationContext` | Update options with the values determined during the build (the service provider is available). |
 
@@ -154,7 +156,7 @@ Other members:
 
 - `SetServiceProviderFactory()`: replaces the factory which creates the `IServiceProvider`.
 - `GetBuiltProduct()`: returns the product created by `Build()`.
-- `UnitBuilderToServiceProviderFactory`: uses a `UnitBuilder` as the `IServiceProviderFactory<TContainerBuilder>` of the .NET Generic Host.
+- `UnitServiceProviderFactory`: uses a `UnitBuilder` as the `IServiceProviderFactory<TContainerBuilder>` of the .NET Generic Host.
 
 The services registered by default are: `UnitContext`, `UnitOptions`, `ExecutionRoot`, `RadioClass`, `IConsoleService` (`ConsoleService`), the product type, and the logging services described below.
 
@@ -166,44 +168,44 @@ Changes to `UnitName`, `ProgramDirectory` and `DataDirectory` in `PostConfigure`
 
 ## UnitBase and the lifecycle
 
-- Inherit from **UnitBase** and implement **IUnitPreparable**, **IUnitExecutable** or **IUnitSerializable**.
+- Inherit from **UnitBase** and implement **IUnitPreparable**, **IUnitExecutable** or **IUnitPersistable**.
 - Register it with `context.AddSingletonUnit<TUnit>()` (this also registers the type for instance creation).
 - Instances are created by `product.Context.CreateInstances()`, and each instance is registered to the notification radio by the `UnitBase` constructor.
-- Notify all the units via `product.Context.SendPrepare()` and the other `Send*` methods.
+- Notify all the units via `product.Context.SendPrepareAsync()` and the other `Send*Async` methods.
 
 | Interface | Method | Sent by | Description |
 | --- | --- | --- | --- |
-| `IUnitPreparable` | `Prepare()` | `SendPrepare()` | Called once at the very beginning. |
-| `IUnitSerializable` | `Load()` | `SendLoad()` | Called once after `Prepare()`. Throw `PanicException` to abort. |
-| `IUnitExecutable` | `Start()` | `SendStart()` | Called after `Load()`; may be called multiple times. |
-| `IUnitExecutable` | `Stop()` | `SendStop()` | Called after `Start()`. |
-| `IUnitSerializable` | `Save()` | `SendSave()` | May be called multiple times. |
-| `IUnitExecutable` | `Terminate()` | `SendTerminate()` | Called once at the beginning of the termination process. |
+| `IUnitPreparable` | `PrepareAsync()` | `SendPrepareAsync()` | Called once at the very beginning. |
+| `IUnitPersistable` | `LoadAsync()` | `SendLoadAsync()` | Called once after `PrepareAsync()`. Throw `PanicException` to abort. |
+| `IUnitExecutable` | `StartAsync()` | `SendStartAsync()` | Called after `LoadAsync()`; may be called multiple times. |
+| `IUnitExecutable` | `StopAsync()` | `SendStopAsync()` | Called after `StartAsync()`. |
+| `IUnitPersistable` | `SaveAsync()` | `SendSaveAsync()` | May be called multiple times. |
+| `IUnitExecutable` | `TerminateAsync()` | `SendTerminateAsync()` | Called once at the beginning of the termination process. |
 
-`UnitContext` also provides `ServiceProvider`, `ExecutionRoot` (the root of the background tasks), `Options` (`UnitOptions`), `Radio`, `Commands`/`Subcommands` and `TerminationRequested`.
+`UnitContext` also provides `ServiceProvider`, `ExecutionRoot` (the root of the background tasks), `Options` (`UnitOptions`), `Radio`, `CommandTypes`/`SubcommandTypes` and `IsTerminationRequested`.
 
-The table describes the intended lifecycle, not an enforced state machine. Each `Send*` call forwards a notification; the caller controls order, repetition and cancellation. `TerminationRequested` is an independent application flag: setting it does not cancel `ExecutionRoot`. Use `try/finally` around application work to ensure shutdown runs when a command throws.
+The table describes the intended lifecycle, not an enforced state machine. Each `Send*Async` call forwards a notification; the caller controls order, repetition and cancellation. `IsTerminationRequested` is an independent application flag: setting it does not cancel `ExecutionRoot`. Use `try/finally` around application work to ensure shutdown runs when a command throws.
 
 
 
 ## Options
 
-Options are classes with a parameterless constructor; records make `with` updates convenient. `GetOptions<TOptions>()` gets or creates an instance, and `SetOptions<TOptions>()` shallow-copies its private, public and inherited instance fields into the existing object. References inside an options object remain shared.
+Options are classes with a parameterless constructor; records make `with` updates convenient. `GetOrCreateOptions<TOptions>()` gets or creates an instance, and `SetOptions<TOptions>()` shallow-copies its private, public and inherited instance fields into the existing object. References inside an options object remain shared.
 
-Call `GetOptions<TOptions>()` before the provider is built, or register the options as a singleton, to make them injectable. A new options type first requested in `PostConfigure` is kept in the context but cannot be added to the already-built provider. Finish configuration before concurrent use; updates are not atomic. Loggers may capture settings when constructed, so configure their options before resolving them.
+Call `GetOrCreateOptions<TOptions>()` before the provider is built, or register the options as a singleton, to make them injectable. A new options type first requested in `PostConfigure` is kept in the context but cannot be added to the already-built provider. Finish configuration before concurrent use; updates are not atomic. Log outputs may capture settings when constructed, so configure their options before resolving them.
 
 ```csharp
 builder.PostConfigure(context =>
 {
-    context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+    context.SetOptions(context.GetOrCreateOptions<FileLogOutputOptions>() with
     {
-        Path = Path.Combine(context.DataDirectory, "Logs/Log.txt"),
-        MaxLogCapacity = 2,
+        FilePath = Path.Combine(context.DataDirectory, "Logs/Log.txt"),
+        MaxLogCapacityInMegabytes = 2,
     });
 });
 ```
 
-`IUnitPreConfigurationContext.GetCustomContext<TContext>()` provides a shared context (`IUnitCustomContext`) which can carry information between builders. `ProcessContext()` is called after the configuration phase.
+`IUnitPreConfigurationContext.GetCustomContext<TContext>()` provides a shared context (`IUnitCustomContext`) which can carry information between builders. `IUnitCustomContext.Configure()` is called after the configuration delegates of all the builders.
 
 
 
@@ -217,23 +219,23 @@ this.logger.GetWriter(LogLevel.Error)?.Write($"Error: {code}");
 ```
 
 Log levels are `Debug`, `Information` (default), `Warning`, `Error` and `Fatal`.
-Use `ILogger<DefaultLog>` (or `ILogger`) to omit the source name from the formatted text.
+Use `ILogger<DefaultLogSource>` (or `ILogger`) to omit the source name from the formatted text.
 
 ### Resolvers
 
 A resolver determines the output and filter for each exact source/level pair. Resolvers share the context in registration order; later assignments win. Results, including disabled levels, are cached. Resolvers must be thread-safe because concurrent cache misses can invoke them more than once.
 
 ```csharp
-context.ClearLoggerResolver(); // Clears the default resolver (all logs -> ConsoleLogger).
-context.AddLoggerResolver(x =>
+context.ClearLogOutputResolvers(); // Clears the default resolver (all logs -> ConsoleLogOutput).
+context.AddLogOutputResolver(x =>
 {// Log source/level -> Resolver() -> Output/filter
     if (x.LogLevel <= LogLevel.Debug)
     {
-        x.SetOutput<ConsoleLogger>();
+        x.SetOutput<ConsoleLogOutput>();
         return;
     }
 
-    x.SetOutput<ConsoleAndFileLogger>();
+    x.SetOutput<ConsoleAndFileLogOutput>();
     if (x.LogSourceType == typeof(MyCommand))
     {
         x.SetFilter<MyLogFilter>(); // The filter type must be registered in the DI container.
@@ -245,13 +247,13 @@ context.AddLoggerResolver(x =>
 
 | Output | Description |
 | --- | --- |
-| `ConsoleLogger` | Writes to the console via `IConsoleService`. Set `ConsoleLoggerOptions.EnableBuffering` to write logs from a background worker. |
-| `FileLogger<TOption>` | Writes to a file (one file per day) from a background worker. The oldest files are deleted when the total size exceeds `FileLoggerOptions.MaxLogCapacity`. |
-| `ConsoleAndFileLogger` | Writes to both `ConsoleLogger` and `FileLogger<FileLoggerOptions>`. |
-| `MemoryLogger` | Keeps the formatted logs in memory (`MemoryLogger.ToUtf8Array()`). |
-| `EmptyLogger` | Discards all logs. |
+| `ConsoleLogOutput` | Writes to the console via `IConsoleService`. Set `ConsoleLogOutputOptions.EnableBuffering` to write logs from a background worker. |
+| `FileLogOutput<TOptions>` | Writes to a file (one file per day) from a background worker. The oldest files are deleted when the total size exceeds `FileLogOutputOptions.MaxLogCapacityInMegabytes`. |
+| `ConsoleAndFileLogOutput` | Writes to both `ConsoleLogOutput` and `FileLogOutput<FileLogOutputOptions>`. |
+| `MemoryLogOutput` | Keeps the formatted logs in memory (`MemoryLogOutput.ToUtf8Array()`). |
+| `EmptyLogOutput` | Discards all logs. |
 
-To add another file logger, derive a new options type from `FileLoggerOptions`, register it (`context.TryAddSingleton<MyFileLoggerOptions>()`), and use `FileLogger<MyFileLoggerOptions>` as the output type. The open generic registration creates the logger automatically.
+To add another file log output, derive a new options type from `FileLogOutputOptions`, register it (`context.TryAddSingleton<MyFileLogOutputOptions>()`), and use `FileLogOutput<MyFileLogOutputOptions>` as the output type. The open generic registration creates the log output automatically.
 
 ### Filters
 
@@ -260,14 +262,14 @@ A filter is applied before the log is written, and it can change the destination
 The replacement writer supplies the output and level; the original source, event ID and log service are preserved. Its filter is not invoked again. Returning `null` or a default writer discards the event. Register outputs and filters as singletons: brokers are shared across scopes.
 
 ```csharp
-public LogWriter? Filter(LogFilterParameter parameter)
+public LogWriter? Filter(LogFilterContext context)
 {
-    if (parameter.LogLevel == LogLevel.Error)
+    if (context.LogLevel == LogLevel.Error)
     {
-        return parameter.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+        return context.LogService.GetWriter<ConsoleAndFileLogOutput>(LogLevel.Fatal); // Error -> Fatal
     }
 
-    return parameter.OriginalWriter; // null to discard the log.
+    return context.OriginalWriter; // null to discard the log.
 }
 ```
 
@@ -277,22 +279,22 @@ Buffered outputs are written by background workers. Before exiting, flush them a
 
 ```csharp
 var logUnit = product.Context.ServiceProvider.GetRequiredService<LogUnit>();
-await logUnit.Flush();             // Flushes all the buffered outputs.
-await logUnit.FlushConsole();      // Flushes the console output only.
-await logUnit.FlushAndTerminate(); // Flushes all the buffered outputs and terminates the workers.
+await logUnit.FlushAsync();             // Flushes all the buffered outputs.
+await logUnit.FlushConsoleAsync();      // Flushes the console output only.
+await logUnit.FlushAndTerminateAsync(); // Flushes all the buffered outputs and terminates the workers.
 ```
 
-`LogUnit.SetTimeOffset()` adjusts the timestamp of the log events, and `SimpleLogFormatterOptions` customizes the format ("Timestamp [Level Source(EventId)] Message").
+`LogUnit.SetTimestampOffset()` adjusts the timestamp of the log events, and `SimpleLogFormatterOptions` customizes the format ("Timestamp [Level Source(EventId)] Message").
 
-`Flush()` processes one batch per output (up to 1,000 console events or 10,000 file events). `FlushAndTerminate()` closes worker queues, drains accepted events and rejects later writes. Stop producers before calling it. A flush failure in one output does not prevent other registered outputs from being flushed.
+`FlushAsync()` processes one batch per output (up to 1,000 console events or 10,000 file events). `FlushAndTerminateAsync()` closes worker queues, drains accepted events and rejects later writes. Stop producers before calling it. A flush failure in one output does not prevent other registered outputs from being flushed.
 
 ### Capacity and file retention
 
-- Console and file `MaxQueue` limits are enforced atomically. Full queues discard new events; zero or negative values mean unlimited.
-- File names use the UTC date, independently of timestamp formatting and the current culture. Relative paths are resolved when the logger is created. Give each file logger a distinct path.
-- File cleanup only targets the configured prefix, a valid `yyyyMMdd` date and the configured extension. `MaxLogCapacity` uses decimal megabytes and periodic whole-file eviction; zero or negative values retain no files at cleanup. Files at exactly the limit are kept.
+- Console and file `MaxQueueLength` limits are enforced atomically. Full queues discard new events; zero or negative values mean unlimited.
+- File names use the UTC date, independently of timestamp formatting and the current culture. Relative paths are resolved when the log output is created. Give each file log output a distinct path.
+- File cleanup only targets the configured prefix, a valid `yyyyMMdd` date and the configured extension. `MaxLogCapacityInMegabytes` uses decimal megabytes and periodic whole-file eviction; zero or negative values retain no files at cleanup. Files at exactly the limit are kept.
 - `ClearLogsAtStartup` runs before the worker accepts events. `DeleteAllLogs()` is serialized with file writes but leaves queued events intact. File I/O is best-effort: failed batches are not retried, and flush counts describe dequeued events rather than durable writes.
-- `MemoryLogger.MaxMemoryUsage` limits retained UTF-8 bytes, not total managed memory. An oversized event evicts prior events and is discarded. `Clear()` retains reusable storage; `ToUtf8Array()` returns an independent snapshot. UTF-8 output has no ANSI colors.
+- `MemoryLogOutputOptions.MaxRetainedBytes` limits retained UTF-8 bytes, not total managed memory. An oversized event evicts prior events and is discarded. `Clear()` retains reusable storage; `ToUtf8Array()` returns an independent snapshot. UTF-8 output has no ANSI colors.
 
 `ILogService` and typed loggers are scoped. Reuse `GetLogger(Type)` results when the source is known only at runtime; each call creates a wrapper. Prefer `ILogger<T>` injection for known source types.
 
@@ -346,7 +348,7 @@ These methods register the command in the DI container and preserve its command 
 
 Pass a scope's `ServiceProvider` in `SimpleParserOptions` when commands need scoped lifetime and disposal. QuickStart shows this pattern. Parser instances contain mutable parse state and should not be shared across concurrent executions.
 
-The non-generic `Arc.Unit` methods (`context.AddCommand(typeof(ExampleCommand))` and `AddSubcommand`) remain available for other parsers. `UnitContext.GetCommandTypes(Type)` returns the commands which belong to a specified group.
+The non-generic `Arc.Unit` methods (`context.AddCommand(typeof(ExampleCommand))` and `AddSubcommand`) remain available for other parsers. `IUnitCommandContext.GetCommandGroup(Type)` gets the group identified by a type (e.g. the subcommands of a command), and `UnitContext.GetCommandTypes(Type)` returns the commands which belong to the group.
 
 
 
@@ -356,16 +358,16 @@ The non-generic `Arc.Unit` methods (`context.AddCommand(typeof(ExampleCommand))`
 
 ```csharp
 consoleService.WriteLine("Text", ConsoleColor.Red);
-var result = await consoleService.ReadLine(cancellationToken);
+var result = await consoleService.ReadLineAsync(cancellationToken);
 if (result.IsSuccess)
 {
     // result.Text
 }
 ```
 
-`ConsoleService` is registered by default, and `EmptyConsole` discards all the output. `ConsoleHelper` provides the escape sequences (colors, cursor and erase operations).
+`ConsoleService` is registered by default, and `EmptyConsoleService` discards all the output. `ConsoleHelper` provides the escape sequences (colors, cursor and erase operations).
 
-`ReadLine()` reports an empty line as success, EOF or I/O failure as `Terminated`, and cancellation as `Canceled`. `EmptyConsole` returns successful empty input unless the token is already canceled. `ReadKey()` and `KeyAvailable` suppress console errors. Color settings control emitted escape sequences, not terminal support.
+`ReadLineAsync()` reports an empty line as success, EOF or I/O failure as `Terminated`, and cancellation as `Canceled`. `EmptyConsoleService` returns successful empty input unless the token is already canceled. `ReadKey()` and `KeyAvailable` suppress console errors. Color settings control emitted escape sequences, not terminal support.
 
 `PathHelper` provides path composition, best-effort directory/file operations and a cached container check. Both byte-array and `ReadOnlyMemory<byte>` append overloads avoid copying. Try methods suppress I/O errors; append argument validation and cancellation before opening the file still throw.
 
@@ -388,8 +390,8 @@ The public API is annotated with `DynamicallyAccessedMembers`, so the trimmer pr
 
 ## Samples
 
-- [QuickStart](/QuickStart): a console application with commands, a log filter and a file logger.
-- [Playground](/Playground): a sandbox which exercises the builder, the loggers and the termination process.
+- [QuickStart](/QuickStart): a console application with commands, a log filter and a file log output.
+- [Playground](/Playground): a sandbox which exercises the builder, the log outputs and the termination process.
 
 Historical sources in `Playground/Obsolete` remain in the repository but are excluded from compilation.
 

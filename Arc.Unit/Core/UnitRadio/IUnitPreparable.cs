@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using CrossChannel;
 
@@ -18,5 +18,5 @@ public interface IUnitPreparable : IRadioService
     /// <param name="unitContext">the <see cref="UnitContext"/> associated with this operation.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task Prepare(UnitContext unitContext, CancellationToken cancellationToken);
+    public Task PrepareAsync(UnitContext unitContext, CancellationToken cancellationToken);
 }

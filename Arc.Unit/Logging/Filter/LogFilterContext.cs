@@ -1,21 +1,21 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
-/// Represents the information passed to <see cref="ILogFilter.Filter(LogFilterParameter)"/>.
+/// Represents the information passed to <see cref="ILogFilter.Filter(LogFilterContext)"/>.
 /// </summary>
-public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
+public readonly struct LogFilterContext : IEquatable<LogFilterContext>
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="LogFilterParameter"/> struct.
+    /// Initializes a new instance of the <see cref="LogFilterContext"/> struct.
     /// </summary>
-    /// <param name="logService">The log service which created this parameter.</param>
+    /// <param name="logService">The log service which created this context.</param>
     /// <param name="logSourceType">The log source type (the category of the log).</param>
     /// <param name="logLevel">The log level.</param>
     /// <param name="eventId">The event id (0 if not specified).</param>
     /// <param name="originalWriter">The writer which is going to be used if the filter does not change it.</param>
-    public LogFilterParameter(ILogService logService, Type logSourceType, LogLevel logLevel, long eventId, LogWriter originalWriter)
+    public LogFilterContext(ILogService logService, Type logSourceType, LogLevel logLevel, long eventId, LogWriter originalWriter)
     {
         this.LogService = logService;
         this.LogSourceType = logSourceType;
@@ -25,7 +25,7 @@ public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
     }
 
     /// <summary>
-    /// The log service which created this parameter (use it to obtain another <see cref="LogWriter"/>).
+    /// The log service which created this context (use it to obtain another <see cref="LogWriter"/>).
     /// </summary>
     public readonly ILogService LogService;
 
@@ -51,14 +51,14 @@ public readonly struct LogFilterParameter : IEquatable<LogFilterParameter>
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
-        => obj is LogFilterParameter other && this.Equals(other);
+        => obj is LogFilterContext other && this.Equals(other);
 
     /// <summary>
-    /// Determines whether the specified parameter has the same source, level, event id and writer.
+    /// Determines whether the specified context has the same source, level, event id and writer.
     /// </summary>
-    /// <param name="other">The parameter to compare with.</param>
-    /// <returns><see langword="true"/> if the parameters are equivalent.</returns>
-    public bool Equals(LogFilterParameter other)
+    /// <param name="other">The context to compare with.</param>
+    /// <returns><see langword="true"/> if the contexts are equivalent.</returns>
+    public bool Equals(LogFilterContext other)
         => this.LogSourceType == other.LogSourceType &&
         this.LogLevel == other.LogLevel &&
         this.EventId == other.EventId &&

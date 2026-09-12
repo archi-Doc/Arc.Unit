@@ -27,9 +27,9 @@ public record class SimpleLogFormatterOptions
     public string? TimestampFormat { get; init; } = "HH:mm:ss.fff";
 
     /// <summary>
-    /// Gets a value indicating whether timestamps are displayed as local time or not.
+    /// Gets a value indicating whether timestamps are displayed as local time (<see langword="false"/>: UTC).
     /// </summary>
-    public bool TimestampLocal { get; init; } = true;
+    public bool UseLocalTimestamp { get; init; } = true;
 
     /// <summary>
     /// Gets the event id format (default is "X4", <see langword="null"/> to omit the event id).

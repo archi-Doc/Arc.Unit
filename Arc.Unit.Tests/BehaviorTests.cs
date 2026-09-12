@@ -83,12 +83,12 @@ public class BehaviorTests
         using var unit = new TestUnitScope(new UnitBuilder().Configure(c => c.AddSingletonUnit<Receiver>()));
         unit.Context.CreateInstances();
         unit.Context.CreateInstances();
-        await unit.Context.SendPrepare();
-        await unit.Context.SendLoad();
-        await unit.Context.SendStart();
-        await unit.Context.SendSave();
-        await unit.Context.SendStop();
-        await unit.Context.SendTerminate();
+        await unit.Context.SendPrepareAsync();
+        await unit.Context.SendLoadAsync();
+        await unit.Context.SendStartAsync();
+        await unit.Context.SendSaveAsync();
+        await unit.Context.SendStopAsync();
+        await unit.Context.SendTerminateAsync();
         var receiver = unit.Context.ServiceProvider.GetRequiredService<Receiver>();
         Assert.Equal(new[] { "prepare", "load", "start", "save", "stop", "terminate" }, receiver.Calls);
     }
@@ -103,8 +103,8 @@ public class BehaviorTests
             Assert.True(c.AddSubcommand(typeof(ChildCommand)));
             c.GetCommandGroup(typeof(Command)).AddCommand(typeof(ChildCommand));
         }));
-        Assert.Equal(new[] { typeof(Command) }, unit.Context.Commands);
-        Assert.Equal(new[] { typeof(ChildCommand) }, unit.Context.Subcommands);
+        Assert.Equal(new[] { typeof(Command) }, unit.Context.CommandTypes);
+        Assert.Equal(new[] { typeof(ChildCommand) }, unit.Context.SubcommandTypes);
         Assert.Equal(new[] { typeof(ChildCommand) }, unit.Context.GetCommandTypes(typeof(Command)));
         Assert.Empty(unit.Context.GetCommandTypes(typeof(string)));
         using var first = unit.Context.ServiceProvider.CreateScope();
@@ -120,8 +120,8 @@ public class BehaviorTests
         {
             c.AddSingleton<CaptureOutput>();
             c.AddSingleton<RedirectFilter>();
-            c.ClearLoggerResolver();
-            c.AddLoggerResolver(r =>
+            c.ClearLogOutputResolvers();
+            c.AddLogOutputResolver(r =>
             {
                 if (r.LogLevel != LogLevel.Debug)
                 {
@@ -160,27 +160,27 @@ public class BehaviorTests
     [InlineData(0)]
     [InlineData(60)]
     [InlineData(300)]
-    public void MemoryLoggerMatchesEvictionModel(int limit)
+    public void MemoryLogOutputMatchesEvictionModel(int limit)
     {
-        var options = new MemoryLoggerOptions { MaxMemoryUsage = limit, FormatterOptions = new(false) { TimestampFormat = null } };
-        var logger = new MemoryLogger(options);
+        var options = new MemoryLogOutputOptions { MaxRetainedBytes = limit, FormatterOptions = new(false) { TimestampFormat = null } };
+        var logOutput = new MemoryLogOutput(options);
         var formatter = new SimpleLogFormatter(options.FormatterOptions);
         var expected = new Queue<byte[]>();
         for (var i = 0; i < 100; i++)
         {
-            var log = new LogEvent(null!, typeof(DefaultLog), LogLevel.Information, 0, new string('x', i % 31));
+            var log = new LogEvent(null!, typeof(DefaultLogSource), LogLevel.Information, 0, new string('x', i % 31));
             expected.Enqueue(formatter.FormatUtf8(log));
             while (limit > 0 && expected.Sum(x => x.Length) > limit)
             {
                 expected.Dequeue();
             }
 
-            logger.Output(log);
-            Assert.Equal(expected.SelectMany(x => x).ToArray(), logger.ToUtf8Array());
+            logOutput.Output(log);
+            Assert.Equal(expected.SelectMany(x => x).ToArray(), logOutput.ToUtf8Array());
         }
 
-        logger.Clear();
-        Assert.Same(Array.Empty<byte>(), logger.ToUtf8Array());
+        logOutput.Clear();
+        Assert.Same(Array.Empty<byte>(), logOutput.ToUtf8Array());
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public class BehaviorTests
         var broken = new FlushOutput(logUnit) { Fail = true };
         var good = new FlushOutput(logUnit);
         Assert.False(logUnit.RegisterFlushTarget(good));
-        await Assert.ThrowsAsync<IOException>(() => logUnit.Flush());
+        await Assert.ThrowsAsync<IOException>(() => logUnit.FlushAsync());
         Assert.Equal(1, good.Calls);
         broken.Fail = false;
     }
@@ -224,11 +224,11 @@ public class BehaviorTests
 
     public class RedirectFilter : ILogFilter
     {
-        public LogWriter? Filter(LogFilterParameter parameter) => parameter.LogLevel switch
+        public LogWriter? Filter(LogFilterContext context) => context.LogLevel switch
         {
             LogLevel.Warning => null,
-            LogLevel.Error => parameter.LogService.GetWriter<DefaultLog>(LogLevel.Fatal),
-            _ => parameter.OriginalWriter,
+            LogLevel.Error => context.LogService.GetWriter<DefaultLogSource>(LogLevel.Fatal),
+            _ => context.OriginalWriter,
         };
     }
 
@@ -236,23 +236,23 @@ public class BehaviorTests
     {
         public bool Fail { get; set; }
         public int Calls { get; private set; }
-        public override Task<int> Flush(bool terminate)
+        public override Task<int> FlushAsync(bool terminate)
         {
             this.Calls++;
             return this.Fail ? throw new IOException("test") : Task.FromResult(0);
         }
     }
 
-    public class Receiver(UnitContext context) : UnitBase(context), IUnitPreparable, IUnitExecutable, IUnitSerializable
+    public class Receiver(UnitContext context) : UnitBase(context), IUnitPreparable, IUnitExecutable, IUnitPersistable
     {
         public List<string> Calls { get; } = new();
         private Task Record(string name) { this.Calls.Add(name); return Task.CompletedTask; }
-        public Task Prepare(UnitContext context, CancellationToken token) => this.Record("prepare");
-        public Task Load(UnitContext context, CancellationToken token) => this.Record("load");
-        public Task Start(UnitContext context, CancellationToken token) => this.Record("start");
-        public Task Save(UnitContext context, CancellationToken token) => this.Record("save");
-        public Task Stop(UnitContext context, CancellationToken token) => this.Record("stop");
-        public Task Terminate(UnitContext context, CancellationToken token) => this.Record("terminate");
+        public Task PrepareAsync(UnitContext context, CancellationToken token) => this.Record("prepare");
+        public Task LoadAsync(UnitContext context, CancellationToken token) => this.Record("load");
+        public Task StartAsync(UnitContext context, CancellationToken token) => this.Record("start");
+        public Task SaveAsync(UnitContext context, CancellationToken token) => this.Record("save");
+        public Task StopAsync(UnitContext context, CancellationToken token) => this.Record("stop");
+        public Task TerminateAsync(UnitContext context, CancellationToken token) => this.Record("terminate");
     }
 }
 
@@ -264,7 +264,7 @@ internal sealed class TestUnitScope : IDisposable
     public void Dispose()
     {
         this.Context.ExecutionRoot.RequestTermination();
-        this.Context.ServiceProvider.GetRequiredService<LogUnit>().FlushAndTerminate().GetAwaiter().GetResult();
+        this.Context.ServiceProvider.GetRequiredService<LogUnit>().FlushAndTerminateAsync().GetAwaiter().GetResult();
         this.Context.ExecutionRoot.WaitForTerminationAsync(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
         ((IDisposable)this.Context.ServiceProvider).Dispose();
     }

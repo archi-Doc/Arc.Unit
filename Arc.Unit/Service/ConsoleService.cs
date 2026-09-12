@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
 
@@ -54,7 +54,7 @@ public class ConsoleService : IConsoleService
     }
 
     /// <inheritdoc/>
-    public async Task<InputResult> ReadLine(CancellationToken cancellationToken = default)
+    public async Task<InputResult> ReadLineAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -115,7 +115,7 @@ public class ConsoleService : IConsoleService
     private static void WriteColored(ReadOnlySpan<char> message, ConsoleColor color, bool newLine)
     {
         var prefix = ConsoleHelper.GetForegroundColorEscapeCode(color).AsSpan();
-        var suffix = ConsoleHelper.ResetSpan;
+        var suffix = ConsoleHelper.ResetAttributesSpan;
         var length = prefix.Length + message.Length + suffix.Length;
 
         char[]? rent = null;

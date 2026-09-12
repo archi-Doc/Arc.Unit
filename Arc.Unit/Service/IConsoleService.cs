@@ -44,7 +44,7 @@ public interface IConsoleService
     /// </summary>
     /// <param name="cancellationToken">A cancellation token to cancel the read operation.</param>
     /// <returns>A task that represents the asynchronous read operation, containing the input result.</returns>
-    public Task<InputResult> ReadLine(CancellationToken cancellationToken = default);
+    public Task<InputResult> ReadLineAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Reads the next key pressed by the user.

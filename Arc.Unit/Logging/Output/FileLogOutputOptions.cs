@@ -1,26 +1,26 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
-/// Options of <see cref="FileLogger{TOption}"/>.
+/// Options of <see cref="FileLogOutput{TOptions}"/>.
 /// </summary>
-public record class FileLoggerOptions
+public record class FileLogOutputOptions
 {
     /// <summary>
     /// The default log file path.
     /// </summary>
-    public const string DefaultPath = "Log.txt";
+    public const string DefaultFilePath = "Log.txt";
 
     /// <summary>
-    /// The default value of <see cref="MaxQueue"/>.
+    /// The default value of <see cref="MaxQueueLength"/>.
     /// </summary>
-    public const int DefaultMaxQueue = 1_000;
+    public const int DefaultMaxQueueLength = 1_000;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="FileLoggerOptions"/> class.
+    /// Initializes a new instance of the <see cref="FileLogOutputOptions"/> class.
     /// </summary>
-    public FileLoggerOptions()
+    public FileLogOutputOptions()
     {
         this.FormatterOptions = new SimpleLogFormatterOptions(false) with
         {
@@ -32,7 +32,7 @@ public record class FileLoggerOptions
     /// Gets the log file path (the date is inserted before the extension: "Log.txt" -> "Log20260101.txt").<br/>
     /// A relative path is combined with the current directory.
     /// </summary>
-    public string Path { get; init; } = DefaultPath;
+    public string FilePath { get; init; } = DefaultFilePath;
 
     /// <summary>
     /// Gets <see cref="SimpleLogFormatterOptions"/>.
@@ -42,14 +42,14 @@ public record class FileLoggerOptions
     /// <summary>
     /// Gets the maximum queued event count (zero or negative means unlimited). New events are dropped when full.
     /// </summary>
-    public int MaxQueue { get; init; } = DefaultMaxQueue;
+    public int MaxQueueLength { get; init; } = DefaultMaxQueueLength;
 
     /// <summary>
     /// Gets the upper limit of log capacity in megabytes.<br/>
     /// One megabyte is 1,000,000 bytes. Periodic cleanup deletes oldest daily files until within the limit.
     /// Zero or negative values retain no files at cleanup; they do not disable cleanup.
     /// </summary>
-    public int MaxLogCapacity { get; init; } = 10;
+    public int MaxLogCapacityInMegabytes { get; init; } = 10;
 
     /// <summary>
     /// Gets a value indicating whether or not to clear logs at startup.

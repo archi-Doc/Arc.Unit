@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
@@ -8,16 +8,16 @@ namespace Arc.Unit;
 /// </summary>
 public interface ILogFilter
 {
-    internal delegate LogWriter? FilterDelegate(LogFilterParameter parameter);
+    internal delegate LogWriter? FilterDelegate(LogFilterContext context);
 
     /// <summary>
     /// Determines the <see cref="LogWriter"/> which actually writes the log.
     /// </summary>
-    /// <param name="parameter">The information of the log to be written.</param>
+    /// <param name="context">The information of the log to be written.</param>
     /// <returns>
-    /// <see cref="LogFilterParameter.OriginalWriter"/> to keep the original destination,<br/>
+    /// <see cref="LogFilterContext.OriginalWriter"/> to keep the original destination,<br/>
     /// another <see cref="LogWriter"/> to change the destination,<br/>
     /// or <see langword="null"/> to discard the log.
     /// </returns>
-    public LogWriter? Filter(LogFilterParameter parameter);
+    public LogWriter? Filter(LogFilterContext context);
 }

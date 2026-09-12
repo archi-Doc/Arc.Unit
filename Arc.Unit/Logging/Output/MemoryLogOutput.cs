@@ -1,13 +1,13 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
 /// Stores UTF-8 log lines in reusable circular storage. Oldest lines are evicted when the byte limit is exceeded.
 /// </summary>
-public class MemoryLogger : ILogOutput
+public class MemoryLogOutput : ILogOutput
 {
-    private readonly MemoryLoggerOptions options;
+    private readonly MemoryLogOutputOptions options;
     private readonly SimpleLogFormatter formatter;
     private readonly Lock syncObject = new();
     private readonly Queue<int> lengths = new();
@@ -16,9 +16,9 @@ public class MemoryLogger : ILogOutput
     private int head;
     private int used;
 
-    /// <summary>Initializes a new instance of the <see cref="MemoryLogger"/> class.</summary>
+    /// <summary>Initializes a new instance of the <see cref="MemoryLogOutput"/> class.</summary>
     /// <param name="options">Formatting and retained-byte limits.</param>
-    public MemoryLogger(MemoryLoggerOptions options)
+    public MemoryLogOutput(MemoryLogOutputOptions options)
     {
         this.options = options;
         this.formatter = new(options.FormatterOptions);
@@ -36,7 +36,7 @@ public class MemoryLogger : ILogOutput
                 this.formatter.FormatUtf8(ref writer, logEvent);
                 writer.Flush();
                 var line = this.staging.WrittenSpan;
-                var limit = this.options.MaxMemoryUsage <= 0 ? Array.MaxLength : Math.Min(this.options.MaxMemoryUsage, Array.MaxLength);
+                var limit = this.options.MaxRetainedBytes <= 0 ? Array.MaxLength : Math.Min(this.options.MaxRetainedBytes, Array.MaxLength);
                 while (this.used + (long)line.Length > limit && this.lengths.TryDequeue(out var length))
                 {
                     this.head = (int)((this.head + (long)length) % this.bytes.Length);

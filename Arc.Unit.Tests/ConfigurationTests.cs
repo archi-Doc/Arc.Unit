@@ -58,7 +58,7 @@ public class ConfigurationTests
     [Fact]
     public void ProviderFactoryImportsHostServices()
     {
-        var factory = new UnitBuilderToServiceProviderFactory(new UnitBuilder());
+        var factory = new UnitServiceProviderFactory(new UnitBuilder());
         var services = new ServiceCollection();
         services.AddSingleton<Registered>();
         var builder = factory.CreateBuilder(services);
@@ -101,25 +101,25 @@ public class ConfigurationTests
     [Fact]
     public void ResolverUpdatesOnlyRequestedFields()
     {
-        var resolver = new LoggerResolverContext(new(typeof(Registered), LogLevel.Error));
-        resolver.TrySetOutput<EmptyLogger>();
-        resolver.TrySetOutput<MemoryLogger>();
-        Assert.Equal(typeof(EmptyLogger), resolver.LogOutputType);
+        var resolver = new LogOutputResolverContext(new(typeof(Registered), LogLevel.Error));
+        resolver.TrySetOutput<EmptyLogOutput>();
+        resolver.TrySetOutput<MemoryLogOutput>();
+        Assert.Equal(typeof(EmptyLogOutput), resolver.LogOutputType);
         resolver.TrySetFilter<BehaviorTests.RedirectFilter>();
-        resolver.TrySetOutputAndFilter<MemoryLogger, BehaviorTests.RedirectFilter>();
-        Assert.Equal(typeof(EmptyLogger), resolver.LogOutputType);
+        resolver.TrySetOutputAndFilter<MemoryLogOutput, BehaviorTests.RedirectFilter>();
+        Assert.Equal(typeof(EmptyLogOutput), resolver.LogOutputType);
         resolver.ClearOutput();
-        resolver.SetOutputType(typeof(MemoryLogger));
+        resolver.SetOutput(typeof(MemoryLogOutput));
         resolver.ClearFilter();
-        resolver.SetFilterType(typeof(BehaviorTests.RedirectFilter));
+        resolver.SetFilter(typeof(BehaviorTests.RedirectFilter));
         Assert.Equal(typeof(BehaviorTests.RedirectFilter), resolver.LogFilterType);
         resolver.SetFilter<BehaviorTests.RedirectFilter>();
         resolver.ClearOutputAndFilter();
         Assert.Null(resolver.LogOutputType);
         Assert.Null(resolver.LogFilterType);
-        Assert.Throws<ArgumentException>(() => resolver.SetOutputType(typeof(string)));
-        Assert.Throws<ArgumentException>(() => resolver.SetFilterType(typeof(string)));
-        new EmptyLogger().Output(default);
+        Assert.Throws<ArgumentException>(() => resolver.SetOutput(typeof(string)));
+        Assert.Throws<ArgumentException>(() => resolver.SetFilter(typeof(string)));
+        new EmptyLogOutput().Output(default);
     }
 
     [Fact]
@@ -131,8 +131,8 @@ public class ConfigurationTests
         Assert.Equal("No", new InputResult(InputResultKind.No).ToString());
         Assert.Equal("input", new InputResult("input").ToString());
         Assert.Equal("", default(InputResult).Text);
-        Assert.True(InputResultKind.No.IsNegative);
-        Assert.True(InputResultKind.Success.IsPositive);
+        Assert.True(InputResultKind.No.IsNo);
+        Assert.True(InputResultKind.Success.IsSuccess);
         Assert.True(InputResultKind.Canceled.IsCanceled);
         Assert.True(InputResultKind.Terminated.IsTerminated);
         Assert.True(ConsoleHelper.TryGetForegroundColor(39, false, out var color));
@@ -143,7 +143,7 @@ public class ConfigurationTests
         Assert.False(ConsoleHelper.TryGetBackgroundColor(-1, out _));
         Assert.Equal(ConsoleHelper.DefaultForegroundColorEscapeCode, ConsoleHelper.GetForegroundColorEscapeCode(ConsoleHelper.DefaultColor));
         Assert.Equal(ConsoleHelper.DefaultBackgroundColorEscapeCode, ConsoleHelper.GetBackgroundColorEscapeCode(ConsoleHelper.DefaultColor));
-        var empty = new EmptyConsole();
+        var empty = new EmptyConsoleService();
         empty.Write("discard");
         empty.Write("discard".AsSpan());
         empty.WriteLine("discard");
@@ -163,18 +163,18 @@ public class ConfigurationTests
         var pair = new LogSourceLevelPair(typeof(Registered), LogLevel.Debug);
         Assert.True(pair.Equals((object)new LogSourceLevelPair(typeof(Registered), LogLevel.Debug)));
         Assert.False(pair.Equals(null));
-        var parameter = new LogFilterParameter(null!, typeof(Registered), LogLevel.Debug, 1, default);
-        Assert.True(parameter.Equals((object)new LogFilterParameter(null!, typeof(Registered), LogLevel.Debug, 1, default)));
-        Assert.Equal(parameter.GetHashCode(), new LogFilterParameter(null!, typeof(Registered), LogLevel.Debug, 1, default).GetHashCode());
-        Assert.False(parameter.Equals(null));
-        Assert.Equal(typeof(EmptyLogger), default(LogWriter).OutputType);
+        var filterContext = new LogFilterContext(null!, typeof(Registered), LogLevel.Debug, 1, default);
+        Assert.True(filterContext.Equals((object)new LogFilterContext(null!, typeof(Registered), LogLevel.Debug, 1, default)));
+        Assert.Equal(filterContext.GetHashCode(), new LogFilterContext(null!, typeof(Registered), LogLevel.Debug, 1, default).GetHashCode());
+        Assert.False(filterContext.Equals(null));
+        Assert.Equal(typeof(EmptyLogOutput), default(LogWriter).OutputType);
     }
 
     public class CustomProduct(UnitContext context) : UnitProduct(context) { }
     public class CustomContext : IUnitCustomContext
     {
         public int Calls { get; set; }
-        public void ProcessContext(IUnitConfigurationContext context)
+        public void Configure(IUnitConfigurationContext context)
         {
             this.Calls++;
             context.AddSingleton<Registered>();

@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -61,7 +61,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     internal Dictionary<Type, CommandGroup> CommandGroups { get; } = new();
 
-    internal List<LoggerResolverDelegate> LoggerResolvers { get; } = new();
+    internal List<LogOutputResolver> LogOutputResolvers { get; } = new();
 
     internal Dictionary<Type, object> OptionTypeToInstance { get; } = new();
 
@@ -96,7 +96,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
         return (TContext)context;
     }
 
-    TOptions IUnitPreConfigurationContext.GetOptions<TOptions>()
+    TOptions IUnitPreConfigurationContext.GetOrCreateOptions<TOptions>()
     {
         var options = this.ServiceProvider?.GetService<TOptions>();
         if (options is not null)
@@ -122,7 +122,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        var baseOptions = ((IUnitPreConfigurationContext)this).GetOptions<TOptions>();
+        var baseOptions = ((IUnitPreConfigurationContext)this).GetOrCreateOptions<TOptions>();
         if (!ReferenceEquals(baseOptions, options))
         {// The registered instance cannot be replaced, so the values are copied into it.
             OptionsCopy.Copy(options, baseOptions);
@@ -133,43 +133,43 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
 
     #region IUnitConfigurationContext
 
-    void IUnitConfigurationContext.ClearLoggerResolver() => this.LoggerResolvers.Clear();
+    void IUnitConfigurationContext.ClearLogOutputResolvers() => this.LogOutputResolvers.Clear();
 
-    void IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate resolver) => this.LoggerResolvers.Add(resolver);
+    void IUnitConfigurationContext.AddLogOutputResolver(LogOutputResolver resolver) => this.LogOutputResolvers.Add(resolver);
 
     void IUnitConfigurationContext.RegisterInstanceCreation<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>() => this.InstanceCreationSet.Add(typeof(T));
 
     bool IUnitConfigurationContext.AddCommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime)
     {
-        var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup();
+        var group = ((IUnitCommandContext)this).GetTopLevelCommandGroup();
         return group.AddCommand(commandType, lifetime);
     }
 
     bool IUnitConfigurationContext.AddSubcommand([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType, ServiceLifetime lifetime)
     {
-        var group = ((IUnitConfigurationAndPostConfigurationContext)this).GetSubcommandGroup();
+        var group = ((IUnitCommandContext)this).GetSubcommandGroup();
         return group.AddCommand(commandType, lifetime);
     }
 
     #endregion
 
-    #region IUnitConfigurationAndPreConfigurationContext
+    #region IUnitCommandContext
 
-    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetCommandGroup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
+    CommandGroup IUnitCommandContext.GetCommandGroup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type groupType)
     {
-        if (!this.CommandGroups.TryGetValue(type, out var commandGroup))
+        if (!this.CommandGroups.TryGetValue(groupType, out var commandGroup))
         {
-            this.TryAddSingleton(type);
+            this.TryAddSingleton(groupType);
             commandGroup = new(this);
-            this.CommandGroups.Add(type, commandGroup);
+            this.CommandGroups.Add(groupType, commandGroup);
         }
 
         return commandGroup;
     }
 
-    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetCommandGroup() => ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup(typeof(TopCommand));
+    CommandGroup IUnitCommandContext.GetTopLevelCommandGroup() => ((IUnitCommandContext)this).GetCommandGroup(typeof(TopCommand));
 
-    CommandGroup IUnitConfigurationAndPostConfigurationContext.GetSubcommandGroup() => ((IUnitConfigurationAndPostConfigurationContext)this).GetCommandGroup(typeof(SubCommand));
+    CommandGroup IUnitCommandContext.GetSubcommandGroup() => ((IUnitCommandContext)this).GetCommandGroup(typeof(SubCommand));
 
     #endregion
 

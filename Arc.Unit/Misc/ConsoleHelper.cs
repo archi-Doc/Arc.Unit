@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
@@ -15,12 +15,12 @@ public static class ConsoleHelper
     /// <summary>
     /// The escape sequence which resets the foreground color to the default.
     /// </summary>
-    public const string DefaultForegroundColorEscapeCode = "\u001b[39m\u001b[22m"; // reset to default foreground color
+    public const string DefaultForegroundColorEscapeCode = "[39m[22m"; // reset to default foreground color
 
     /// <summary>
     /// The escape sequence which resets the background color to the default.
     /// </summary>
-    public const string DefaultBackgroundColorEscapeCode = "\u001b[49m"; // reset to the background color
+    public const string DefaultBackgroundColorEscapeCode = "[49m"; // reset to the background color
 
     /// <summary>
     /// Provides extension properties for <see cref="InputResultKind"/> to simplify result checks.
@@ -29,14 +29,14 @@ public static class ConsoleHelper
     extension(InputResultKind inputResultKind)
     {
         /// <summary>
-        /// Gets a value indicating whether the result is positive (success or yes).
+        /// Gets a value indicating whether the result is <see cref="InputResultKind.Success"/> (success or 'Yes').
         /// </summary>
-        public bool IsPositive => inputResultKind == InputResultKind.Success;
+        public bool IsSuccess => inputResultKind == InputResultKind.Success;
 
         /// <summary>
-        /// Gets a value indicating whether the result is negative (no).
+        /// Gets a value indicating whether the result is <see cref="InputResultKind.No"/>.
         /// </summary>
-        public bool IsNegative => inputResultKind == InputResultKind.No;
+        public bool IsNo => inputResultKind == InputResultKind.No;
 
         /// <summary>
         /// Gets a value indicating whether the input is canceled.
@@ -57,57 +57,57 @@ public static class ConsoleHelper
     /// <summary>
     /// Gets the escape sequence which erases from the cursor to the end of the line.
     /// </summary>
-    public static ReadOnlySpan<char> EraseToEndOfLineSpan => "\u001b[K";
+    public static ReadOnlySpan<char> EraseToEndOfLineSpan => "[K";
 
     /// <summary>
     /// Gets the escape sequence which erases to the end of the line, followed by a line terminator.
     /// </summary>
-    public static ReadOnlySpan<char> EraseToEndOfLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "\u001b[K\r\n" : "\u001b[K\n";
+    public static ReadOnlySpan<char> EraseToEndOfLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "[K\r\n" : "[K\n";
 
     /// <summary>
     /// Gets the escape sequence which erases the entire line.
     /// </summary>
-    public static ReadOnlySpan<char> EraseEntireLineSpan => "\u001b[2K";
+    public static ReadOnlySpan<char> EraseEntireLineSpan => "[2K";
 
     /// <summary>
     /// Gets the escape sequence which erases the entire line, followed by a line terminator.
     /// </summary>
-    public static ReadOnlySpan<char> EraseEntireLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "\u001b[2K\r\n" : "\u001b[2K\n";
+    public static ReadOnlySpan<char> EraseEntireLineAndNewLineSpan => Environment.NewLine == "\r\n" ? "[2K\r\n" : "[2K\n";
 
     /// <summary>
     /// Gets the escape sequence which resets all the display attributes.
     /// </summary>
-    public static ReadOnlySpan<char> ResetSpan => "\u001b[0m";
+    public static ReadOnlySpan<char> ResetAttributesSpan => "[0m";
 
     /// <summary>
     /// Gets the escape sequence which saves the cursor position.
     /// </summary>
-    public static ReadOnlySpan<char> SaveCursorSpan => "\u001b[s";
+    public static ReadOnlySpan<char> SaveCursorSpan => "[s";
 
     /// <summary>
     /// Gets the escape sequence which restores the saved cursor position.
     /// </summary>
-    public static ReadOnlySpan<char> RestoreCursorSpan => "\u001b[u";
+    public static ReadOnlySpan<char> RestoreCursorSpan => "[u";
 
     /// <summary>
     /// Gets the escape sequence which hides the cursor.
     /// </summary>
-    public static ReadOnlySpan<char> HideCursorSpan => "\u001b[?25l";
+    public static ReadOnlySpan<char> HideCursorSpan => "[?25l";
 
     /// <summary>
     /// Gets the escape sequence which shows the cursor.
     /// </summary>
-    public static ReadOnlySpan<char> ShowCursorSpan => "\u001b[?25h";
+    public static ReadOnlySpan<char> ShowCursorSpan => "[?25h";
 
     /// <summary>
     /// Gets the prefix of the cursor position sequence (row and column follow).
     /// </summary>
-    public static ReadOnlySpan<char> SetCursorSpan => "\u001b["; // "\e[n;mH
+    public static ReadOnlySpan<char> CursorPositionPrefixSpan => "["; // "\e[n;mH
 
     /// <summary>
     /// Gets the escape sequence which moves the cursor to the upper left corner.
     /// </summary>
-    public static ReadOnlySpan<char> ResetCursorSpan => "\u001b[0;0H";
+    public static ReadOnlySpan<char> MoveCursorHomeSpan => "[0;0H";
 
     /// <summary>
     /// Gets the escape sequence which sets the specified foreground color.
@@ -118,22 +118,22 @@ public static class ConsoleHelper
     {
         return color switch
         {
-            ConsoleColor.Black => "\u001b[30m",
-            ConsoleColor.DarkRed => "\u001b[31m",
-            ConsoleColor.DarkGray => "\u001b[90m",
-            ConsoleColor.DarkGreen => "\u001b[32m",
-            ConsoleColor.DarkYellow => "\u001b[33m",
-            ConsoleColor.DarkBlue => "\u001b[34m",
-            ConsoleColor.DarkMagenta => "\u001b[35m",
-            ConsoleColor.DarkCyan => "\u001b[36m",
-            ConsoleColor.Gray => "\u001b[37m",
-            ConsoleColor.Red => "\u001b[1m\u001b[31m",
-            ConsoleColor.Green => "\u001b[1m\u001b[32m",
-            ConsoleColor.Yellow => "\u001b[1m\u001b[33m",
-            ConsoleColor.Blue => "\u001b[1m\u001b[34m",
-            ConsoleColor.Magenta => "\u001b[1m\u001b[35m",
-            ConsoleColor.Cyan => "\u001b[1m\u001b[36m",
-            ConsoleColor.White => "\u001b[1m\u001b[37m",
+            ConsoleColor.Black => "[30m",
+            ConsoleColor.DarkRed => "[31m",
+            ConsoleColor.DarkGray => "[90m",
+            ConsoleColor.DarkGreen => "[32m",
+            ConsoleColor.DarkYellow => "[33m",
+            ConsoleColor.DarkBlue => "[34m",
+            ConsoleColor.DarkMagenta => "[35m",
+            ConsoleColor.DarkCyan => "[36m",
+            ConsoleColor.Gray => "[37m",
+            ConsoleColor.Red => "[1m[31m",
+            ConsoleColor.Green => "[1m[32m",
+            ConsoleColor.Yellow => "[1m[33m",
+            ConsoleColor.Blue => "[1m[34m",
+            ConsoleColor.Magenta => "[1m[35m",
+            ConsoleColor.Cyan => "[1m[36m",
+            ConsoleColor.White => "[1m[37m",
             _ => DefaultForegroundColorEscapeCode,
         };
     }
@@ -147,22 +147,22 @@ public static class ConsoleHelper
     {
         return color switch
         {
-            ConsoleColor.Black => "\u001b[40m",
-            ConsoleColor.DarkRed => "\u001b[41m",
-            ConsoleColor.DarkGreen => "\u001b[42m",
-            ConsoleColor.DarkYellow => "\u001b[43m",
-            ConsoleColor.DarkBlue => "\u001b[44m",
-            ConsoleColor.DarkMagenta => "\u001b[45m",
-            ConsoleColor.DarkCyan => "\u001b[46m",
-            ConsoleColor.Gray => "\u001b[47m",
-            ConsoleColor.DarkGray => "\u001b[100m",
-            ConsoleColor.Red => "\u001b[101m",
-            ConsoleColor.Green => "\u001b[102m",
-            ConsoleColor.Yellow => "\u001b[103m",
-            ConsoleColor.Blue => "\u001b[104m",
-            ConsoleColor.Magenta => "\u001b[105m",
-            ConsoleColor.Cyan => "\u001b[106m",
-            ConsoleColor.White => "\u001b[107m",
+            ConsoleColor.Black => "[40m",
+            ConsoleColor.DarkRed => "[41m",
+            ConsoleColor.DarkGreen => "[42m",
+            ConsoleColor.DarkYellow => "[43m",
+            ConsoleColor.DarkBlue => "[44m",
+            ConsoleColor.DarkMagenta => "[45m",
+            ConsoleColor.DarkCyan => "[46m",
+            ConsoleColor.Gray => "[47m",
+            ConsoleColor.DarkGray => "[100m",
+            ConsoleColor.Red => "[101m",
+            ConsoleColor.Green => "[102m",
+            ConsoleColor.Yellow => "[103m",
+            ConsoleColor.Blue => "[104m",
+            ConsoleColor.Magenta => "[105m",
+            ConsoleColor.Cyan => "[106m",
+            ConsoleColor.White => "[107m",
             _ => DefaultBackgroundColorEscapeCode,
         };
     }
