@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Collections.Concurrent;
 using Arc.Threading;
@@ -14,12 +14,12 @@ public class LogUnit
     /// <summary>
     /// A value indicating whether the execution group of the log workers is independent of the parent (so that logs are written during termination).
     /// </summary>
-    public const bool IsGroupIndependent = true;
+    public const bool IsWorkerGroupIndependent = true;
 
     /// <summary>
     /// The name of the execution group which owns the log workers.
     /// </summary>
-    public const string GroupName = "Logger";
+    public const string WorkerGroupName = "Logger";
 
     /// <summary>
     /// Gets the global log timestamp offset in ticks.
@@ -29,14 +29,14 @@ public class LogUnit
     /// <summary>
     /// Sets a global timestamp offset applied by the logging pipeline.
     /// </summary>
-    /// <param name="timeSpan">The offset to apply to log time values.</param>
-    public static void SetTimeOffset(TimeSpan timeSpan)
+    /// <param name="offset">The offset to apply to log time values.</param>
+    public static void SetTimestampOffset(TimeSpan offset)
     {
-        OffsetTicks = timeSpan.Ticks;
+        OffsetTicks = offset.Ticks;
     }
 
     /// <summary>
-    /// Registers core logging services, logger outputs, options, and the default resolver.
+    /// Registers core logging services, log outputs, options, and the default resolver.
     /// </summary>
     /// <param name="context">The unit configuration context used to register services.</param>
     public static void Configure(IUnitConfigurationContext context)
@@ -46,38 +46,38 @@ public class LogUnit
         context.AddScoped<ILogService, LogService>();
 
         // ILogger
-        context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger), typeof(LoggerFactory<DefaultLog>)));
+        context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger), typeof(LoggerFactory<DefaultLogSource>)));
         context.Services.Add(ServiceDescriptor.Scoped(typeof(ILogger<>), typeof(LoggerFactory<>)));
 
-        // Empty logger
-        context.TryAddSingleton<EmptyLogger>();
+        // Empty log output
+        context.TryAddSingleton<EmptyLogOutput>();
 
-        // Memory logger
-        context.TryAddSingleton<MemoryLogger>();
-        context.TryAddSingleton<MemoryLoggerOptions>();
+        // Memory log output
+        context.TryAddSingleton<MemoryLogOutput>();
+        context.TryAddSingleton<MemoryLogOutputOptions>();
 
-        // Console logger
-        context.TryAddSingleton<ConsoleLogger>();
-        context.TryAddSingleton<ConsoleLoggerOptions>();
+        // Console log output
+        context.TryAddSingleton<ConsoleLogOutput>();
+        context.TryAddSingleton<ConsoleLogOutputOptions>();
 
-        // File logger
-        context.Services.Add(ServiceDescriptor.Singleton(typeof(FileLogger<>), typeof(FileLoggerFactory<>)));
-        context.TryAddSingleton<FileLoggerOptions>();
+        // File log output
+        context.Services.Add(ServiceDescriptor.Singleton(typeof(FileLogOutput<>), typeof(FileLogOutputFactory<>)));
+        context.TryAddSingleton<FileLogOutputOptions>();
 
-        // Console and file logger
-        context.TryAddSingleton<ConsoleAndFileLogger>();
+        // Console and file log output
+        context.TryAddSingleton<ConsoleAndFileLogOutput>();
 
         // Default resolver
-        context.AddLoggerResolver(x =>
+        context.AddLogOutputResolver(x =>
         {
-            x.SetOutput<ConsoleLogger>();
+            x.SetOutput<ConsoleLogOutput>();
         });
     }
 
     #region FieldAndProperty
 
     private readonly IServiceProvider serviceProvider;
-    private readonly LoggerResolverDelegate[] loggerResolvers;
+    private readonly LogOutputResolver[] logOutputResolvers;
     private readonly ConcurrentDictionary<LogSourceLevelPair, LogBroker?> brokers = new();
     private readonly Lock flushTargetsLock = new();
     private BufferedLogOutput[] flushTargets = [];
@@ -91,7 +91,7 @@ public class LogUnit
     public LogUnit(UnitContext unitContext)
     {
         this.serviceProvider = unitContext.ServiceProvider;
-        this.loggerResolvers = unitContext.LoggerResolvers;
+        this.logOutputResolvers = unitContext.LogOutputResolvers;
     }
 
     /// <summary>
@@ -131,22 +131,22 @@ public class LogUnit
     /// Flushes all registered buffered outputs without termination.
     /// </summary>
     /// <returns>A task that represents the asynchronous flush operation.</returns>
-    public Task Flush() => this.FlushTargets(false, false);
+    public Task FlushAsync() => this.FlushTargets(false, false);
 
     /// <summary>
     /// Flushes only registered console outputs without termination.
     /// </summary>
     /// <returns>A task that represents the asynchronous flush operation.</returns>
-    public Task FlushConsole() => this.FlushTargets(false, true);
+    public Task FlushConsoleAsync() => this.FlushTargets(false, true);
 
     /// <summary>
     /// Flushes all registered buffered outputs and requests termination semantics.
     /// </summary>
     /// <returns>A task that represents the asynchronous flush and termination operation.</returns>
-    public Task FlushAndTerminate() => this.FlushTargets(true, false);
+    public Task FlushAndTerminateAsync() => this.FlushTargets(true, false);
 
     internal static ExecutionGroup GetGroup(ExecutionRoot root)
-        => root.IndependentGroup.GetOrAddGroup(IsGroupIndependent, GroupName);
+        => root.IndependentGroup.GetOrAddGroup(IsWorkerGroupIndependent, WorkerGroupName);
 
     /// <summary>
     /// Gets or creates a cached <see cref="LogBroker"/> for the specified source type and level.
@@ -180,7 +180,7 @@ public class LogUnit
         List<Task>? pending = null;
         foreach (var target in targets)
         {
-            if (consoleOnly && target is not ConsoleLogger)
+            if (consoleOnly && target is not ConsoleLogOutput)
             {
                 continue;
             }
@@ -188,7 +188,7 @@ public class LogUnit
             Task task;
             try
             {
-                task = target.Flush(terminate);
+                task = target.FlushAsync(terminate);
             }
             catch (Exception exception)
             {
@@ -216,8 +216,8 @@ public class LogUnit
 
     private LogBroker? ResolveLogBroker(LogSourceLevelPair pair)
     {
-        var context = new LoggerResolverContext(pair);
-        var resolvers = this.loggerResolvers;
+        var context = new LogOutputResolverContext(pair);
+        var resolvers = this.logOutputResolvers;
         for (var i = 0; i < resolvers.Length; i++)
         {
             resolvers[i](context);

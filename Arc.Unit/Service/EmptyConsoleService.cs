@@ -1,11 +1,11 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
 /// Discards output and returns successful empty input, or Canceled for an already-canceled token.
 /// </summary>
-public sealed class EmptyConsole : IConsoleService
+public sealed class EmptyConsoleService : IConsoleService
 {
     private static readonly Task<InputResult> EmptyInput = Task.FromResult(new InputResult(InputResultKind.Success));
     private static readonly Task<InputResult> CanceledInput = Task.FromResult(new InputResult(InputResultKind.Canceled));
@@ -23,7 +23,7 @@ public sealed class EmptyConsole : IConsoleService
     }
 
     /// <inheritdoc/>
-    public Task<InputResult> ReadLine(CancellationToken cancellationToken = default)
+    public Task<InputResult> ReadLineAsync(CancellationToken cancellationToken = default)
     {
         return cancellationToken.IsCancellationRequested ? CanceledInput : EmptyInput;
     }

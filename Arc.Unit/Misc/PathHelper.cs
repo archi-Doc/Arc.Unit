@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Runtime.CompilerServices;
 
@@ -17,10 +17,10 @@ public static class PathHelper
     /// <param name="bytes">The bytes to append.</param>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns><see langword="true"/>; The bytes are successfully appended.</returns>
-    public static Task<bool> TryAppendAllBytes(string path, byte[] bytes, CancellationToken cancellationToken = default)
+    public static Task<bool> TryAppendAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(bytes);
-        return TryAppendAllBytes(path, bytes.AsMemory(), cancellationToken);
+        return TryAppendAllBytesAsync(path, bytes.AsMemory(), cancellationToken);
     }
 
     /// <summary>Appends memory without copying it. I/O errors return false.</summary>
@@ -28,7 +28,7 @@ public static class PathHelper
     /// <param name="bytes">The bytes; keep the memory valid until completion.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True on success. Cancellation before opening the file throws; I/O cancellation returns false.</returns>
-    public static async Task<bool> TryAppendAllBytes(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
+    public static async Task<bool> TryAppendAllBytesAsync(string path, ReadOnlyMemory<byte> bytes, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         cancellationToken.ThrowIfCancellationRequested();
@@ -126,12 +126,12 @@ public static class PathHelper
 
     /// <summary>
     /// Gets the rooted directory path.<br/>
-    /// If the directory is rooted, it is returned as is; if it is not the root path, root and directory path are combined.
+    /// If the directory is rooted, it is returned as is; otherwise, the base directory and the directory path are combined.
     /// </summary>
-    /// <param name="rootDirectory">Root path.</param>
+    /// <param name="baseDirectory">The base directory path.</param>
     /// <param name="directory">Directory path.</param>
     /// <returns>Rooted directory path.</returns>
-    public static string GetRootedDirectory(string rootDirectory, string directory)
+    public static string GetRootedDirectory(string baseDirectory, string directory)
     {
         try
         {
@@ -141,24 +141,24 @@ public static class PathHelper
             }
             else
             {
-                return Path.Combine(rootDirectory, directory);
+                return Path.Combine(baseDirectory, directory);
             }
         }
         catch
         {
-            return Path.Combine(rootDirectory, directory);
+            return Path.Combine(baseDirectory, directory);
         }
     }
 
     /// <summary>
     /// Gets the rooted file path.<br/>
-    /// If the file is rooted, it is returned as is; if it is not the root path, root and file path are combined.
+    /// If the file is rooted, it is returned as is; otherwise, the base directory and the file path are combined.
     /// </summary>
-    /// <param name="rootDirectory">Root path.</param>
+    /// <param name="baseDirectory">The base directory path.</param>
     /// <param name="file">File path.</param>
     /// <returns>Rooted file path.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static string GetRootedFile(string rootDirectory, string file)
+    public static string GetRootedFile(string baseDirectory, string file)
     {
         if (Path.IsPathRooted(file))
         {
@@ -166,14 +166,14 @@ public static class PathHelper
         }
         else
         {
-            return Path.Combine(rootDirectory, file);
+            return Path.Combine(baseDirectory, file);
         }
     }
 
     /// <summary>
     /// Gets a value indicating whether the process is running in a container.
     /// </summary>
-    public static bool RunningInContainer => runningInContainer ??= GetRunningInContainer();
+    public static bool IsRunningInContainer => runningInContainer ??= GetRunningInContainer();
 
     private static bool? runningInContainer;
 

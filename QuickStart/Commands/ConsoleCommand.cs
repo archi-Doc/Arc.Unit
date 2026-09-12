@@ -37,7 +37,7 @@ public class ConsoleCommand : ISimpleCommand
         this.logger.GetWriter(LogLevel.Error)?.Write("Log filter test: Error -> Fatal");
         this.logger.GetWriter(LogLevel.Fatal)?.Write("Log filter test: Fatal -> Error");
 
-        this.unitContext.ServiceProvider.GetRequiredService<ILogger<DefaultLog>>().GetWriter()?.Write("---");
+        this.unitContext.ServiceProvider.GetRequiredService<ILogger<DefaultLogSource>>().GetWriter()?.Write("---");
         this.logger.GetWriter(LogLevel.Debug)?.Write("End");
         return Task.CompletedTask;
     }

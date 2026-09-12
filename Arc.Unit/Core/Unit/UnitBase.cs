@@ -1,12 +1,12 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
 /// Base class of Unit.<br/>
 /// <b>Unit = Builder + Product(Instance) + Function</b><br/>
-/// By implementing <see cref="IUnitPreparable"/>, <see cref="IUnitExecutable"/> or <see cref="IUnitSerializable"/>,
-/// the unit receives the notifications sent by <see cref="UnitContext"/> (e.g. <see cref="UnitContext.SendPrepare(CancellationToken)"/>).
+/// By implementing <see cref="IUnitPreparable"/>, <see cref="IUnitExecutable"/> or <see cref="IUnitPersistable"/>,
+/// the unit receives the notifications sent by <see cref="UnitContext"/> (e.g. <see cref="UnitContext.SendPrepareAsync(CancellationToken)"/>).
 /// </summary>
 public abstract class UnitBase
 {

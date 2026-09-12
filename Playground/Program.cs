@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Text;
 using Arc;
@@ -23,7 +23,7 @@ public interface ITestInterface<T> : ITestInterface
 
 public class CustomContext : IUnitCustomContext
 {
-    void IUnitCustomContext.ProcessContext(IUnitConfigurationContext context)
+    void IUnitCustomContext.Configure(IUnitConfigurationContext context)
     {
     }
 }
@@ -48,10 +48,10 @@ public class Program
 
     public static async Task Main(string[] args)
     {
-        AppCloseHandler.Set(() =>
+        AppCloseHandler.Register(() =>
         {// Closing the console window or terminating the process.
             root?.RequestTermination(); // Send a termination signal to the root.
-            root?.WaitForTermination(TimeSpan.FromSeconds(2)).Wait();
+            root?.WaitForTerminationAsync(TimeSpan.FromSeconds(2)).Wait();
         });
 
         Console.CancelKeyPress += (s, e) =>
@@ -63,7 +63,7 @@ public class Program
         var builder = new UnitBuilder()
             .PreConfigure(context =>
             {
-                // context.SetOptions(context.GetOptions<TestOptions>());
+                // context.SetOptions(context.GetOrCreateOptions<TestOptions>());
             })
             .Configure(context =>
             {
@@ -73,35 +73,35 @@ public class Program
                 context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>), typeof(TestClassFactory<>)));
                 // context.Services.Add(ServiceDescriptor.Singleton(typeof(ITestInterface<>).MakeGenericType(typeof(int)), new TestClass()));
 
-                // Logger
-                context.ClearLoggerResolver();
-                context.AddLoggerResolver(x =>
+                // Log output
+                context.ClearLogOutputResolvers();
+                context.AddLogOutputResolver(x =>
                 {// Log source/level -> Resolver() -> Output/filter
                     if (x.LogLevel <= LogLevel.Debug)
                     {
-                        // x.SetOutput<ConsoleLogger>();
+                        // x.SetOutput<ConsoleLogOutput>();
                         return;
                     }
 
-                    // x.SetOutput<MemoryLogger>();
-                    x.SetOutput<ConsoleAndFileLogger>();
+                    // x.SetOutput<MemoryLogOutput>();
+                    x.SetOutput<ConsoleAndFileLogOutput>();
                 });
             })
             .PostConfigure(context =>
             {
-                context.SetOptions(context.GetOptions<TestOptions>() with
+                context.SetOptions(context.GetOrCreateOptions<TestOptions>() with
                 {
                     Name = "test",
                 });
 
                 var logfile = "Logs/TestLog.txt";
-                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+                context.SetOptions(context.GetOrCreateOptions<FileLogOutputOptions>() with
                 {
-                    Path = Path.Combine(context.ProgramDirectory, logfile),
-                    MaxLogCapacity = 1,
+                    FilePath = Path.Combine(context.ProgramDirectory, logfile),
+                    MaxLogCapacityInMegabytes = 1,
                 });
 
-                context.SetOptions(context.GetOptions<ConsoleLoggerOptions>() with
+                context.SetOptions(context.GetOrCreateOptions<ConsoleLogOutputOptions>() with
                 {
                     EnableBuffering = true,
                 });
@@ -136,8 +136,8 @@ public class Program
         var d = logUnit.RootLogService;
         logUnit.RootLogService.GetLogger<TestClass>().GetWriter()?.Write("A");
 
-        var fileLogger = unit.Context.ServiceProvider.GetRequiredService<FileLogger<FileLoggerOptions>>();
-        var path = fileLogger.GetCurrentPath();
+        var fileLogOutput = unit.Context.ServiceProvider.GetRequiredService<FileLogOutput<FileLogOutputOptions>>();
+        var path = fileLogOutput.GetCurrentPath();
 
         Parallel.For(0, 5, x =>
         {
@@ -147,11 +147,11 @@ public class Program
             }
         });
 
-        var ff = PathHelper.RunningInContainer;
-        ff = PathHelper.RunningInContainer;
+        var ff = PathHelper.IsRunningInContainer;
+        ff = PathHelper.IsRunningInContainer;
 
-        var memoryLogger = unit.Context.ServiceProvider.GetRequiredService<MemoryLogger>();
-        var array = memoryLogger.ToUtf8Array();
+        var memoryLogOutput = unit.Context.ServiceProvider.GetRequiredService<MemoryLogOutput>();
+        var array = memoryLogOutput.ToUtf8Array();
         var st = Encoding.UTF8.GetString(array);
 
         try
@@ -170,8 +170,8 @@ public class Program
         var consoleService = unit.Context.ServiceProvider.GetRequiredService<IConsoleService>();
 
         root.RequestTermination();
-        await logUnit.FlushAndTerminate();
-        await root.WaitForTermination(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
+        await logUnit.FlushAndTerminateAsync();
+        await root.WaitForTerminationAsync(TerminationOptions.IncludeIndependent); // Wait for the termination infinitely.
         if (unit.Context.ServiceProvider is IAsyncDisposable disposable)
         {
             await disposable.DisposeAsync();

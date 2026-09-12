@@ -1,10 +1,10 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
 /// Base class of <see cref="ILogOutput"/> which buffers logs and writes them later.<br/>
-/// Buffered outputs are flushed by <see cref="LogUnit.Flush()"/> and <see cref="LogUnit.FlushAndTerminate()"/>.
+/// Buffered outputs are flushed by <see cref="LogUnit.FlushAsync()"/> and <see cref="LogUnit.FlushAndTerminateAsync()"/>.
 /// </summary>
 public abstract class BufferedLogOutput : ILogOutput
 {
@@ -23,7 +23,7 @@ public abstract class BufferedLogOutput : ILogOutput
     /// </summary>
     /// <param name="terminate"><see langword="true" /> to write all the buffered logs and terminate the log worker.</param>
     /// <returns>The number of flushed logs.</returns>
-    public abstract Task<int> Flush(bool terminate);
+    public abstract Task<int> FlushAsync(bool terminate);
 
     /// <inheritdoc/>
     public virtual void Output(LogEvent logEvent)

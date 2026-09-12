@@ -52,7 +52,7 @@ public readonly struct LogEvent : IEquatable<LogEvent>
     public readonly string Message;
 
     /// <summary>
-    /// The UTC time when this event was created (<see cref="LogUnit.SetTimeOffset(TimeSpan)"/> is applied).
+    /// The UTC time when this event was created (<see cref="LogUnit.SetTimestampOffset(TimeSpan)"/> is applied).
     /// </summary>
     public readonly DateTimeOffset Timestamp;
 

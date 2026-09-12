@@ -100,10 +100,10 @@ public class UnitArguments
     /// <summary>
     /// Determines whether the specified option exists in the argument list.
     /// </summary>
-    /// <param name="option">The option name to check for.</param>
+    /// <param name="optionName">The option name to check for.</param>
     /// <returns><c>true</c> if the option exists; otherwise, <c>false</c>.</returns>
-    public bool ContainsOption(string option)
-        => this.TryGetOptionValue(option, out _);
+    public bool ContainsOption(string optionName)
+        => this.TryGetOptionValue(optionName, out _);
 
     /// <summary>
     /// Determines whether the specified value exists in the argument list.

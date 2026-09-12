@@ -56,7 +56,7 @@ public class RegressionTests
     public void OptionsCopyKeepsIdentityAndInheritedPrivateFields()
     {
         DerivedOptions? original = null;
-        var product = new UnitBuilder().PreConfigure(c => original = c.GetOptions<DerivedOptions>())
+        var product = new UnitBuilder().PreConfigure(c => original = c.GetOrCreateOptions<DerivedOptions>())
             .PostConfigure(c => c.SetOptions(new DerivedOptions(42) { Name = "updated" })).Build();
         using var provider = (ServiceProvider)product.Context.ServiceProvider;
         var options = product.Context.GetOptions<DerivedOptions>();
@@ -74,9 +74,9 @@ public class RegressionTests
     [Fact]
     public async Task EmptyConsoleHonorsCancellationAndReusesResult()
     {
-        var console = new EmptyConsole();
-        Assert.True((await console.ReadLine(new CancellationToken(true))).IsCanceled);
-        Assert.Same(console.ReadLine(), console.ReadLine());
+        var console = new EmptyConsoleService();
+        Assert.True((await console.ReadLineAsync(new CancellationToken(true))).IsCanceled);
+        Assert.Same(console.ReadLineAsync(), console.ReadLineAsync());
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class RegressionTests
     {
         var directory = Directory.CreateTempSubdirectory("arc-unit-test-");
         var root = new ExecutionRoot();
-        var worker = new FileLoggerWorker(root, new FileLoggerOptions { Path = Path.Combine(directory.FullName, "Log.txt"), MaxLogCapacity = 1 });
+        var worker = new FileLogOutputWorker(root, new FileLogOutputOptions { FilePath = Path.Combine(directory.FullName, "Log.txt"), MaxLogCapacityInMegabytes = 1 });
         try
         {
             var unrelated = Path.Combine(directory.FullName, "Logabcdefgh.txt");
@@ -103,8 +103,8 @@ public class RegressionTests
         finally
         {
             root.RequestTermination();
-            await worker.Flush(true);
-            await root.WaitForTermination(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10));
+            await worker.FlushAsync(true);
+            await root.WaitForTerminationAsync(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10));
             directory.Delete(true);
         }
     }

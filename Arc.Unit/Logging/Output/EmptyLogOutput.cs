@@ -1,16 +1,16 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
 /// <see cref="ILogOutput"/> which discards all logs.
 /// </summary>
-public class EmptyLogger : ILogOutput
+public class EmptyLogOutput : ILogOutput
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="EmptyLogger"/> class.
+    /// Initializes a new instance of the <see cref="EmptyLogOutput"/> class.
     /// </summary>
-    public EmptyLogger()
+    public EmptyLogOutput()
     {
     }
 

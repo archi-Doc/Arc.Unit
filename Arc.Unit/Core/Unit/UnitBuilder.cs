@@ -34,16 +34,16 @@ public class UnitBuilder<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTy
         => (UnitBuilder<TProduct>)base.AddBuilder(unitBuilder);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
-        => (UnitBuilder<TProduct>)base.PreConfigure(@delegate);
+    public override UnitBuilder<TProduct> PreConfigure(Action<IUnitPreConfigurationContext> configureDelegate)
+        => (UnitBuilder<TProduct>)base.PreConfigure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> @delegate)
-        => (UnitBuilder<TProduct>)base.Configure(@delegate);
+    public override UnitBuilder<TProduct> Configure(Action<IUnitConfigurationContext> configureDelegate)
+        => (UnitBuilder<TProduct>)base.Configure(configureDelegate);
 
     /// <inheritdoc/>
-    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
-        => (UnitBuilder<TProduct>)base.PostConfigure(@delegate);
+    public override UnitBuilder<TProduct> PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
+        => (UnitBuilder<TProduct>)base.PostConfigure(configureDelegate);
 
     /// <inheritdoc/>
     public override TProduct GetBuiltProduct() => (TProduct)base.GetBuiltProduct();
@@ -119,12 +119,12 @@ public class UnitBuilder
     /// Adds a delegate to the builder to pre-configure the unit.<br/>
     /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate used to pre-configure the unit.</param>
+    /// <param name="configureDelegate">The delegate used to pre-configure the unit.</param>
     /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
-    public virtual UnitBuilder PreConfigure(Action<IUnitPreConfigurationContext> @delegate)
+    public virtual UnitBuilder PreConfigure(Action<IUnitPreConfigurationContext> configureDelegate)
     {
-        ArgumentNullException.ThrowIfNull(@delegate);
-        this.preConfigureActions.Add(@delegate);
+        ArgumentNullException.ThrowIfNull(configureDelegate);
+        this.preConfigureActions.Add(configureDelegate);
         return this;
     }
 
@@ -133,12 +133,12 @@ public class UnitBuilder
     /// Adds a delegate to the builder to configure the unit.<br/>
     /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate used to configure the unit.</param>
+    /// <param name="configureDelegate">The delegate used to configure the unit.</param>
     /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
-    public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> @delegate)
+    public virtual UnitBuilder Configure(Action<IUnitConfigurationContext> configureDelegate)
     {
-        ArgumentNullException.ThrowIfNull(@delegate);
-        this.configureActions.Add(@delegate);
+        ArgumentNullException.ThrowIfNull(configureDelegate);
+        this.configureActions.Add(configureDelegate);
         return this;
     }
 
@@ -147,12 +147,12 @@ public class UnitBuilder
     /// Adds a delegate to the builder to post-configure the unit.<br/>
     /// This method can be called multiple times, and all delegates will be combined.
     /// </summary>
-    /// <param name="delegate">The delegate used to post-configure the unit.</param>
+    /// <param name="configureDelegate">The delegate used to post-configure the unit.</param>
     /// <returns>The same <see cref="UnitBuilder"/> instance for method chaining.</returns>
-    public virtual UnitBuilder PostConfigure(Action<IUnitPostConfigurationContext> @delegate)
+    public virtual UnitBuilder PostConfigure(Action<IUnitPostConfigurationContext> configureDelegate)
     {
-        ArgumentNullException.ThrowIfNull(@delegate);
-        this.postConfigureActions.Add(@delegate);
+        ArgumentNullException.ThrowIfNull(configureDelegate);
+        this.postConfigureActions.Add(configureDelegate);
         return this;
     }
 
@@ -232,7 +232,7 @@ public class UnitBuilder
         {
             if (x is IUnitCustomContext context)
             {
-                context.ProcessContext(builderContext);
+                context.Configure(builderContext);
             }
         }
 

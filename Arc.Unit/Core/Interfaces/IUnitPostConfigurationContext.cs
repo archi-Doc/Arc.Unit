@@ -5,7 +5,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Provides contextual information and configuration methods used during the post-configuration phase of a unit.
 /// </summary>
-public interface IUnitPostConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPostConfigurationContext
+public interface IUnitPostConfigurationContext : IUnitPreConfigurationContext, IUnitCommandContext
 {
     /// <summary>
     /// Gets <see cref="IServiceProvider"/>.

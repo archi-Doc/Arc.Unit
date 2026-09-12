@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System;
 using Arc.Threading;
@@ -20,7 +20,7 @@ public sealed class UnitContext
     /// Gets or sets a value indicating whether the application requested termination.
     /// This flag does not cancel ExecutionRoot or send notifications.
     /// </summary>
-    public bool TerminationRequested { get; set; }
+    public bool IsTerminationRequested { get; set; }
 
     /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
@@ -38,9 +38,9 @@ public sealed class UnitContext
     public UnitOptions Options { get; private set; } = new();
 
     /// <summary>
-    /// Gets the <see cref="RadioClass"/> which delivers the notifications (Prepare/Start/Stop/Terminate/Load/Save) to the units.
+    /// Gets the <see cref="LocalRadio"/> which delivers the notifications (Prepare/Start/Stop/Terminate/Load/Save) to the units.
     /// </summary>
-    public RadioClass Radio { get; private set; } = default!;
+    public LocalRadio Radio { get; private set; } = default!;
 
     /// <summary>
     /// Gets an array of <see cref="Type"/> registered by <see cref="IUnitConfigurationContext.RegisterInstanceCreation{T}()"/>.<br/>
@@ -51,22 +51,22 @@ public sealed class UnitContext
     /// <summary>
     /// Gets an array of command <see cref="Type"/> added by <see cref="IUnitConfigurationContext.AddCommand(Type, ServiceLifetime)"/>.
     /// </summary>
-    public Type[] Commands => this.CommandDictionary[typeof(UnitBuilderContext.TopCommand)];
+    public Type[] CommandTypes => this.CommandTypesByGroup[typeof(UnitBuilderContext.TopCommand)];
 
     /// <summary>
     /// Gets an array of subcommand <see cref="Type"/> added by <see cref="IUnitConfigurationContext.AddSubcommand(Type, ServiceLifetime)"/>.
     /// </summary>
-    public Type[] Subcommands => this.CommandDictionary[typeof(UnitBuilderContext.SubCommand)];
+    public Type[] SubcommandTypes => this.CommandTypesByGroup[typeof(UnitBuilderContext.SubCommand)];
 
     /// <summary>
-    /// Gets a collection of command <see cref="Type"/> (keys) and subcommand <see cref="Type"/> (values).
+    /// Gets a collection of group <see cref="Type"/> (keys, e.g. a parent command type) and the command <see cref="Type"/> which belong to the group (values).
     /// </summary>
-    public Dictionary<Type, Type[]> CommandDictionary { get; private set; } = new();
+    public Dictionary<Type, Type[]> CommandTypesByGroup { get; private set; } = new();
 
     /// <summary>
-    /// Gets an array of <see cref="LoggerResolverDelegate"/> registered by <see cref="IUnitConfigurationContext.AddLoggerResolver(LoggerResolverDelegate)"/>.
+    /// Gets an array of <see cref="LogOutputResolver"/> registered by <see cref="IUnitConfigurationContext.AddLogOutputResolver(LogOutputResolver)"/>.
     /// </summary>
-    public LoggerResolverDelegate[] LoggerResolvers { get; private set; } = [];
+    public LogOutputResolver[] LogOutputResolvers { get; private set; } = [];
 
     private Dictionary<Type, object> optionTypeToInstance = new();
 
@@ -106,13 +106,13 @@ public sealed class UnitContext
     }
 
     /// <summary>
-    /// Gets an array of command <see cref="Type"/> which belong to the specified command type.
+    /// Gets an array of command <see cref="Type"/> which belong to the specified group.
     /// </summary>
-    /// <param name="commandType">The command type.</param>
+    /// <param name="groupType">The type which identifies the group (see <see cref="IUnitCommandContext.GetCommandGroup(Type)"/>).</param>
     /// <returns>An array of command type.</returns>
-    public Type[] GetCommandTypes(Type commandType)
+    public Type[] GetCommandTypes(Type groupType)
     {
-        if (this.CommandDictionary.TryGetValue(commandType, out var array))
+        if (this.CommandTypesByGroup.TryGetValue(groupType, out var array))
         {
             return array;
         }
@@ -138,48 +138,48 @@ public sealed class UnitContext
     /// </summary>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SendPrepare(CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitPreparable>().Prepare(this, cancellationToken);
+    public Task SendPrepareAsync(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitPreparable>().PrepareAsync(this, cancellationToken);
 
     /// <summary>
     /// Sends a start notification to all the units which implement <see cref="IUnitExecutable"/>.
     /// </summary>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SendStart(CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitExecutable>().Start(this, cancellationToken);
+    public Task SendStartAsync(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().StartAsync(this, cancellationToken);
 
     /// <summary>
     /// Sends a stop notification to all the units which implement <see cref="IUnitExecutable"/>.
     /// </summary>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SendStop(CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitExecutable>().Stop(this, cancellationToken);
+    public Task SendStopAsync(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().StopAsync(this, cancellationToken);
 
     /// <summary>
     /// Sends a terminate notification to all the units which implement <see cref="IUnitExecutable"/>.
     /// </summary>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SendTerminate(CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitExecutable>().Terminate(this, cancellationToken);
+    public Task SendTerminateAsync(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitExecutable>().TerminateAsync(this, cancellationToken);
 
     /// <summary>
-    /// Sends a load notification to all the units which implement <see cref="IUnitSerializable"/>.
+    /// Sends a load notification to all the units which implement <see cref="IUnitPersistable"/>.
     /// </summary>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SendLoad(CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitSerializable>().Load(this, cancellationToken);
+    public Task SendLoadAsync(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitPersistable>().LoadAsync(this, cancellationToken);
 
     /// <summary>
-    /// Sends a save notification to all the units which implement <see cref="IUnitSerializable"/>.
+    /// Sends a save notification to all the units which implement <see cref="IUnitPersistable"/>.
     /// </summary>
     /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task SendSave(CancellationToken cancellationToken = default)
-        => this.Radio.Send<IUnitSerializable>().Save(this, cancellationToken);
+    public Task SendSaveAsync(CancellationToken cancellationToken = default)
+        => this.Radio.Send<IUnitPersistable>().SaveAsync(this, cancellationToken);
 
     /// <summary>
     /// Converts <see cref="UnitBuilderContext"/> to <see cref="UnitContext"/>.
@@ -190,7 +190,7 @@ public sealed class UnitContext
     {
         this.ServiceProvider = serviceProvider;
         this.optionTypeToInstance = builderContext.OptionTypeToInstance;
-        this.Radio = serviceProvider.GetRequiredService<RadioClass>();
+        this.Radio = serviceProvider.GetRequiredService<LocalRadio>();
         this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
 
         this.ExecutionRoot = serviceProvider.GetRequiredService<ExecutionRoot>();
@@ -198,14 +198,14 @@ public sealed class UnitContext
         options.CopyFrom(builderContext);
         this.Options = options;
 
-        ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
-        ((IUnitConfigurationAndPostConfigurationContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
+        ((IUnitCommandContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.TopCommand));
+        ((IUnitCommandContext)builderContext).GetCommandGroup(typeof(UnitBuilderContext.SubCommand));
         foreach (var x in builderContext.CommandGroups)
         {
-            this.CommandDictionary[x.Key] = x.Value.ToArray();
+            this.CommandTypesByGroup[x.Key] = x.Value.ToArray();
         }
 
-        this.LoggerResolvers = builderContext.LoggerResolvers.ToArray();
+        this.LogOutputResolvers = builderContext.LogOutputResolvers.ToArray();
     }
 
     internal void AddRadio(UnitBase unit)
@@ -220,9 +220,9 @@ public sealed class UnitContext
             this.Radio.Open(executable, true);
         }
 
-        if (unit is IUnitSerializable serializable)
+        if (unit is IUnitPersistable persistable)
         {
-            this.Radio.Open(serializable, true);
+            this.Radio.Open(persistable, true);
         }
     }
 }

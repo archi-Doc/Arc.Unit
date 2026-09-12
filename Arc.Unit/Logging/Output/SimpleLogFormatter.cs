@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Buffers;
 using System.Text;
@@ -51,9 +51,9 @@ public class SimpleLogFormatter
     /// <summary>
     /// Formats the log event and appends it to the specified <see cref="StringBuilder"/>.
     /// </summary>
-    /// <param name="sb">The <see cref="StringBuilder"/> to append to.</param>
+    /// <param name="builder">The <see cref="StringBuilder"/> to append to.</param>
     /// <param name="logEvent">The log event to be formatted.</param>
-    public void Format(StringBuilder sb, LogEvent logEvent)
+    public void Format(StringBuilder builder, LogEvent logEvent)
     {// Timestamp [Level Source(EventId)] Message
         var logLevelColors = GetLogLevelConsoleColors(logEvent.LogLevel);
         var logLevelString = GetLogLevelString(logEvent.LogLevel);
@@ -75,52 +75,52 @@ public class SimpleLogFormatter
         var timestampFormat = this.options.TimestampFormat;
         if (timestampFormat != null)
         {
-            var dateTime = this.options.TimestampLocal ? logEvent.Timestamp.ToLocalTime() : logEvent.Timestamp;
+            var dateTime = this.options.UseLocalTimestamp ? logEvent.Timestamp.ToLocalTime() : logEvent.Timestamp;
             Span<char> destination = stackalloc char[FormatBufferLength];
             if (dateTime.TryFormat(destination, out var written, timestampFormat))
             {
-                sb.Append(destination.Slice(0, written));
+                builder.Append(destination.Slice(0, written));
             }
             else
             {
-                sb.Append(dateTime.ToString(timestampFormat));
+                builder.Append(dateTime.ToString(timestampFormat));
             }
 
-            sb.Append(' ');
+            builder.Append(' ');
         }
 
-        sb.Append('[');
+        builder.Append('[');
 
         // Level
-        this.WriteColoredMessage(sb, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
+        this.WriteColoredMessage(builder, logLevelString, logLevelColors.Background, logLevelColors.Foreground);
 
         // Source(EventId)
-        if (logEvent.LogSourceType != typeof(DefaultLog))
+        if (logEvent.LogSourceType != typeof(DefaultLogSource))
         {
-            sb.Append(' ');
-            this.WriteColoredMessage(sb, logEvent.LogSourceType.Name, ConsoleHelper.DefaultColor, sourceColor);
+            builder.Append(' ');
+            this.WriteColoredMessage(builder, logEvent.LogSourceType.Name, ConsoleHelper.DefaultColor, sourceColor);
         }
 
         if (logEvent.EventId != 0 && this.options.EventIdFormat is { } eventIdFormat)
         {
             Span<char> destination = stackalloc char[FormatBufferLength];
-            sb.Append('(');
+            builder.Append('(');
             if (logEvent.EventId.TryFormat(destination, out var written, eventIdFormat))
             {
-                sb.Append(destination.Slice(0, written));
+                builder.Append(destination.Slice(0, written));
             }
             else
             {
-                sb.Append(logEvent.EventId.ToString(eventIdFormat));
+                builder.Append(logEvent.EventId.ToString(eventIdFormat));
             }
 
-            sb.Append(')');
+            builder.Append(')');
         }
 
-        sb.Append("] ");
+        builder.Append("] ");
 
         // Message
-        this.WriteColoredMessage(sb, logEvent.Message, ConsoleHelper.DefaultColor, messageColor);
+        this.WriteColoredMessage(builder, logEvent.Message, ConsoleHelper.DefaultColor, messageColor);
     }
 
     /// <summary>
@@ -147,7 +147,7 @@ public class SimpleLogFormatter
         var timestampFormat = this.options.TimestampFormat;
         if (timestampFormat != null)
         {
-            if (this.options.TimestampLocal)
+            if (this.options.UseLocalTimestamp)
             {// Local
                 writer.AppendFormatted(logEvent.Timestamp.ToLocalTime(), 0, timestampFormat);
             }
@@ -163,7 +163,7 @@ public class SimpleLogFormatter
         writer.AppendUtf8(GetLogLevelUtf8String(logEvent.LogLevel));
 
         // Source(EventId)
-        if (logEvent.LogSourceType != typeof(DefaultLog))
+        if (logEvent.LogSourceType != typeof(DefaultLogSource))
         {
             writer.Append(' ');
             writer.AppendLiteral(logEvent.LogSourceType.Name);
@@ -280,34 +280,34 @@ public class SimpleLogFormatter
         };
     }
 
-    private void WriteColoredMessage(StringBuilder sb, string message, ConsoleColor background, ConsoleColor foreground)
+    private void WriteColoredMessage(StringBuilder builder, string message, ConsoleColor background, ConsoleColor foreground)
     {
         if (!this.options.EnableColor)
         {
-            sb.Append(message);
+            builder.Append(message);
             return;
         }
 
         if (background != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleHelper.GetBackgroundColorEscapeCode(background));
+            builder.Append(ConsoleHelper.GetBackgroundColorEscapeCode(background));
         }
 
         if (foreground != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleHelper.GetForegroundColorEscapeCode(foreground));
+            builder.Append(ConsoleHelper.GetForegroundColorEscapeCode(foreground));
         }
 
-        sb.Append(message);
+        builder.Append(message);
 
         if (foreground != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleHelper.DefaultForegroundColorEscapeCode); // reset to default foreground color
+            builder.Append(ConsoleHelper.DefaultForegroundColorEscapeCode); // reset to default foreground color
         }
 
         if (background != ConsoleHelper.DefaultColor)
         {
-            sb.Append(ConsoleHelper.DefaultBackgroundColorEscapeCode); // reset to the background color
+            builder.Append(ConsoleHelper.DefaultBackgroundColorEscapeCode); // reset to the background color
         }
     }
 }

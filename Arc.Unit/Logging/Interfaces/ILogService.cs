@@ -36,7 +36,7 @@ public interface ILogService
     /// <summary>
     /// Gets a logger associated with the specified source type.
     /// </summary>
-    /// <param name="logSource">
+    /// <param name="logSourceType">
     /// The source type used to categorize and route log messages.
     /// </param>
     /// <returns>
@@ -47,7 +47,7 @@ public interface ILogService
     /// (a generic type is not constructed at runtime, so that the method works with Native AOT).<br/>
     /// Use <see cref="GetLogger{TLogSource}()"/> when the log source type is known at compile time.
     /// </remarks>
-    ILogger GetLogger(Type logSource);
+    ILogger GetLogger(Type logSourceType);
 
     /// <summary>
     /// Gets the console service used for console-oriented output operations.

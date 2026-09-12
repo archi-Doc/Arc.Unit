@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using Arc.Threading;
 using Arc.Unit;
@@ -38,17 +38,17 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
                 // Log filter
                 context.AddSingleton<ExampleLogFilter>();
 
-                // Logger
-                context.ClearLoggerResolver();
-                context.AddLoggerResolver(x =>
+                // Log output
+                context.ClearLogOutputResolvers();
+                context.AddLogOutputResolver(x =>
                 {// Log source/level -> Resolver() -> Output/filter
                     if (x.LogLevel <= LogLevel.Debug)
                     {
-                        x.SetOutput<ConsoleLogger>();
+                        x.SetOutput<ConsoleLogOutput>();
                         return;
                     }
 
-                    x.SetOutput<ConsoleAndFileLogger>();
+                    x.SetOutput<ConsoleAndFileLogOutput>();
 
                     if (x.LogSourceType == typeof(ConsoleCommand))
                     {
@@ -60,17 +60,17 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             this.PostConfigure(context =>
             {
                 var logfile = "Logs/Log.txt";
-                context.SetOptions(context.GetOptions<FileLoggerOptions>() with
+                context.SetOptions(context.GetOrCreateOptions<FileLogOutputOptions>() with
                 {
-                    Path = Path.Combine(context.DataDirectory, logfile),
-                    MaxLogCapacity = 2,
+                    FilePath = Path.Combine(context.DataDirectory, logfile),
+                    MaxLogCapacityInMegabytes = 2,
                     ClearLogsAtStartup = true,
                 });
 
-                var consoleLoggerOptions = context.GetOptions<ConsoleLoggerOptions>();
-                context.SetOptions(consoleLoggerOptions with
+                var consoleLogOutputOptions = context.GetOrCreateOptions<ConsoleLogOutputOptions>();
+                context.SetOptions(consoleLogOutputOptions with
                 {
-                    FormatterOptions = consoleLoggerOptions.FormatterOptions with { EnableColor = true },
+                    FormatterOptions = consoleLogOutputOptions.FormatterOptions with { EnableColor = true },
                 });
             });
         }
@@ -90,8 +90,8 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             // Create optional instances
             this.Context.CreateInstances();
 
-            await this.Context.SendPrepare();
-            await this.Context.SendStart();
+            await this.Context.SendPrepareAsync();
+            await this.Context.SendStartAsync();
 
             await using var scope = this.Context.ServiceProvider.CreateAsyncScope();
             var parserOptions = SimpleParserOptions.Standard with
@@ -111,11 +111,11 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             {
                 try
                 {
-                    await this.Context.SendStop();
+                    await this.Context.SendStopAsync();
                 }
                 finally
                 {
-                    await this.Context.SendTerminate();
+                    await this.Context.SendTerminateAsync();
                 }
             }
         }
@@ -123,22 +123,22 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
 
     private class ExampleLogFilter : ILogFilter
     {
-        public LogWriter? Filter(LogFilterParameter parameter)
+        public LogWriter? Filter(LogFilterContext context)
         {// Log source/Event id/LogLevel -> Filter() -> ILog
-            if (parameter.LogSourceType == typeof(ConsoleCommand))
+            if (context.LogSourceType == typeof(ConsoleCommand))
             {
                 // return null; // No log
-                if (parameter.LogLevel == LogLevel.Error)
+                if (context.LogLevel == LogLevel.Error)
                 {
-                    return parameter.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Fatal); // Error -> Fatal
+                    return context.LogService.GetWriter<ConsoleAndFileLogOutput>(LogLevel.Fatal); // Error -> Fatal
                 }
-                else if (parameter.LogLevel == LogLevel.Fatal)
+                else if (context.LogLevel == LogLevel.Fatal)
                 {
-                    return parameter.LogService.GetWriter<ConsoleAndFileLogger>(LogLevel.Error); // Fatal -> Error
+                    return context.LogService.GetWriter<ConsoleAndFileLogOutput>(LogLevel.Error); // Fatal -> Error
                 }
             }
 
-            return parameter.OriginalWriter;
+            return context.OriginalWriter;
         }
     }
 
@@ -149,7 +149,7 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         this.options = options;
     }
 
-    Task IUnitPreparable.Prepare(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitPreparable.PrepareAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit prepared.");
         this.logger.GetWriter()?.Write($"Program: {this.options.ProgramDirectory}");
@@ -157,19 +157,19 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
         return Task.CompletedTask;
     }
 
-    Task IUnitExecutable.Start(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitExecutable.StartAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit started.");
         return Task.CompletedTask;
     }
 
-    Task IUnitExecutable.Stop(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitExecutable.StopAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit stopped.");
         return Task.CompletedTask;
     }
 
-    Task IUnitExecutable.Terminate(UnitContext unitContext, CancellationToken cancellationToken)
+    Task IUnitExecutable.TerminateAsync(UnitContext unitContext, CancellationToken cancellationToken)
     {
         this.logger.GetWriter()?.Write("Unit terminated.");
         return Task.CompletedTask;

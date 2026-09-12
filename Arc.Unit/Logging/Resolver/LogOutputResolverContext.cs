@@ -1,13 +1,13 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 namespace Arc.Unit;
 
 /// <summary>
-/// Provides the log source/level to <see cref="LoggerResolverDelegate"/>, and receives the resolved output and filter.
+/// Provides the log source/level to <see cref="LogOutputResolver"/>, and receives the resolved output and filter.
 /// </summary>
-public sealed class LoggerResolverContext
+public sealed class LogOutputResolverContext
 {
-    internal LoggerResolverContext(LogSourceLevelPair pair)
+    internal LogOutputResolverContext(LogSourceLevelPair pair)
     {
         this.LogSourceType = pair.LogSourceType;
         this.LogLevel = pair.LogLevel;
@@ -48,7 +48,7 @@ public sealed class LoggerResolverContext
     /// </summary>
     /// <param name="logOutputType">The type which implements <see cref="ILogOutput"/>.</param>
     /// <exception cref="ArgumentException"><paramref name="logOutputType"/> does not implement <see cref="ILogOutput"/>.</exception>
-    public void SetOutputType(Type logOutputType)
+    public void SetOutput(Type logOutputType)
     {
         if (!typeof(ILogOutput).IsAssignableFrom(logOutputType))
         {
@@ -73,7 +73,7 @@ public sealed class LoggerResolverContext
     /// </summary>
     /// <param name="logFilterType">The type which implements <see cref="ILogFilter"/>.</param>
     /// <exception cref="ArgumentException"><paramref name="logFilterType"/> does not implement <see cref="ILogFilter"/>.</exception>
-    public void SetFilterType(Type logFilterType)
+    public void SetFilter(Type logFilterType)
     {
         if (!typeof(ILogFilter).IsAssignableFrom(logFilterType))
         {

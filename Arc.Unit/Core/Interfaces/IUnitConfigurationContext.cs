@@ -1,4 +1,4 @@
-﻿// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
+// Copyright (c) All contributors. All rights reserved. Licensed under the MIT license.
 
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +8,7 @@ namespace Arc.Unit;
 /// <summary>
 /// Provides contextual information and configuration methods used during the configuration phase of a unit.
 /// </summary>
-public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnitConfigurationAndPostConfigurationContext
+public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnitCommandContext
 {
     /// <summary>
     /// Gets the <see cref="IServiceCollection"/> used for dependency injection and service registration.
@@ -16,16 +16,16 @@ public interface IUnitConfigurationContext : IUnitPreConfigurationContext, IUnit
     IServiceCollection Services { get; }
 
     /// <summary>
-    /// Adds a logger resolver delegate that determines the appropriate <see cref="ILogOutput"/> and <see cref="ILogFilter"/>
+    /// Adds a log output resolver that determines the appropriate <see cref="ILogOutput"/> and <see cref="ILogFilter"/>
     /// based on the log source and <see cref="LogLevel"/>.
     /// </summary>
-    /// <param name="resolver">The <see cref="LoggerResolverDelegate"/> to add.</param>
-    void AddLoggerResolver(LoggerResolverDelegate resolver);
+    /// <param name="resolver">The <see cref="LogOutputResolver"/> to add.</param>
+    void AddLogOutputResolver(LogOutputResolver resolver);
 
     /// <summary>
-    /// Clears all registered logger resolvers from the context.
+    /// Clears all registered log output resolvers from the context.
     /// </summary>
-    void ClearLoggerResolver();
+    void ClearLogOutputResolvers();
 
     /// <summary>
     /// Adds a command type to the configuration context.
