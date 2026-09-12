@@ -104,7 +104,7 @@ public class RegressionTests
         {
             root.RequestTermination();
             await worker.Flush(true);
-            await root.WaitForTermination(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10));
+            await root.WaitForTerminationAsync(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10));
             directory.Delete(true);
         }
     }

@@ -38,9 +38,9 @@ public sealed class UnitContext
     public UnitOptions Options { get; private set; } = new();
 
     /// <summary>
-    /// Gets the <see cref="RadioClass"/> which delivers the notifications (Prepare/Start/Stop/Terminate/Load/Save) to the units.
+    /// Gets the <see cref="LocalRadio"/> which delivers the notifications (Prepare/Start/Stop/Terminate/Load/Save) to the units.
     /// </summary>
-    public RadioClass Radio { get; private set; } = default!;
+    public LocalRadio Radio { get; private set; } = default!;
 
     /// <summary>
     /// Gets an array of <see cref="Type"/> registered by <see cref="IUnitConfigurationContext.RegisterInstanceCreation{T}()"/>.<br/>
@@ -190,7 +190,7 @@ public sealed class UnitContext
     {
         this.ServiceProvider = serviceProvider;
         this.optionTypeToInstance = builderContext.OptionTypeToInstance;
-        this.Radio = serviceProvider.GetRequiredService<RadioClass>();
+        this.Radio = serviceProvider.GetRequiredService<LocalRadio>();
         this.InstanceCreationTypes = builderContext.InstanceCreationSet.ToArray();
 
         this.ExecutionRoot = serviceProvider.GetRequiredService<ExecutionRoot>();

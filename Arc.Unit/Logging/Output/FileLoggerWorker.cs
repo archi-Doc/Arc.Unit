@@ -67,7 +67,7 @@ internal sealed class FileLoggerWorker : TaskCore
     {
         var worker = (FileLoggerWorker)obj!;
 
-        while (await worker.Delay(IntervalInMilliseconds))
+        while (await worker.TryDelay(IntervalInMilliseconds))
         {
             await worker.Flush(false).ConfigureAwait(false);
         }

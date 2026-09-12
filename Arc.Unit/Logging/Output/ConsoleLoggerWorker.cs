@@ -26,7 +26,7 @@ internal sealed class ConsoleLoggerWorker : TaskCore
     public static async Task Process(TaskCore obj)
     {
         var worker = (ConsoleLoggerWorker)obj!;
-        while (await worker.Delay(BufferingTimeInMilliseconds))
+        while (await worker.TryDelay(BufferingTimeInMilliseconds))
         {
             await worker.Flush(false).ConfigureAwait(false);
         }

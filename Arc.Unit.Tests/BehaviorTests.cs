@@ -265,7 +265,7 @@ internal sealed class TestUnitScope : IDisposable
     {
         this.Context.ExecutionRoot.RequestTermination();
         this.Context.ServiceProvider.GetRequiredService<LogUnit>().FlushAndTerminate().GetAwaiter().GetResult();
-        this.Context.ExecutionRoot.WaitForTermination(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
+        this.Context.ExecutionRoot.WaitForTerminationAsync(TerminationOptions.IncludeIndependent).WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
         ((IDisposable)this.Context.ServiceProvider).Dispose();
     }
 }
