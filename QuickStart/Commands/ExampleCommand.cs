@@ -24,6 +24,6 @@ public class ExampleCommand : ISimpleCommand<ExampleCommandOptions>
 
 public record ExampleCommandOptions
 {
-    [SimpleOption("string", Description = "String", Required = true)]
+    [SimpleOption("string", Description = "String", IsRequired = true)]
     public string String { get; init; } = string.Empty;
 }
