@@ -97,8 +97,8 @@ public class ConsoleUnit : UnitBase, IUnitPreparable, IUnitExecutable
             var parserOptions = SimpleParserOptions.Standard with
             {
                 ServiceProvider = scope.ServiceProvider,
-                RequireStrictCommandName = false,
-                RequireStrictOptionName = true,
+                RequireCommandName = false,
+                RejectUnknownOptionNames = true,
             };
 
             // Main
