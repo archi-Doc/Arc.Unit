@@ -158,8 +158,7 @@ internal class UnitBuilderContext : IUnitPreConfigurationContext, IUnitConfigura
     CommandGroup IUnitCommandContext.GetCommandGroup([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type groupType)
     {
         if (!this.CommandGroups.TryGetValue(groupType, out var commandGroup))
-        {
-            this.TryAddSingleton(groupType);
+        {// The group type is only a key. Registering it here would fix the lifetime of a command added later (TryAdd).
             commandGroup = new(this);
             this.CommandGroups.Add(groupType, commandGroup);
         }

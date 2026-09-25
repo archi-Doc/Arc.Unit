@@ -56,6 +56,23 @@ public class ConfigurationTests
     }
 
     [Fact]
+    public void DirectoryOptionsAreResolvedFromArguments()
+    {
+        var data = Path.Combine(Path.GetTempPath(), "arc-unit-data");
+        using (var unit = new TestUnitScope(new UnitBuilder(), ["-ProgramDirectory", "program", "-DataDirectory", data]))
+        {
+            Assert.Equal(Path.Combine(Directory.GetCurrentDirectory(), "program"), unit.Context.Options.ProgramDirectory);
+            Assert.Equal(data, unit.Context.Options.DataDirectory);
+        }
+
+        using (var unit = new TestUnitScope(new UnitBuilder()))
+        {
+            Assert.Equal(Directory.GetCurrentDirectory(), unit.Context.Options.ProgramDirectory);
+            Assert.Equal(string.Empty, unit.Context.Options.DataDirectory);
+        }
+    }
+
+    [Fact]
     public void ProviderFactoryImportsHostServices()
     {
         var factory = new UnitServiceProviderFactory(new UnitBuilder());

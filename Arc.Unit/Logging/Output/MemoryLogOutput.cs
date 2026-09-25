@@ -48,7 +48,7 @@ public class MemoryLogOutput : ILogOutput
                     return;
                 }
 
-                this.EnsureCapacity(this.used + line.Length);
+                this.EnsureCapacity(this.used + line.Length, limit);
                 var tail = (int)((this.head + (long)this.used) % this.bytes.Length);
                 var first = Math.Min(line.Length, this.bytes.Length - tail);
                 line[..first].CopyTo(this.bytes.AsSpan(tail));
@@ -98,14 +98,15 @@ public class MemoryLogOutput : ILogOutput
         }
     }
 
-    private void EnsureCapacity(int required)
+    private void EnsureCapacity(int required, long limit)
     {
         if (required <= this.bytes.Length)
         {
             return;
         }
 
-        var capacity = (int)Math.Min(Array.MaxLength, Math.Max(required, Math.Max(256L, this.bytes.Length * 2L)));
+        // required <= limit <= Array.MaxLength: the storage never grows beyond the retained-byte limit.
+        var capacity = (int)Math.Min(limit, Math.Max(required, Math.Max(256L, this.bytes.Length * 2L)));
         var replacement = new byte[capacity];
         this.CopyTo(replacement);
         this.bytes = replacement;

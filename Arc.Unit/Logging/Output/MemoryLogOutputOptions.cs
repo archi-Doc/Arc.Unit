@@ -29,7 +29,7 @@ public record class MemoryLogOutputOptions
     public SimpleLogFormatterOptions FormatterOptions { get; init; }
 
     /// <summary>
-    /// Gets the retained UTF-8 byte limit (zero or negative means unlimited). Buffer capacity and bookkeeping are excluded.
+    /// Gets the retained UTF-8 byte limit (zero or negative means unlimited). The storage does not grow beyond it; bookkeeping is excluded.
     /// The default is <see cref="DefaultMaxRetainedBytes"/>. An oversized line evicts prior lines and is discarded.
     /// </summary>
     public long MaxRetainedBytes { get; init; } = DefaultMaxRetainedBytes;
