@@ -72,7 +72,8 @@ public class FileLogOutput<TOptions> : BufferedLogOutput, IFileLogOutput
     }
 
     /// <inheritdoc/>
-    public override Task<int> FlushAsync(bool terminate) => this.worker.FlushAsync(terminate);
+    public override Task<int> FlushAsync(bool terminate)
+        => this.worker?.FlushAsync(terminate) ?? Task.FromResult(0); // The base constructor registers this output before the worker is created, and this constructor may fail.
 
     private readonly FileLogOutputWorker worker;
     private readonly TOptions options;

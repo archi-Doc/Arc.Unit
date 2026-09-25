@@ -273,7 +273,14 @@ public class UnitBuilder
         catch
         {
             unitContext?.ExecutionRoot?.RequestTermination(TerminationOptions.IncludeIndependent);
-            (serviceProvider as IDisposable)?.Dispose();
+            try
+            {
+                (serviceProvider as IDisposable)?.Dispose();
+            }
+            catch
+            {// Best-effort cleanup (e.g. an IAsyncDisposable-only service throws): the original exception must not be replaced.
+            }
+
             throw;
         }
     }

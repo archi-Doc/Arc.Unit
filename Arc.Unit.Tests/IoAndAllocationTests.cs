@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Reflection;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -185,6 +186,20 @@ public class IoAndAllocationTests
         {
             directory.Delete(true);
         }
+    }
+
+    [Fact]
+    public void MemoryLogOutputStorageDoesNotGrowBeyondLimit()
+    {
+        var memory = new MemoryLogOutput(new() { MaxRetainedBytes = 300, FormatterOptions = new(false) { TimestampFormat = null } });
+        for (var i = 0; i < 100; i++)
+        {
+            memory.Output(new(null!, typeof(DefaultLogSource), LogLevel.Information, 0, new string('x', i % 50)));
+        }
+
+        var storage = (byte[])typeof(MemoryLogOutput).GetField("bytes", BindingFlags.NonPublic | BindingFlags.Instance)!.GetValue(memory)!;
+        Assert.InRange(storage.Length, 1, 300);
+        Assert.InRange(memory.ToUtf8Array().Length, 1, 300);
     }
 
     [Fact]

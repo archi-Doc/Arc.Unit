@@ -109,6 +109,55 @@ public class RegressionTests
         }
     }
 
+    [Fact]
+    public void GroupRegistrationOrderDoesNotChangeCommandLifetime()
+    {
+        using var unit = new TestUnitScope(new UnitBuilder().Configure(c =>
+        {
+            c.GetCommandGroup(typeof(ParentCommand)).AddCommand(typeof(ChildCommand));
+            c.AddCommand(typeof(ParentCommand)); // Scoped, although the group was created first.
+        }));
+        using var first = unit.Context.ServiceProvider.CreateScope();
+        using var second = unit.Context.ServiceProvider.CreateScope();
+        Assert.Same(first.ServiceProvider.GetRequiredService<ParentCommand>(), first.ServiceProvider.GetRequiredService<ParentCommand>());
+        Assert.NotSame(first.ServiceProvider.GetRequiredService<ParentCommand>(), second.ServiceProvider.GetRequiredService<ParentCommand>());
+        Assert.Equal(new[] { typeof(ChildCommand) }, unit.Context.GetCommandTypes(typeof(ParentCommand)));
+    }
+
+    [Fact]
+    public async Task FailedFileOutputConstructionDoesNotBreakFlush()
+    {
+        using var unit = new TestUnitScope(new UnitBuilder().PostConfigure(c => c.SetOptions(new FileLogOutputOptions { FilePath = "" })));
+        Assert.Throws<ArgumentException>(() => unit.Context.ServiceProvider.GetRequiredService<FileLogOutput<FileLogOutputOptions>>());
+        await unit.Context.ServiceProvider.GetRequiredService<LogUnit>().FlushAsync(); // Dispose() also runs a terminating flush.
+    }
+
+    [Fact]
+    public void BuildFailureIsNotReplacedByCleanupFailure()
+    {
+        var builder = new UnitBuilder().Configure(c => c.AddSingleton<AsyncOnlyService>()).PostConfigure(c =>
+        {
+            c.ServiceProvider.GetRequiredService<AsyncOnlyService>(); // ServiceProvider.Dispose() throws for this service.
+            throw new ApplicationException("original");
+        });
+        Assert.Equal("original", Assert.Throws<ApplicationException>(() => builder.Build()).Message);
+    }
+
+    [Fact]
+    public void UnbuiltContextHasNoCommands()
+    {
+        var context = new UnitContext();
+        Assert.Empty(context.CommandTypes);
+        Assert.Empty(context.SubcommandTypes);
+    }
+
+    public class ParentCommand { }
+    public class ChildCommand { }
+    public sealed class AsyncOnlyService : IAsyncDisposable
+    {
+        public ValueTask DisposeAsync() => default;
+    }
+
     public class BaseOptions
     {
         private readonly int number;

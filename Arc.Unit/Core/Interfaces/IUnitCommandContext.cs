@@ -10,7 +10,8 @@ namespace Arc.Unit;
 public interface IUnitCommandContext
 {
     /// <summary>
-    /// Gets the command group identified by the specified type (e.g. the child group of a command). Register commands during Configure, before the provider is built.
+    /// Gets the command group identified by the specified type (e.g. the child group of a command). Register commands during Configure, before the provider is built.<br/>
+    /// The group type is not registered in the DI container; add it with <see cref="IUnitConfigurationContext.AddCommand(Type, Microsoft.Extensions.DependencyInjection.ServiceLifetime)"/> if it is a command.
     /// </summary>
     /// <param name="groupType">The type which identifies the group (usually the parent command type).</param>
     /// <returns><see cref="CommandGroup"/>.</returns>

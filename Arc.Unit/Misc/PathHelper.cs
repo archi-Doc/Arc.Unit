@@ -132,23 +132,7 @@ public static class PathHelper
     /// <param name="directory">Directory path.</param>
     /// <returns>Rooted directory path.</returns>
     public static string GetRootedDirectory(string baseDirectory, string directory)
-    {
-        try
-        {
-            if (Path.IsPathRooted(directory))
-            {// File.GetAttributes(directory).HasFlag(FileAttributes.Directory)
-                return directory;
-            }
-            else
-            {
-                return Path.Combine(baseDirectory, directory);
-            }
-        }
-        catch
-        {
-            return Path.Combine(baseDirectory, directory);
-        }
-    }
+        => GetRootedFile(baseDirectory, directory);
 
     /// <summary>
     /// Gets the rooted file path.<br/>

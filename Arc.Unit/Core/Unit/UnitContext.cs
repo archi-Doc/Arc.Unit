@@ -20,7 +20,11 @@ public sealed class UnitContext
     /// Gets or sets a value indicating whether the application requested termination.
     /// This flag does not cancel ExecutionRoot or send notifications.
     /// </summary>
-    public bool IsTerminationRequested { get; set; }
+    public bool IsTerminationRequested
+    {// Usually set by another thread (e.g. a Ctrl+C handler), so the value must not be cached by a polling loop.
+        get => Volatile.Read(ref field);
+        set => Volatile.Write(ref field, value);
+    }
 
     /// <summary>
     /// Gets an instance of <see cref="IServiceProvider"/>.
@@ -51,12 +55,12 @@ public sealed class UnitContext
     /// <summary>
     /// Gets an array of command <see cref="Type"/> added by <see cref="IUnitConfigurationContext.AddCommand(Type, ServiceLifetime)"/>.
     /// </summary>
-    public Type[] CommandTypes => this.CommandTypesByGroup[typeof(UnitBuilderContext.TopCommand)];
+    public Type[] CommandTypes => this.GetCommandTypes(typeof(UnitBuilderContext.TopCommand));
 
     /// <summary>
     /// Gets an array of subcommand <see cref="Type"/> added by <see cref="IUnitConfigurationContext.AddSubcommand(Type, ServiceLifetime)"/>.
     /// </summary>
-    public Type[] SubcommandTypes => this.CommandTypesByGroup[typeof(UnitBuilderContext.SubCommand)];
+    public Type[] SubcommandTypes => this.GetCommandTypes(typeof(UnitBuilderContext.SubCommand));
 
     /// <summary>
     /// Gets a collection of group <see cref="Type"/> (keys, e.g. a parent command type) and the command <see cref="Type"/> which belong to the group (values).

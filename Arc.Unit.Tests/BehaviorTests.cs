@@ -160,6 +160,7 @@ public class BehaviorTests
     [InlineData(0)]
     [InlineData(60)]
     [InlineData(300)]
+    [InlineData(1000)]
     public void MemoryLogOutputMatchesEvictionModel(int limit)
     {
         var options = new MemoryLogOutputOptions { MaxRetainedBytes = limit, FormatterOptions = new(false) { TimestampFormat = null } };
@@ -258,7 +259,7 @@ public class BehaviorTests
 
 internal sealed class TestUnitScope : IDisposable
 {
-    internal TestUnitScope(UnitBuilder builder) => this.Product = builder.Build();
+    internal TestUnitScope(UnitBuilder builder, string[]? args = null) => this.Product = args is null ? builder.Build() : builder.Build(args);
     internal UnitProduct Product { get; }
     internal UnitContext Context => this.Product.Context;
     public void Dispose()

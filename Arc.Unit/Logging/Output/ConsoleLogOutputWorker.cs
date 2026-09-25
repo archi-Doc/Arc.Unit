@@ -72,6 +72,4 @@ internal sealed class ConsoleLogOutputWorker : TaskCore
 
         return Task.FromResult(count);
     }
-
-    public int Count => this.queue.Count;
 }
